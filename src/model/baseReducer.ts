@@ -4,17 +4,9 @@ import {
   Reducer,
   combineReducers
 } from 'redux';
-import { isObject } from 'lodash';
-import { BsUiModelState } from '../type';
-import {
-  BSUIMODEL_BATCH,
-  BsUiModelBaseAction,
-  BsUiModelBatchAction,
-} from './baseAction';
-import {
-  templateReducer,
-  isValidTemplateState,
-} from './template';
+import { BsBrightSignPlayerModelState } from '../type';
+import { activeMediaStateReducer } from './activeMediaState';
+import { BsBrightSignPlayerModelBaseAction, BsBrightSignPlayerModelBatchAction, BSBSBRIGHTSIGNPLAYERMODEL_BATCH } from '.';
 
 // -----------------------------------------------------------------------
 // Defaults
@@ -25,38 +17,35 @@ import {
 // -----------------------------------------------------------------------
 // Reducers
 // -----------------------------------------------------------------------
-
-export type BsUiReducer = Reducer<BsUiModelState>;
+export type BsBspReducer = Reducer<BsBrightSignPlayerModelState>;
 const enableBatching = (
-    reduce: (state: BsUiModelState, action: BsUiModelBaseAction | BsUiModelBatchAction) => BsUiModelState,
-): BsUiReducer => {
+  reduce: (state: BsBrightSignPlayerModelState, action: BsBrightSignPlayerModelBaseAction | BsBrightSignPlayerModelBatchAction) => BsBrightSignPlayerModelState,
+): BsBspReducer => {
   return function batchingReducer(
-    state: BsUiModelState,
-    action: BsUiModelBaseAction | BsUiModelBatchAction,
-  ): BsUiModelState {
+    state: BsBrightSignPlayerModelState,
+    action: BsBrightSignPlayerModelBaseAction | BsBrightSignPlayerModelBatchAction,
+  ): BsBrightSignPlayerModelState {
     switch (action.type) {
-      case BSUIMODEL_BATCH:
-        return (action as BsUiModelBatchAction).payload.reduce(batchingReducer, state);
+      case BSBSBRIGHTSIGNPLAYERMODEL_BATCH:
+        return (action as BsBrightSignPlayerModelBatchAction).payload.reduce(batchingReducer, state);
       default:
         return reduce(state, action);
     }
   };
 };
 
-export const bsUiModelReducer: BsUiReducer = enableBatching(combineReducers<BsUiModelState>({
-  template: templateReducer,
+export const bsBspReducer: BsBspReducer = enableBatching(combineReducers<BsBrightSignPlayerModelState>({
+  activeMediaStates: activeMediaStateReducer
 }));
 
 // -----------------------------------------------------------------------
 // Validators
 // -----------------------------------------------------------------------
 
-export const isValidBsUiModelState = (state: any): boolean => {
-  return isObject(state)
-    && state.hasOwnProperty('template') && isValidTemplateState(state.template);
+export const isValidBsBrightSignPlayerModelState = (state: any): boolean => {
+  return true;
 };
 
-export const isValidBsUiModelStateShallow = (state: any): boolean => {
-  return isObject(state)
-    && state.hasOwnProperty('template');
+export const isValidBsBrightSignPlayerModelStateShallow = (state: any): boolean => {
+  return true;
 };
