@@ -95,9 +95,10 @@ export class SignComponent extends React.Component<SignProps> {
 // const mapStateToProps = (state: any, ownProps: undefined): ImageProps => {
 const mapStateToProps = (state: any, ownProps: undefined): any => {
   return {
-    src: state.src,
-    width: state.width,
-    height: state.height,
+    // src: state.src,
+    // width: state.width,
+    // height: state.height,
+    bsdm: state.bsdm,
   };
 };
 

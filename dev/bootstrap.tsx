@@ -9,7 +9,7 @@ import {
 } from '@brightsign/bsdatamodel';
 
 import { BsBrightSignPlayerState } from '../src/type';
-import { Template, bsBspReducer } from '../src/index';
+import { bsBspReducer, App, initRuntime } from '../src/index';
 import './bootstrap.css';
 import 'normalize.css/normalize.css';
 import 'flexboxgrid/dist/flexboxgrid.min.css';
@@ -18,7 +18,7 @@ import 'font-awesome/css/font-awesome.min.css';
 const getStore = () => {
   const reducers = combineReducers<BsBrightSignPlayerState>({
     bsdm: bsDmReducer,
-    bsp: bsBspReducer,
+    bsplayer: bsBspReducer,
   });
   return createStore<BsBrightSignPlayerState>(
     reducers,
@@ -28,9 +28,11 @@ const getStore = () => {
 
 const store = getStore();
 
+store.dispatch(initRuntime(store));
+
 ReactDOM.render(
   <Provider store={store}>
-    <Template />
+    <App />
   </Provider>,
   document.getElementById('root') as HTMLElement
 );

@@ -6,11 +6,10 @@
 
 import * as React from 'react';
 import { DmDerivedContentItem, DmEvent, DmMediaState, DmState, DmZone } from '@brightsign/bsdatamodel';
-import { DmState, DmcZone } from '@brightsign/bsdatamodel';
+import { DmcZone } from '@brightsign/bsdatamodel';
 import { Store } from 'redux';
 import { Action, Dispatch, ActionCreator } from 'redux';
 import { Reducer } from 'redux';
-import { DmState } from '@brightsign/bsdatamodel';
 
 /** @module Controller:index */
 

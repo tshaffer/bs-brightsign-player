@@ -48,7 +48,7 @@ class AppComponent extends React.Component<any, object> {
 function mapStateToProps(state: any) {
   return {
     bsdm: state.bsdm,
-    activeMediaStates: state.bsAutotron.activeMediaStates,
+    activeMediaStates: state.bsplayer.activeMediaStates,
   };
 }
 
