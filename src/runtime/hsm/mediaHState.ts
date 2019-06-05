@@ -4,6 +4,7 @@ import { ArEventType, HSMStateData, SubscribedEvents } from "../../type/runtime"
 import { DmEvent, DmTimer, DmcTransition, dmGetTransitionById, dmGetTransitionIdsForEvent, BsDmId, dmGetEventStateById, DmMediaState } from "@brightsign/bsdatamodel";
 import { MediaZoneHSM } from "./mediaZoneHSM";
 import { ZoneHSM } from "./zoneHSM";
+import { getReduxStore } from "../../index";
 // import { dispatchPostMessage } from "../../index";
 
 export class MediaHState extends HState {
@@ -142,7 +143,8 @@ export class MediaHState extends HState {
         EventType: EventType.Timer,
       };
 
-      mediaHState.stateMachine.dispatchEvent(event);
+      const reduxStore: any = getReduxStore();
+      reduxStore.dispatch(mediaHState.stateMachine.dispatchEvent(event));
       // dispatchPostMessage(event);
     }
   }

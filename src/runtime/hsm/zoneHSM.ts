@@ -29,10 +29,10 @@ export class ZoneHSM extends HSM {
   mediaStateIds: BsDmId[];
   mediaStates: MediaHState[];
 
-  constructor(autotronStore: Store<BsBrightSignPlayerState>, zoneId: string, dispatchEvent: any) {
+  constructor(hsmId: string, autotronStore: Store<BsAutotronState>, zoneId: string, dispatchEvent: any) {
 
-    super(dispatchEvent);
-
+    super(hsmId, autotronStore, dispatchEvent);
+    
     this.autotronStore = autotronStore;
     this.zoneId = zoneId;
 

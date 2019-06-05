@@ -2,7 +2,6 @@ import { HState } from '../runtime/hsm/HSM';
 import { 
   DmState
 } from '@brightsign/bsdatamodel';
-import { ActiveMediaStatesShape } from './activeMediaState';
 
 export interface ArEventType {
   EventType: string;
@@ -48,7 +47,6 @@ export type StateMachineShape = { };
 export interface ArState {
   bsdm : DmState;
   stateMachine : StateMachineShape;
-  activeMediaStates : ActiveMediaStatesShape;
   // dataFeeds : DataFeedShape;
   // mrssDataFeedItems : MrssDataFeedItemShape;
 }

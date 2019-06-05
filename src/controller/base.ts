@@ -1,5 +1,5 @@
 import {
-  ARMediaStateLUT, ActiveMediaStatesShape, BsBrightSignPlayerModelState
+  BsBrightSignPlayerModelState
 } from '../type';
 import {
   BsBrightSignPlayerModelAction,
@@ -15,12 +15,8 @@ import {
 
 const fetchModelAsync = (): Promise<BsBrightSignPlayerModelState> => {
   return new Promise((resolve) => {
-    const activeMediaStateIdByZone: ARMediaStateLUT = {};
-    const activeMediaStates: ActiveMediaStatesShape = {
-      activeMediaStateIdByZone,
-    };
     const model: BsBrightSignPlayerModelState = {
-      activeMediaStates,
+      // activeMediaStates,
     };
     resolve(model);
   });

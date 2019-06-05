@@ -2,7 +2,6 @@ import { ZoneHSM } from "./zoneHSM";
 import { MediaHState } from "./mediaHState";
 import { DmMediaState } from "@brightsign/bsdatamodel";
 import { HSMStateData, ArEventType } from "../../type/runtime";
-import { setActiveMediaState } from "../../index";
 
 export default class ImageState extends MediaHState {
 
@@ -22,7 +21,6 @@ export default class ImageState extends MediaHState {
 
     if (event.EventType === 'ENTRY_SIGNAL') {
       console.log(this.id + ': entry signal');
-      this.stateMachine.autotronStore.dispatch(setActiveMediaState(this.stateMachine.id, this.id));
       this.launchTimer();
       return 'HANDLED';
     } else if (event.EventType === 'EXIT_SIGNAL') {

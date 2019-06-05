@@ -5,8 +5,9 @@ import {
   combineReducers
 } from 'redux';
 import { BsBrightSignPlayerModelState } from '../type';
-import { activeMediaStateReducer } from './activeMediaState';
+import { activeHStateReducer } from './activeHState';
 import { BsBrightSignPlayerModelBaseAction, BsBrightSignPlayerModelBatchAction, BSBSBRIGHTSIGNPLAYERMODEL_BATCH } from '.';
+import { hsmReducer } from './hsm';
 
 // -----------------------------------------------------------------------
 // Defaults
@@ -35,7 +36,8 @@ const enableBatching = (
 };
 
 export const bsBspReducer: BsBspReducer = enableBatching(combineReducers<BsBrightSignPlayerModelState>({
-  activeMediaStates: activeMediaStateReducer
+  activeHStates: activeHStateReducer,
+  hsms: hsmReducer,
 }));
 
 // -----------------------------------------------------------------------

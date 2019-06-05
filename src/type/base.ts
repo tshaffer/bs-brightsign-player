@@ -1,7 +1,6 @@
 /** @module Types:base */
 
 import { DmState } from '@brightsign/bsdatamodel';
-import { ActiveMediaStatesShape } from './activeMediaState';
 
 /** @internal */
 /** @private */
@@ -17,5 +16,4 @@ export interface BsBrightSignPlayerState {
 /** @internal */
 /** @private */
 export interface BsBrightSignPlayerModelState {
-  activeMediaStates: ActiveMediaStatesShape;
 }

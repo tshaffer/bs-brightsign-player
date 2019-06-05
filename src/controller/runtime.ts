@@ -60,6 +60,10 @@ export function initRuntime(store: Store<BsBrightSignPlayerState>) {
   });
 }
 
+export function getReduxStore(): Store<BsAutotronState> {
+  return _autotronStore;
+}
+
 export function getRuntimeFiles(): Promise<void> {
   return getSyncSpec()
     .then((syncSpec: ArSyncSpec) => {
@@ -75,7 +79,7 @@ export function getRuntimeFiles(): Promise<void> {
 }
 
 function launchHSM() {
-  _playerHSM = new PlayerHSM(startPlayback, restartPlayback, postMessage, dispatchEvent);
+  _playerHSM = new PlayerHSM('playerHSM', _autotronStore, startPlayback, restartPlayback, postMessage, dispatchEvent);
   _playerHSM.initialize();
 }
 
@@ -235,6 +239,7 @@ function restartPlayback(presentationName: string): Promise<void> {
   const presentationToSchedule = scheduledPresentation.presentationToSchedule;
 
   // TEDTODO - why does restartPlayback get a presentationName if it's also in the schedule?
+  // for switchPresentations?
   presentationName = presentationToSchedule.name;
 
   const autoplayFileName = presentationName + '.bml';
@@ -280,22 +285,28 @@ function postMessage(event: ArEventType): () => void {
 // }
 
 export function postRuntimeMessage(event: ArEventType) {
-  console.log('flibbet');
-  dispatchEvent(event);
+  return ((dispatch: any, getState: Function) => {
+    console.log('flibbet');
+    dispatch(dispatchEvent(event));
+  });
 }
 
 export function postMessage(event: ArEventType) {
-  console.log('pizza');
-  dispatchEvent(event);
+  return ((dispatch: any, getState: Function) => {
+    console.log('flibbet');
+    dispatch(dispatchEvent(event));
+  });
 }
 // end of restored code
 
-function dispatchEvent(event: ArEventType) {
+function dispatchEvent(event: ArEventType): Function {
 
-  _playerHSM.Dispatch(event);
+  return ((dispatch: any, getState: Function) => {
+    dispatch(_playerHSM.Dispatch(event));
 
-  _hsmList.forEach((hsm) => {
-    hsm.Dispatch(event);
+    _hsmList.forEach((hsm) => {
+      dispatch(hsm.Dispatch(event));
+    });
   });
 }
 
@@ -314,7 +325,7 @@ function startPlayback() {
 
     switch (bsdmZone.type) {
       default: {
-        zoneHSM = new MediaZoneHSM(_autotronStore, zoneId, dispatchEvent);
+        zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, _autotronStore, zoneId, dispatchEvent);
         break;
       }
     }

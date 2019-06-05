@@ -27,9 +27,10 @@ class AppComponent extends React.Component<any, object> {
 
     console.log('app render invoked');
 
+    // not sure about this check
     if (this.props.bsdm.zones.allZones.length === 0 ||
-      Object.keys(this.props.activeMediaStates.activeMediaStateIdByZone).length === 0) {
-      return (
+      Object.keys(this.props.activeHStates).length === 0) {
+        return (
         <div>
           Waiting for the presentation to be loaded...
         </div>
@@ -48,7 +49,7 @@ class AppComponent extends React.Component<any, object> {
 function mapStateToProps(state: any) {
   return {
     bsdm: state.bsdm,
-    activeMediaStates: state.bsplayer.activeMediaStates,
+    activeHStates: state.bsAutotron.activeHStates,
   };
 }
 
