@@ -82,11 +82,11 @@ export const Sign: React.ComponentClass<Pick<SignProps, "bsdm"> & undefined> & {
 export let myApp: {};
 export const App: React.ComponentClass<Pick<{
     bsdm: any;
-    activeMediaStates: any;
+    activeHStates: any;
 } & null, never>> & {
     WrappedComponent: React.ComponentType<{
         bsdm: any;
-        activeMediaStates: any;
+        activeHStates: any;
     } & null>;
 };
 
@@ -94,20 +94,30 @@ export const initModel: () => BsBrightSignPlayerModelThunkAction<Promise<any>>;
 export const resetModel: () => BsBrightSignPlayerModelThunkAction<BsBrightSignPlayerModelAction<null>>;
 
 export function initRuntime(store: Store<BsBrightSignPlayerState>): (dispatch: any, getState: Function) => Promise<void>;
+export function getReduxStore(): Store<BsBrightSignPlayerState>;
 export function getRuntimeFiles(): Promise<void>;
 export function getPoolFilePath(fileName: string): string;
-export function postRuntimeMessage(event: ArEventType): void;
-export function postMessage(event: ArEventType): void;
+export function postRuntimeMessage(event: ArEventType): (dispatch: any, getState: Function) => void;
+export function postMessage(event: ArEventType): (dispatch: any, getState: Function) => void;
 
-export const SET_ACTIVE_MEDIA_STATE = "SET_ACTIVE_MEDIA_STATE";
-export function setActiveMediaState(zoneId: string, mediaStateId: string): {
+export const ADD_HSM = "ADD_HSM";
+export function addHSM(hsm: any): {
     type: string;
     payload: {
-        zoneId: string;
-        mediaStateId: string;
+        hsm: any;
     };
 };
-export const activeMediaStateReducer: (state: ActiveMediaStatesShape | undefined, action: ActionWithPayload) => ActiveMediaStatesShape;
+export const hsmReducer: (state: any[] | undefined, action: ActionWithPayload) => any[];
+
+export const SET_ACTIVE_HSTATE = "SET_ACTIVE_HSTATE";
+export function setActiveHState(hsmId: string, activeState: any): {
+    type: string;
+    payload: {
+        hsmId: string;
+        activeState: any;
+    };
+};
+export const activeHStateReducer: (state: ActiveHStatesShape | undefined, action: ActionWithPayload) => ActiveHStatesShape;
 
 /** @module Model:base */
 /** @private */
@@ -166,8 +176,6 @@ export const bsBrightSignPlayerModelFilterBaseState: (state: any) => BsBrightSig
 /** @private */
 export const bsBrightSignPlayerModelGetBaseState: (state: BsBrightSignPlayerModelState) => BsBrightSignPlayerModelState;
 
-export function getActiveMediaStateId(state: BsBrightSignPlayerState, zoneId: string): string;
-
 /** @module Types:base */
 /** @private */
 export type DeepPartial<T> = {
@@ -179,15 +187,18 @@ export interface BsBrightSignPlayerState {
 }
 /** @private */
 export interface BsBrightSignPlayerModelState {
-    activeMediaStates: ActiveMediaStatesShape;
+    hsms: any;
+    activeHStates: any;
 }
 
-export type ARMediaStateLUT = {
-    [zoneId: string]: string;
+export type ARHStateLUT = {
+    [hsmId: string]: string | null;
 };
-export type ActiveMediaStatesShape = {
-    activeMediaStateIdByZone: ARMediaStateLUT;
+export type ActiveHStatesShape = {
+    activeHStateIdByHSM: ARHStateLUT;
 };
+
+export type HSMsShape = any[];
 
 export enum BsUiErrorType {
     unknownError = 0,
@@ -244,19 +255,20 @@ export type StateMachineShape = {};
 export interface ArState {
     bsdm: DmState;
     stateMachine: StateMachineShape;
-    activeMediaStates: ActiveMediaStatesShape;
 }
 
 export class HSM {
+    hsmId: string;
+    reduxStore: any;
     dispatchEvent: ((event: ArEventType) => void);
     topState: HState | null;
     activeState: HState | null;
     constructorHandler: (() => void) | null;
-    initialPseudoStateHandler: ((args: any) => (HState | null)) | null;
-    constructor(dispatchEvent: ((event: ArEventType) => void));
+    initialPseudoStateHandler: ((args: any, reduxStore: any) => (HState | null)) | null;
+    constructor(hsmId: string, reduxStore: any, dispatchEvent: ((event: ArEventType) => void));
     constructorFunction(): void;
     initialize(): void;
-    Dispatch(event: ArEventType): void;
+    Dispatch(event: ArEventType): (dispatch: any, getState: Function) => void;
 }
 export class HState {
     topState: null;

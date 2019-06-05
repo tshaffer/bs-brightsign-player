@@ -49,7 +49,7 @@ class AppComponent extends React.Component<any, object> {
 function mapStateToProps(state: any) {
   return {
     bsdm: state.bsdm,
-    activeHStates: state.bsAutotron.activeHStates,
+    activeHStates: state.bsplayer.activeHStates,
   };
 }
 

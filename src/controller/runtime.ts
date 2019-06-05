@@ -31,12 +31,13 @@ import { MediaZoneHSM } from '../runtime/hsm/mediaZoneHSM';
 
 // const srcDirectory = '/Users/tedshaffer/Desktop/ag';
 let srcDirectory = '/Users/tedshaffer/Desktop/ag';
-srcDirectory = '/storage/sd';
-srcDirectory = '/sd:/';
+// srcDirectory = '/storage/sd';
+// srcDirectory = '/sd:/';
 
-var process = require("process");
-process.chdir("/storage/sd");
-srcDirectory = '';
+// TEDTODO - use the following when running on a BrightSign
+// var process = require("process");
+// process.chdir("/storage/sd");
+// srcDirectory = '';
 
 // TEDTODO
 let _autotronStore: Store<BsBrightSignPlayerState>;
