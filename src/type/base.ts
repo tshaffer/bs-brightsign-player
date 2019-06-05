@@ -16,4 +16,6 @@ export interface BsBrightSignPlayerState {
 /** @internal */
 /** @private */
 export interface BsBrightSignPlayerModelState {
+  hsms: any;
+  activeHStates: any;
 }

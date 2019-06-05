@@ -20,7 +20,7 @@ export class MediaZoneHSM extends ZoneHSM {
 
   mediaStateIdToHState: LUT = {};
 
-  constructor(hsmId: string, autotronStore: Store<BsAutotronState>, zoneId: string, dispatchEvent: any) {
+  constructor(hsmId: string, autotronStore: Store<BsBrightSignPlayerState>, zoneId: string, dispatchEvent: any) {
 
     super(hsmId, autotronStore, zoneId, dispatchEvent);
     

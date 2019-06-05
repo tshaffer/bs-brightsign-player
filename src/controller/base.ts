@@ -16,7 +16,8 @@ import {
 const fetchModelAsync = (): Promise<BsBrightSignPlayerModelState> => {
   return new Promise((resolve) => {
     const model: BsBrightSignPlayerModelState = {
-      // activeMediaStates,
+      activeHStates: [],
+      hsms: [],
     };
     resolve(model);
   });

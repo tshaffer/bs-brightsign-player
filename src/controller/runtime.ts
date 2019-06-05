@@ -60,7 +60,7 @@ export function initRuntime(store: Store<BsBrightSignPlayerState>) {
   });
 }
 
-export function getReduxStore(): Store<BsAutotronState> {
+export function getReduxStore(): Store<BsBrightSignPlayerState> {
   return _autotronStore;
 }
 

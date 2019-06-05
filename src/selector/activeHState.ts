@@ -1,9 +1,9 @@
-import { BsAutotronState } from "../../index";
+import { BsBrightSignPlayerState } from '../type';
 
 // ------------------------------------
 // Selectors
 // ------------------------------------
-export function getActiveHStateId(state: BsAutotronState, hsmId: string) {
-  const activeHStateIdByZone = state.bsAutotron.activeHStates.activeHStateIdByHSM;
+export function getActiveHStateId(state: BsBrightSignPlayerState, hsmId: string) {
+  const activeHStateIdByZone = state.bsplayer.activeHStates.activeHStateIdByHSM;
   return activeHStateIdByZone[hsmId];
 }
