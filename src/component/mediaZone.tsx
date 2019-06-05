@@ -43,7 +43,7 @@ import {
   DmZone,
 } from '@brightsign/bsdatamodel';
 // import { ArEventType } from '../type/runtime';
-import { getPoolFilePath } from '../index';
+import { getPoolFilePath, getReduxStore, dispatchHsmEvent } from '../index';
 import { connect } from 'react-redux';
 // import { Dispatch } from 'redux';
 // import { bindActionCreators } from 'redux';
@@ -90,7 +90,9 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
     const event : ArEventType = {
       EventType : EventType.MediaEnd,
     };
-    this.props.postBSPMessage(event);
+    // this.props.postBSPMessage(event);
+    const reduxStore: any = getReduxStore();
+    reduxStore.dispatch(dispatchHsmEvent(event));
   }
 
   renderMediaItem(mediaState: DmMediaState, contentItem: DmDerivedContentItem) {

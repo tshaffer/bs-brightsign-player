@@ -81,7 +81,7 @@ export function getRuntimeFiles(): Promise<void> {
 }
 
 function launchHSM() {
-  _playerHSM = new PlayerHSM('playerHSM', _autotronStore, startPlayback, restartPlayback, postMessage, dispatchEvent);
+  _playerHSM = new PlayerHSM('playerHSM', _autotronStore, startPlayback, restartPlayback, postMessage, dispatchHsmEvent);
   _playerHSM.initialize();
 }
 
@@ -266,18 +266,18 @@ export function dispatchPostMessage(event : ArEventType): void {
 
 function postMessage(event: ArEventType): () => void {
   return () => {
-    dispatchEvent(event);
+    dispatchHsmEvent(event);
   };
 }
 
 // export function postRuntimeMessage(event: ArEventType) {
 //   console.log('flibbet');
-//   dispatchEvent(event);
+//   dispatchHsmEvent(event);
 // }
 
 // export function postMessage(event: ArEventType) {
 //   console.log('pizza');
-//   dispatchEvent(event);
+//   dispatchHsmEvent(event);
 // }
 */
 
@@ -289,19 +289,19 @@ function postMessage(event: ArEventType): () => void {
 export function postRuntimeMessage(event: ArEventType) {
   return ((dispatch: any, getState: Function) => {
     console.log('flibbet');
-    dispatch(dispatchEvent(event));
+    dispatch(dispatchHsmEvent(event));
   });
 }
 
 export function postMessage(event: ArEventType) {
   return ((dispatch: any, getState: Function) => {
     console.log('flibbet');
-    dispatch(dispatchEvent(event));
+    dispatch(dispatchHsmEvent(event));
   });
 }
 // end of restored code
 
-function dispatchEvent(event: ArEventType): Function {
+export function dispatchHsmEvent(event: ArEventType): Function {
 
   return ((dispatch: any, getState: Function) => {
     dispatch(_playerHSM.Dispatch(event));
@@ -327,7 +327,7 @@ function startPlayback() {
 
     switch (bsdmZone.type) {
       default: {
-        zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, _autotronStore, zoneId, dispatchEvent);
+        zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, _autotronStore, zoneId, dispatchHsmEvent);
         break;
       }
     }
