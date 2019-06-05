@@ -42,7 +42,6 @@ import {
   DmZone,
 } from '@brightsign/bsdatamodel';
 // import { ArEventType } from '../type/runtime';
-// import { getPoolFilePath, postRuntimeMessage } from '../index';
 import { getPoolFilePath } from '../index';
 import { connect } from 'react-redux';
 // import { Dispatch } from 'redux';

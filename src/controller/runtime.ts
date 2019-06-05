@@ -29,7 +29,14 @@ import { MediaZoneHSM } from '../runtime/hsm/mediaZoneHSM';
 
 // TEDTODO - this should come from platform
 
-const srcDirectory = '/Users/tedshaffer/Desktop/ag';
+// const srcDirectory = '/Users/tedshaffer/Desktop/ag';
+let srcDirectory = '/Users/tedshaffer/Desktop/ag';
+srcDirectory = '/storage/sd';
+srcDirectory = '/sd:/';
+
+var process = require("process");
+process.chdir("/storage/sd");
+srcDirectory = '';
 
 // TEDTODO
 let _autotronStore: Store<BsBrightSignPlayerState>;
@@ -45,7 +52,6 @@ let _playerHSM: PlayerHSM;
 // -----------------------------------------------------------------------
 export function initRuntime(store: Store<BsBrightSignPlayerState>) {
   return ((dispatch: any, getState: Function) => {
-    debugger;
     _autotronStore = store;
     const autotronState: BsBrightSignPlayerState = _autotronStore.getState();
     console.log(autotronState);
@@ -188,10 +194,18 @@ function getLocalSyncSpec(): Promise<string | null> {
 
 function getLocalSyncSpecFilePath(): string {
   // return isomorphicPath.join(PlatformService.default.getRootDirectory(), 'local-sync.json');
-  return isomorphicPath.join(getRootDirectory(), 'local-sync.json');
+  const rootDirectory: string = getRootDirectory();
+  console.log('rootDirectory:');
+  console.log(rootDirectory);
+  const syncSpecFilePath = isomorphicPath.join(rootDirectory, 'local-sync.json');
+  console.log('syncSpecFilePath:');
+  console.log(syncSpecFilePath);
+  // return isomorphicPath.join(getRootDirectory(), 'local-sync.json');
+  return syncSpecFilePath;
 }
 
 function getNetworkedSyncSpecFilePath(): string {
+  console.log('getNetworkedSyncSpecFilePath');
   // return isomorphicPath.join(PlatformService.default.getRootDirectory(), 'current-sync.json');
   return isomorphicPath.join(getRootDirectory(), 'current-sync.json');
 }
