@@ -1,7 +1,8 @@
 import * as React from 'react';
 
+import { DmState } from '@brightsign/bsdatamodel';
+
 import {
-  DmState,
   DmcZone,
   dmGetZoneById,
   dmGetZonesForSign,

@@ -5,7 +5,8 @@
 //   ../../redux
 
 import * as React from 'react';
-import { DmDerivedContentItem, DmEvent, DmMediaState, DmState, DmZone } from '@brightsign/bsdatamodel';
+import { DmState } from '@brightsign/bsdatamodel';
+import { DmDerivedContentItem, DmEvent, DmMediaState, DmZone } from '@brightsign/bsdatamodel';
 import { DmcZone } from '@brightsign/bsdatamodel';
 import { Store } from 'redux';
 import { Action, Dispatch, ActionCreator } from 'redux';

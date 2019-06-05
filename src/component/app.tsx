@@ -3,8 +3,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 // import { bindActionCreators, Dispatch } from 'redux';
 
-// import { DmState } from '@brightsign/bsdatamodel';
-
 // import { postMessage } from '../store/stateMachine';
 
 import { Sign } from './sign';

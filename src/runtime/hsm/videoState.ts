@@ -2,9 +2,10 @@ import {
   EventType,
 } from '@brightsign/bscore';
 
+import { DmState } from '@brightsign/bsdatamodel';
+
 import {
   DmMediaState,
-  DmState,
 } from '@brightsign/bsdatamodel';
 import { ZoneHSM } from "./zoneHSM";
 import { MediaHState } from "./mediaHState";
@@ -12,11 +13,11 @@ import { HSMStateData, ArEventType } from "../../type/runtime";
 
 export default class VideoState extends MediaHState {
 
-  bsdm : DmState;
-  dispatch : Function;
-  stateMachine : ZoneHSM;
+  bsdm: DmState;
+  dispatch: Function;
+  stateMachine: ZoneHSM;
 
-  constructor(zoneHSM : ZoneHSM, mediaState : DmMediaState) {
+  constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState) {
 
     super(zoneHSM, mediaState.id);
     this.mediaState = mediaState;
@@ -26,7 +27,7 @@ export default class VideoState extends MediaHState {
     this.HStateEventHandler = this.STDisplayingVideoEventHandler;
   }
 
-  STDisplayingVideoEventHandler(event : ArEventType, stateData : HSMStateData) : string {
+  STDisplayingVideoEventHandler(event: ArEventType, stateData: HSMStateData): string {
 
     stateData.nextState = null;
 
@@ -38,7 +39,7 @@ export default class VideoState extends MediaHState {
       this.mediaHStateExitHandler();
     } else if (event.EventType === EventType.MediaEnd) {
       // const eventList : DmcEvent[] = (this.mediaState as DmcMediaState).eventList;
-      const bsEventKey : string = this.getBsEventKey(event);
+      const bsEventKey: string = this.getBsEventKey(event);
       if (this.eventLUT.hasOwnProperty(bsEventKey)) {
         stateData.nextState = this.eventLUT[bsEventKey];
         return 'TRANSITION';

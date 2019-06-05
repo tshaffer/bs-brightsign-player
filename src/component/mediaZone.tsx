@@ -25,6 +25,8 @@ import {
   EventType,
 } from '@brightsign/bscore';
 
+import { DmState } from '@brightsign/bsdatamodel';
+
 import {
   BsDmId,
   // DmDataFeedContentItem,
@@ -33,7 +35,6 @@ import {
   DmEvent,
   // DmEventData,
   DmMediaState,
-  DmState,
   // DmTimer,
   dmGetMediaStateById,
   dmGetEventIdsForMediaState,
