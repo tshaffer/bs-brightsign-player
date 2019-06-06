@@ -10,7 +10,7 @@ export type DeepPartial<T> = {
 
 export interface BsBrightSignPlayerState {
   bsdm: DmState;
-  bsplayer: BsBrightSignPlayerModelState;
+  bsPlayer: BsBrightSignPlayerModelState;
 }
 
 /** @internal */

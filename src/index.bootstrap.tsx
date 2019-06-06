@@ -18,7 +18,7 @@ console.log('index.bootstrap.tsx: start');
 const getStore = () => {
   const reducers = combineReducers<BsBrightSignPlayerState>({
     bsdm: bsDmReducer,
-    bsplayer: bsBspReducer,
+    bsPlayer: bsBspReducer,
   });
   return createStore<BsBrightSignPlayerState>(
     reducers,
