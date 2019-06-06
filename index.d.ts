@@ -100,6 +100,7 @@ export function getRuntimeFiles(): Promise<void>;
 export function getPoolFilePath(fileName: string): string;
 export function postRuntimeMessage(event: ArEventType): (dispatch: any, getState: Function) => void;
 export function postMessage(event: ArEventType): (dispatch: any, getState: Function) => void;
+export function dispatchHsmEvent(event: ArEventType): Function;
 
 export const ADD_HSM = "ADD_HSM";
 export function addHSM(hsm: any): {
@@ -118,7 +119,7 @@ export function setActiveHState(hsmId: string, activeState: any): {
         activeState: any;
     };
 };
-export const activeHStateReducer: (state: ActiveHStatesShape | undefined, action: ActionWithPayload) => ActiveHStatesShape;
+export const activeHStateReducer: (state: ActiveHStatesByHsm | undefined, action: ActionWithPayload) => ActiveHStatesByHsm;
 
 /** @module Model:base */
 /** @private */
@@ -184,7 +185,7 @@ export type DeepPartial<T> = {
 };
 export interface BsBrightSignPlayerState {
     bsdm: DmState;
-    bsplayer: BsBrightSignPlayerModelState;
+    bsPlayer: BsBrightSignPlayerModelState;
 }
 /** @private */
 export interface BsBrightSignPlayerModelState {
@@ -192,12 +193,12 @@ export interface BsBrightSignPlayerModelState {
     activeHStates: any;
 }
 
-export type ARHStateLUT = {
+export interface HStateMap {
     [hsmId: string]: string | null;
-};
-export type ActiveHStatesShape = {
-    activeHStateIdByHSM: ARHStateLUT;
-};
+}
+export interface ActiveHStatesByHsm {
+    activeHStateIdByHSM: HStateMap;
+}
 
 export type HSMsShape = any[];
 

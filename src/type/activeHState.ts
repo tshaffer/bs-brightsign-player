@@ -1,5 +1,6 @@
-export type ARHStateLUT = { [hsmId: string]: string | null };
-export type ActiveHStatesShape = {
-  activeHStateIdByHSM: ARHStateLUT
-};
-
+export interface HStateMap {
+  [hsmId: string]: string | null;
+}
+export interface ActiveHStatesByHsm {
+  activeHStateIdByHSM: HStateMap;
+}

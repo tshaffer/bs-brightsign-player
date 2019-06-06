@@ -1,4 +1,4 @@
-import { ActiveHStatesShape } from '../type/activeHState';
+import { ActiveHStatesByHsm } from '../type/activeHState';
 import { ActionWithPayload } from './baseAction';
 
 // ------------------------------------
@@ -27,18 +27,18 @@ export function setActiveHState(hsmId: string, activeState: any) {
 // ------------------------------------
 // Reducer
 // ------------------------------------
-const initialState: ActiveHStatesShape = {
+const initialState: ActiveHStatesByHsm = {
   activeHStateIdByHSM: {},
 };
 
 export const activeHStateReducer = (
-  state: ActiveHStatesShape = initialState,
+  state: ActiveHStatesByHsm = initialState,
   action: ActionWithPayload) => {
   switch (action.type) {
 
     case SET_ACTIVE_HSTATE: {
 
-      const newState: ActiveHStatesShape = Object.assign({}, state);
+      const newState: ActiveHStatesByHsm = Object.assign({}, state);
 
       const { hsmId, activeState } = action.payload;
       newState.activeHStateIdByHSM[hsmId] = activeState;
