@@ -1,7 +1,11 @@
-import { BsBrightSignPlayerModelState, isValidBsBrightSignPlayerModelStateShallow } from "../index";
-import { BsBrightSignPlayerError, BsBrightSignPlayerErrorType } from "../utility/BsBrightSignPlayerError";
-
 /** @module Selector:base */
+
+import { BsBrightSignPlayerModelState } from '../type';
+import { isValidBsBrightSignPlayerModelStateShallow } from '../index';
+import { 
+  BsBrightSignPlayerError, 
+  BsBrightSignPlayerErrorType 
+} from '../utility/BsBrightSignPlayerError';
 
 /** @internal */
 /** @private */

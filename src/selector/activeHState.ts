@@ -3,7 +3,8 @@ import { BsBrightSignPlayerState } from '../type';
 // ------------------------------------
 // Selectors
 // ------------------------------------
-export function getActiveHStateId(state: BsBrightSignPlayerState, hsmId: string) {
+// TEDTODO - create selector?
+export function getActiveHStateId(state: BsBrightSignPlayerState, hsmId: string): string | null {
   const activeHStateIdByZone = state.bsPlayer.activeHStates;
   return activeHStateIdByZone[hsmId];
 }

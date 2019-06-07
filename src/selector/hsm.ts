@@ -1,13 +1,14 @@
 import { isObject } from 'lodash';
 import { BsBrightSignPlayerState } from '../index';
 import { MediaHState } from '../runtime/hsm/mediaHState';
+import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState } from '@brightsign/bsdatamodel';
 import { ZoneHSM } from '../runtime/hsm/zoneHSM';
 
 // ------------------------------------
 // Selectors
 // ------------------------------------
-export function getActiveMediaStateId(state: BsBrightSignPlayerState, zoneId: string) {
+export function getActiveMediaStateId(state: BsBrightSignPlayerState, zoneId: string): BsDmId | null {
   for (const hsm of state.bsPlayer.hsms) {
     if (hsm.hasOwnProperty('zoneId')) {
       const zoneHsm: ZoneHSM = hsm as ZoneHSM;
