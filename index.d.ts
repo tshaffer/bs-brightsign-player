@@ -200,21 +200,6 @@ export interface HStateMap {
 
 export type HSMList = HSM[];
 
-export enum BsUiErrorType {
-    unknownError = 0,
-    unexpectedError = 1,
-    invalidParameters = 2,
-    invalidOperation = 3,
-    apiError = 4,
-    invalidModel = 5,
-}
-export class BsUiError extends Error {
-    name: string;
-    type: BsUiErrorType;
-    constructor(type: BsUiErrorType, reason?: string);
-}
-export function isBsUiError(error: Error): error is BsUiError;
-
 export interface ArEventType {
     EventType: string;
     data?: any;
@@ -256,6 +241,21 @@ export interface ArState {
     bsdm: DmState;
     stateMachine: StateMachineShape;
 }
+
+export enum BsBrightSignPlayerErrorType {
+    unknownError = 0,
+    unexpectedError = 1,
+    invalidParameters = 2,
+    invalidOperation = 3,
+    apiError = 4,
+    invalidModel = 5,
+}
+export class BsBrightSignPlayerError extends Error {
+    name: string;
+    type: BsBrightSignPlayerErrorType;
+    constructor(type: BsBrightSignPlayerErrorType, reason?: string);
+}
+export function isBsBrightSignPlayerError(error: Error): error is BsBrightSignPlayerError;
 
 export class HSM {
     hsmId: string;

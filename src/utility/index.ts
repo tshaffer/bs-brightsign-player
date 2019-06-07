@@ -1,1 +1,1 @@
-export * from './BsUiError';
+export * from './BsBrightSignPlayerError';
