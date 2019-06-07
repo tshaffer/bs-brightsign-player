@@ -25,22 +25,22 @@ import {
   EventType,
 } from '@brightsign/bscore';
 
+import { BsDmId } from '@brightsign/bsdatamodel';
+import { DmMediaState } from '@brightsign/bsdatamodel';
 import { DmState } from '@brightsign/bsdatamodel';
+import { DmZone } from '@brightsign/bsdatamodel';
+import { DmEvent } from '@brightsign/bsdatamodel';
 
 import {
-  BsDmId,
   // DmDataFeedContentItem,
   DmDerivedContentItem,
   DmMediaContentItem,
-  DmEvent,
   // DmEventData,
-  DmMediaState,
   // DmTimer,
   dmGetMediaStateById,
   dmGetEventIdsForMediaState,
   dmGetEventById,
   DmcEvent,
-  DmZone,
 } from '@brightsign/bsdatamodel';
 // import { ArEventType } from '../type/runtime';
 import { getPoolFilePath, getReduxStore, dispatchHsmEvent } from '../index';

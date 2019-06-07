@@ -2,12 +2,12 @@ import { ZoneHSM } from "./zoneHSM";
 import { Store } from "redux";
 import { BsBrightSignPlayerState } from "../../index";
 import { DmState } from '@brightsign/bsdatamodel';
+import { DmZone } from '@brightsign/bsdatamodel';
+import { BsDmId } from '@brightsign/bsdatamodel';
+import { DmMediaState } from '@brightsign/bsdatamodel';
 
 import { 
   dmGetZoneById, 
-  DmZone, 
-  BsDmId, 
-  DmMediaState, 
   dmGetMediaStateIdsForZone, 
   dmGetMediaStateById, 
   dmGetEventIdsForMediaState} from "@brightsign/bsdatamodel";

@@ -1,15 +1,15 @@
-import { HSM, HState, STTopEventHandler } from "./HSM";
-import { 
-  dmGetZoneById, 
-  DmZone, 
-  BsDmId, 
+import { HSM, HState, STTopEventHandler } from './HSM';
+import {
+  dmGetZoneById,
   dmGetZoneSimplePlaylist
- } from "@brightsign/bsdatamodel";
- import { DmState } from '@brightsign/bsdatamodel';
+} from '@brightsign/bsdatamodel';
+import { BsDmId } from '@brightsign/bsdatamodel';
+import { DmState } from '@brightsign/bsdatamodel';
+import { DmZone } from '@brightsign/bsdatamodel';
 
-import { Store } from "redux";
-import { BsBrightSignPlayerState } from "../../index";
-import { MediaHState } from "./mediaHState";
+import { Store } from 'redux';
+import { BsBrightSignPlayerState } from '../../index';
+import { MediaHState } from './mediaHState';
 
 export class ZoneHSM extends HSM {
 
@@ -33,7 +33,7 @@ export class ZoneHSM extends HSM {
   constructor(hsmId: string, autotronStore: Store<BsBrightSignPlayerState>, zoneId: string, dispatchEvent: any) {
 
     super(hsmId, autotronStore, dispatchEvent);
-    
+
     this.autotronStore = autotronStore;
     this.zoneId = zoneId;
 

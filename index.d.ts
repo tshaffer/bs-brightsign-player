@@ -5,12 +5,16 @@
 //   ../../redux
 
 import * as React from 'react';
+import { DmMediaState } from '@brightsign/bsdatamodel';
 import { DmState } from '@brightsign/bsdatamodel';
-import { DmDerivedContentItem, DmEvent, DmMediaState, DmZone } from '@brightsign/bsdatamodel';
+import { DmZone } from '@brightsign/bsdatamodel';
+import { DmEvent } from '@brightsign/bsdatamodel';
+import { DmDerivedContentItem } from '@brightsign/bsdatamodel';
 import { DmcZone } from '@brightsign/bsdatamodel';
 import { Store } from 'redux';
 import { Action, Dispatch, ActionCreator } from 'redux';
 import { Reducer } from 'redux';
+import { BsDmId } from '@brightsign/bsdatamodel';
 
 /** @module Controller:index */
 
@@ -189,7 +193,7 @@ export interface BsBrightSignPlayerState {
 }
 /** @private */
 export interface BsBrightSignPlayerModelState {
-    hsms: any;
+    hsms: ZoneHSM[];
     activeHStates: any;
 }
 
@@ -259,6 +263,24 @@ export interface ArState {
     stateMachine: StateMachineShape;
 }
 
+export class ZoneHSM extends HSM {
+    autotronStore: Store<BsBrightSignPlayerState>;
+    bsdmZone: DmZone;
+    type: string;
+    zoneId: string;
+    stTop: HState;
+    id: string;
+    name: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    initialMediaStateId: string;
+    mediaStateIds: BsDmId[];
+    mediaStates: MediaHState[];
+    constructor(hsmId: string, autotronStore: Store<BsBrightSignPlayerState>, zoneId: string, dispatchEvent: any);
+}
+
 export class HSM {
     hsmId: string;
     reduxStore: any;
@@ -281,4 +303,18 @@ export class HState {
     constructor(stateMachine: HSM, id: string);
 }
 export function STTopEventHandler(_: ArEventType, stateData: HSMStateData): string;
+
+export class MediaHState extends HState {
+    mediaState: DmMediaState;
+    eventLUT: SubscribedEvents;
+    timeoutInterval: number;
+    timeout: any;
+    addEvents(zoneHSM: ZoneHSM, eventIds: BsDmId[]): void;
+    mediaHStateEventHandler(event: ArEventType, stateData: HSMStateData): string;
+    mediaHStateExitHandler(): void;
+    getBsEventKey(bsEvent: ArEventType): string;
+    getHStateEventKey(event: DmEvent): string;
+    launchTimer(): void;
+    timeoutHandler(mediaHState: MediaHState): void;
+}
 

@@ -3,10 +3,8 @@ import {
 } from '@brightsign/bscore';
 
 import { DmState } from '@brightsign/bsdatamodel';
+import { DmMediaState } from '@brightsign/bsdatamodel';
 
-import {
-  DmMediaState,
-} from '@brightsign/bsdatamodel';
 import { ZoneHSM } from "./zoneHSM";
 import { MediaHState } from "./mediaHState";
 import { HSMStateData, ArEventType } from "../../type/runtime";

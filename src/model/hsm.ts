@@ -16,9 +16,7 @@ export function addHSM(hsm: any) {
 
   return {
     type: ADD_HSM,
-    payload: {
-      hsm
-    },
+    payload: hsm,
   };
 }
 

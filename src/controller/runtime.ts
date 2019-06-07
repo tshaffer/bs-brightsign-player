@@ -15,14 +15,14 @@ import { HSM } from '../runtime/hsm/HSM';
 import { PlayerHSM } from '../runtime/hsm/playerHSM';
 import { BsBrightSignPlayerState } from '../index';
 import { Store } from 'redux';
+import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmState } from '@brightsign/bsdatamodel';
+import { DmZone } from '@brightsign/bsdatamodel';
 
 import {
   DmSignState,
   dmOpenSign,
   dmGetZonesForSign,
-  BsDmId,
-  DmZone,
   dmGetZoneById
 } from '@brightsign/bsdatamodel';
 import { ZoneHSM } from '../runtime/hsm/zoneHSM';
