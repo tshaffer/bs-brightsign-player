@@ -109,9 +109,7 @@ export function dispatchHsmEvent(event: ArEventType): Function;
 export const ADD_HSM = "ADD_HSM";
 export function addHSM(hsm: any): {
     type: string;
-    payload: {
-        hsm: any;
-    };
+    payload: any;
 };
 export const hsmReducer: (state: any[] | undefined, action: ActionWithPayload) => any[];
 
@@ -194,7 +192,7 @@ export interface BsBrightSignPlayerState {
 /** @private */
 export interface BsBrightSignPlayerModelState {
     hsms: ZoneHSM[];
-    activeHStates: any;
+    activeHStates: ActiveHStatesByHsm;
 }
 
 export interface HStateMap {
