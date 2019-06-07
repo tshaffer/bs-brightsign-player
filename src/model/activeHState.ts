@@ -1,4 +1,4 @@
-import { ActiveHStatesByHsm } from '../type/activeHState';
+import { HStateMap } from '../type/activeHState';
 import { ActionWithPayload } from './baseAction';
 
 // ------------------------------------
@@ -27,21 +27,21 @@ export function setActiveHState(hsmId: string, activeState: any) {
 // ------------------------------------
 // Reducer
 // ------------------------------------
-const initialState: ActiveHStatesByHsm = {
-  activeHStateIdByHSM: {},
-};
+
+const initialState: HStateMap = {};
 
 export const activeHStateReducer = (
-  state: ActiveHStatesByHsm = initialState,
+  state: HStateMap = initialState,
   action: ActionWithPayload) => {
   switch (action.type) {
 
     case SET_ACTIVE_HSTATE: {
 
-      const newState: ActiveHStatesByHsm = Object.assign({}, state);
+      const newState: HStateMap = Object.assign({}, state);
 
       const { hsmId, activeState } = action.payload;
-      newState.activeHStateIdByHSM[hsmId] = activeState;
+
+      newState[hsmId] = activeState;
       
       console.log(newState);
 

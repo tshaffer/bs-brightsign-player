@@ -121,7 +121,7 @@ export function setActiveHState(hsmId: string, activeState: any): {
         activeState: any;
     };
 };
-export const activeHStateReducer: (state: ActiveHStatesByHsm | undefined, action: ActionWithPayload) => ActiveHStatesByHsm;
+export const activeHStateReducer: (state: HStateMap | undefined, action: ActionWithPayload) => HStateMap;
 
 /** @module Model:base */
 /** @private */
@@ -192,14 +192,11 @@ export interface BsBrightSignPlayerState {
 /** @private */
 export interface BsBrightSignPlayerModelState {
     hsms: ZoneHSM[];
-    activeHStates: ActiveHStatesByHsm;
+    activeHStates: HStateMap;
 }
 
 export interface HStateMap {
     [hsmId: string]: string | null;
-}
-export interface ActiveHStatesByHsm {
-    activeHStateIdByHSM: HStateMap;
 }
 
 export type HSMsShape = any[];
