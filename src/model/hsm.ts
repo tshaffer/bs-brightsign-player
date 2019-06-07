@@ -1,6 +1,7 @@
 import { HSMList } from "../type/hsm";
 import { ActionWithPayload } from "./baseAction";
 import { HSM } from "../runtime/hsm/HSM";
+import { isObject } from "lodash";
 
 // ------------------------------------
 // Constants
@@ -41,4 +42,12 @@ export const hsmReducer = (
     default:
       return state;
   }
+};
+
+/** @internal */
+/** @private */
+export const isValidHSMs = (state: any): boolean => {
+  return isObject(state);
+  // TEDTODO
+  //  && state.hasOwnProperty('statePositionById') && isObject(state.statePositionById);
 };

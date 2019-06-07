@@ -111,6 +111,8 @@ export function addHSM(hsm: HSM): {
     payload: HSM;
 };
 export const hsmReducer: (state: HSM[] | undefined, action: ActionWithPayload) => HSM[];
+/** @private */
+export const isValidHSMs: (state: any) => boolean;
 
 export const SET_ACTIVE_HSTATE = "SET_ACTIVE_HSTATE";
 export function setActiveHState(hsmId: string, activeState: any): {
@@ -121,6 +123,8 @@ export function setActiveHState(hsmId: string, activeState: any): {
     };
 };
 export const activeHStateReducer: (state: HStateMap | undefined, action: ActionWithPayload) => HStateMap;
+/** @private */
+export const isValidActiveHStates: (state: any) => boolean;
 
 /** @module Model:base */
 /** @private */
@@ -169,8 +173,8 @@ export type ResetBsBrightSignPlayerModelAction = BsBrightSignPlayerModelAction<n
 export const bsBrightSignPlayerModelResetModel: () => BsBrightSignPlayerModelAction<null>;
 
 /** @module Model:base */
-export type BsBspReducer = Reducer<BsBrightSignPlayerModelState>;
-export const bsBspReducer: BsBspReducer;
+export type BsBrightSignPlayerReducer = Reducer<BsBrightSignPlayerModelState>;
+export const bsBrightSignPlayerReducer: BsBrightSignPlayerReducer;
 export const isValidBsBrightSignPlayerModelState: (state: any) => boolean;
 export const isValidBsBrightSignPlayerModelStateShallow: (state: any) => boolean;
 

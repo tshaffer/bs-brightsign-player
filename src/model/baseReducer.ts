@@ -5,9 +5,10 @@ import {
   combineReducers
 } from 'redux';
 import { BsBrightSignPlayerModelState } from '../type';
-import { activeHStateReducer } from './activeHState';
+import { activeHStateReducer, isValidActiveHStates } from './activeHState';
 import { BsBrightSignPlayerModelBaseAction, BsBrightSignPlayerModelBatchAction, BSBSBRIGHTSIGNPLAYERMODEL_BATCH } from '.';
-import { hsmReducer } from './hsm';
+import { hsmReducer, isValidHSMs } from './hsm';
+import { isObject } from 'lodash';
 
 // -----------------------------------------------------------------------
 // Defaults
@@ -18,10 +19,10 @@ import { hsmReducer } from './hsm';
 // -----------------------------------------------------------------------
 // Reducers
 // -----------------------------------------------------------------------
-export type BsBspReducer = Reducer<BsBrightSignPlayerModelState>;
+export type BsBrightSignPlayerReducer = Reducer<BsBrightSignPlayerModelState>;
 const enableBatching = (
   reduce: (state: BsBrightSignPlayerModelState, action: BsBrightSignPlayerModelBaseAction | BsBrightSignPlayerModelBatchAction) => BsBrightSignPlayerModelState,
-): BsBspReducer => {
+): BsBrightSignPlayerReducer => {
   return function batchingReducer(
     state: BsBrightSignPlayerModelState,
     action: BsBrightSignPlayerModelBaseAction | BsBrightSignPlayerModelBatchAction,
@@ -35,7 +36,7 @@ const enableBatching = (
   };
 };
 
-export const bsBspReducer: BsBspReducer = enableBatching(combineReducers<BsBrightSignPlayerModelState>({
+export const bsBrightSignPlayerReducer: BsBrightSignPlayerReducer = enableBatching(combineReducers<BsBrightSignPlayerModelState>({
   activeHStates: activeHStateReducer,
   hsms: hsmReducer,
 }));
@@ -45,9 +46,13 @@ export const bsBspReducer: BsBspReducer = enableBatching(combineReducers<BsBrigh
 // -----------------------------------------------------------------------
 
 export const isValidBsBrightSignPlayerModelState = (state: any): boolean => {
-  return true;
+  return isObject(state)
+    && state.hasOwnProperty('activeHStates') && isValidActiveHStates(state.activeHStates)
+    && state.hasOwnProperty('hsms') && isValidHSMs(state.activeHStates);
 };
 
 export const isValidBsBrightSignPlayerModelStateShallow = (state: any): boolean => {
-  return true;
+  return isObject(state)
+  && state.hasOwnProperty('activeHStates') 
+  && state.hasOwnProperty('hsms');
 };

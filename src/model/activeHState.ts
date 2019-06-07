@@ -1,5 +1,6 @@
 import { HStateMap } from '../type/activeHState';
 import { ActionWithPayload } from './baseAction';
+import { isObject } from 'lodash';
 
 // ------------------------------------
 // Constants
@@ -52,4 +53,10 @@ export const activeHStateReducer = (
   }
 };
 
-
+/** @internal */
+/** @private */
+export const isValidActiveHStates = (state: any): boolean => {
+  return isObject(state);
+  // TEDTODO
+  //  && state.hasOwnProperty('statePositionById') && isObject(state.statePositionById);
+};
