@@ -1,5 +1,6 @@
-import { HSMsShape } from "../type/hsm";
+import { HSMList } from "../type/hsm";
 import { ActionWithPayload } from "./baseAction";
+import { HSM } from "../runtime/hsm/HSM";
 
 // ------------------------------------
 // Constants
@@ -9,7 +10,7 @@ export const ADD_HSM = 'ADD_HSM';
 // ------------------------------------
 // Actions
 // ------------------------------------
-export function addHSM(hsm: any) {
+export function addHSM(hsm: HSM) {
 
   console.log('addHSM:');
   console.log(hsm);
@@ -23,16 +24,16 @@ export function addHSM(hsm: any) {
 // ------------------------------------
 // Reducer
 // ------------------------------------
-const initialState: HSMsShape = [];
+const initialState: HSMList = [];
 
 export const hsmReducer = (
-  state: HSMsShape = initialState,
+  state: HSMList = initialState,
   action: ActionWithPayload) => {
   switch (action.type) {
 
     case ADD_HSM: {
 
-      const newState: HSMsShape = state.slice(0);
+      const newState: HSMList = state.slice(0);
       newState.push(action.payload);
 
       return newState;
@@ -41,6 +42,3 @@ export const hsmReducer = (
       return state;
   }
 };
-
-
-

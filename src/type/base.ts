@@ -1,8 +1,8 @@
 /** @module Types:base */
 
 import { DmState } from '@brightsign/bsdatamodel';
-import { ZoneHSM } from '../runtime/hsm/zoneHSM';
 import { HStateMap } from './activeHState';
+import { HSM } from '../runtime/hsm/HSM';
 
 /** @internal */
 /** @private */
@@ -18,6 +18,6 @@ export interface BsBrightSignPlayerState {
 /** @internal */
 /** @private */
 export interface BsBrightSignPlayerModelState {
-  hsms: ZoneHSM[];
+  hsms: HSM[];
   activeHStates: HStateMap;
 }

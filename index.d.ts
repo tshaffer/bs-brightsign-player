@@ -14,7 +14,6 @@ import { DmcZone } from '@brightsign/bsdatamodel';
 import { Store } from 'redux';
 import { Action, Dispatch, ActionCreator } from 'redux';
 import { Reducer } from 'redux';
-import { BsDmId } from '@brightsign/bsdatamodel';
 
 /** @module Controller:index */
 
@@ -107,11 +106,11 @@ export function postMessage(event: ArEventType): (dispatch: any, getState: Funct
 export function dispatchHsmEvent(event: ArEventType): Function;
 
 export const ADD_HSM = "ADD_HSM";
-export function addHSM(hsm: any): {
+export function addHSM(hsm: HSM): {
     type: string;
-    payload: any;
+    payload: HSM;
 };
-export const hsmReducer: (state: any[] | undefined, action: ActionWithPayload) => any[];
+export const hsmReducer: (state: HSM[] | undefined, action: ActionWithPayload) => HSM[];
 
 export const SET_ACTIVE_HSTATE = "SET_ACTIVE_HSTATE";
 export function setActiveHState(hsmId: string, activeState: any): {
@@ -191,7 +190,7 @@ export interface BsBrightSignPlayerState {
 }
 /** @private */
 export interface BsBrightSignPlayerModelState {
-    hsms: ZoneHSM[];
+    hsms: HSM[];
     activeHStates: HStateMap;
 }
 
@@ -199,7 +198,7 @@ export interface HStateMap {
     [hsmId: string]: string | null;
 }
 
-export type HSMsShape = any[];
+export type HSMList = HSM[];
 
 export enum BsUiErrorType {
     unknownError = 0,
@@ -258,24 +257,6 @@ export interface ArState {
     stateMachine: StateMachineShape;
 }
 
-export class ZoneHSM extends HSM {
-    autotronStore: Store<BsBrightSignPlayerState>;
-    bsdmZone: DmZone;
-    type: string;
-    zoneId: string;
-    stTop: HState;
-    id: string;
-    name: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    initialMediaStateId: string;
-    mediaStateIds: BsDmId[];
-    mediaStates: MediaHState[];
-    constructor(hsmId: string, autotronStore: Store<BsBrightSignPlayerState>, zoneId: string, dispatchEvent: any);
-}
-
 export class HSM {
     hsmId: string;
     reduxStore: any;
@@ -298,18 +279,4 @@ export class HState {
     constructor(stateMachine: HSM, id: string);
 }
 export function STTopEventHandler(_: ArEventType, stateData: HSMStateData): string;
-
-export class MediaHState extends HState {
-    mediaState: DmMediaState;
-    eventLUT: SubscribedEvents;
-    timeoutInterval: number;
-    timeout: any;
-    addEvents(zoneHSM: ZoneHSM, eventIds: BsDmId[]): void;
-    mediaHStateEventHandler(event: ArEventType, stateData: HSMStateData): string;
-    mediaHStateExitHandler(): void;
-    getBsEventKey(bsEvent: ArEventType): string;
-    getHStateEventKey(event: DmEvent): string;
-    launchTimer(): void;
-    timeoutHandler(mediaHState: MediaHState): void;
-}
 
