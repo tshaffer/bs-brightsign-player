@@ -1,7 +1,7 @@
 import { HState } from "./HSM";
-import { EventType } from "@brightsign/bscore";
+import { EventType, CommandSequenceType } from "@brightsign/bscore";
 import { ArEventType, HSMStateData, SubscribedEvents } from "../../type/runtime";
-import { DmEvent } from '@brightsign/bsdatamodel';
+import { DmEvent, DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById } from '@brightsign/bsdatamodel';
 import { DmTimer, DmcTransition, dmGetTransitionById, dmGetTransitionIdsForEvent, dmGetEventStateById } from "@brightsign/bsdatamodel";
 import { MediaZoneHSM } from "./mediaZoneHSM";
 import { ZoneHSM } from "./zoneHSM";
@@ -9,6 +9,7 @@ import { getReduxStore } from "../../index";
 // import { dispatchPostMessage } from "../../index";
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState } from '@brightsign/bsdatamodel';
+import { isNil } from "lodash";
 
 export class MediaHState extends HState {
 
@@ -73,7 +74,6 @@ export class MediaHState extends HState {
     return 'SUPER';
   }
 
-
   mediaHStateExitHandler(): void {
     console.log(this.id + ': exit signal');
     if (this.timeout) {
@@ -81,7 +81,6 @@ export class MediaHState extends HState {
       this.timeout = null;
     }
   }
-
 
   getBsEventKey(bsEvent: ArEventType): string {
 
@@ -108,7 +107,6 @@ export class MediaHState extends HState {
     return bsEventKey;
   }
 
-
   getHStateEventKey(event: DmEvent): string {
 
     let eventKey: string = '';
@@ -123,6 +121,9 @@ export class MediaHState extends HState {
       }
       case EventType.MediaEnd: {
         eventKey = 'mediaEnd-' + this.id;
+        break;
+      }
+      default: {
         break;
       }
     }
@@ -151,5 +152,31 @@ export class MediaHState extends HState {
       // dispatchPostMessage(event);
     }
   }
+
+  executeCommand(command: DmcCommand, zoneHSM: MediaZoneHSM) {
+    console.log('executeCommand:');
+    console.log(command);
+  }
+
+  executeMediaStateCommands(mediaStateId: BsDmId, zoneHSM: MediaZoneHSM, commandSequenceType: CommandSequenceType) {
+    const reduxStore: any = getReduxStore();
+    const bsdm: DmState = reduxStore.getState().bsdm;
+    const sequenceId: BsDmId | null = 
+      dmGetCommandSequenceIdForParentAndType(bsdm, { id: mediaStateId, type: commandSequenceType.toString() });
+    if (!isNil(sequenceId)) {
+      const sequence: DmCommandSequence | null = dmGetCommandSequenceStateById(bsdm, { id: sequenceId as string });
+      if (isNil(sequence)) {
+        return;
+      }
+      const validatedSequence: DmCommandSequence = sequence as DmCommandSequence;
+      for (const commandId of validatedSequence.sequence) {
+        const command: DmcCommand | null = dmGetCommandById(bsdm, { id: commandId });
+        if (!isNil(command)) {
+          this.executeCommand(command, zoneHSM);
+        }
+      }
+    }
+  }
+
 
 }

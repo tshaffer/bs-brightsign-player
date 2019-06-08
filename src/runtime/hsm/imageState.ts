@@ -2,6 +2,8 @@ import { ZoneHSM } from "./zoneHSM";
 import { MediaHState } from "./mediaHState";
 import { DmMediaState } from "@brightsign/bsdatamodel";
 import { HSMStateData, ArEventType } from "../../type/runtime";
+import { CommandSequenceType } from "@brightsign/bscore";
+import { MediaZoneHSM } from "./mediaZoneHSM";
 
 export default class ImageState extends MediaHState {
 
@@ -21,6 +23,7 @@ export default class ImageState extends MediaHState {
 
     if (event.EventType === 'ENTRY_SIGNAL') {
       console.log(this.id + ': entry signal');
+      this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry);
       this.launchTimer();
       return 'HANDLED';
     } else if (event.EventType === 'EXIT_SIGNAL') {
@@ -32,5 +35,4 @@ export default class ImageState extends MediaHState {
     stateData.nextState = this.superState;
     return 'SUPER';
   }
-
 }
