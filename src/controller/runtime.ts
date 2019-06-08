@@ -31,14 +31,22 @@ import { MediaZoneHSM } from '../runtime/hsm/mediaZoneHSM';
 // TEDTODO - this should come from platform
 
 // const srcDirectory = '/Users/tedshaffer/Desktop/ag';
-let srcDirectory = '/Users/tedshaffer/Desktop/ag';
+const srcDirectory = '/Users/tedshaffer/Desktop/ag';
 // srcDirectory = '/storage/sd';
 // srcDirectory = '/sd:/';
 
 // TEDTODO - use the following when running on a BrightSign
-// var process = require("process");
-// process.chdir("/storage/sd");
+// const process = require('process');
+// process.chdir('/storage/sd');
 // srcDirectory = '';
+
+import Registry from '@brightsign/registry';
+const registry: Registry = new Registry();
+registry.read('networking', 'ru')
+  .then( (keyValue) => {
+    console.log('rs registry value is:');
+    console.log(keyValue);
+});
 
 // TEDTODO
 let _autotronStore: Store<BsBrightSignPlayerState>;

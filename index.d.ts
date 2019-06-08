@@ -14,6 +14,7 @@ import { DmcZone } from '@brightsign/bsdatamodel';
 import { Store } from 'redux';
 import { Action, Dispatch, ActionCreator } from 'redux';
 import { Reducer } from 'redux';
+import { BsDmId } from '@brightsign/bsdatamodel';
 
 /** @module Controller:index */
 
@@ -178,10 +179,15 @@ export const bsBrightSignPlayerReducer: BsBrightSignPlayerReducer;
 export const isValidBsBrightSignPlayerModelState: (state: any) => boolean;
 export const isValidBsBrightSignPlayerModelStateShallow: (state: any) => boolean;
 
+/** @module Selector:base */
 /** @private */
 export const bsBrightSignPlayerModelFilterBaseState: (state: any) => BsBrightSignPlayerModelState;
 /** @private */
 export const bsBrightSignPlayerModelGetBaseState: (state: BsBrightSignPlayerModelState) => BsBrightSignPlayerModelState;
+
+export function getActiveHStateId(state: BsBrightSignPlayerState, hsmId: string): string | null;
+
+export function getActiveMediaStateId(state: BsBrightSignPlayerState, zoneId: string): BsDmId | null;
 
 /** @module Types:base */
 /** @private */

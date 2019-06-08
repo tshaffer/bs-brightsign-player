@@ -9,7 +9,7 @@ import {
 } from '@brightsign/bsdatamodel';
 
 import { BsBrightSignPlayerState } from '../src/type';
-import { bsBspReducer, App, initRuntime } from '../src/index';
+import { bsBrightSignPlayerReducer, App, initRuntime } from '../src/index';
 import './bootstrap.css';
 import 'normalize.css/normalize.css';
 import 'flexboxgrid/dist/flexboxgrid.min.css';
@@ -20,7 +20,7 @@ console.log('bootstrap.tsx: start');
 const getStore = () => {
   const reducers = combineReducers<BsBrightSignPlayerState>({
     bsdm: bsDmReducer,
-    bsPlayer: bsBspReducer,
+    bsPlayer: bsBrightSignPlayerReducer,
   });
   return createStore<BsBrightSignPlayerState>(
     reducers,
