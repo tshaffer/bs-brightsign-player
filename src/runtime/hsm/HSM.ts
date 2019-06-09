@@ -15,7 +15,7 @@ export class HSM {
   topState: HState;
   activeState: HState | null;
   constructorHandler: (() => void) | null;
-  initialPseudoStateHandler: ((reduxStore: Store<BsBrightSignPlayerState>) => (HState | null)) | null;
+  initialPseudoStateHandler: ((reduxStore: Store<BsBrightSignPlayerState>) => (HState | null));
 
   constructor(hsmId: string, reduxStore: Store<BsBrightSignPlayerState>, dispatchEvent: ((event: ArEventType) => void)) {
     this.hsmId = hsmId;
@@ -23,7 +23,6 @@ export class HSM {
     this.dispatchEvent = dispatchEvent;
     this.activeState = null;
     this.constructorHandler = null;
-    this.initialPseudoStateHandler = null;
   }
 
   constructorFunction() {
@@ -57,14 +56,15 @@ export class HSM {
 
     // if there is no activeState, the playlist is empty
     if (isNil(this.activeState)) {
-      this.reduxStore.dispatch(setActiveHState(this.hsmId, this.activeState));
+      this.reduxStore.dispatch(setActiveHState(this.hsmId, null));
       return;
     }
 
     let activeState: HState = this.activeState;
 
     // start at the top state
-    if (this.topState === null) {
+    if (isNil(this.topState)) {
+      // TODO
       debugger;
     }
     let sourceState = this.topState;
@@ -309,14 +309,13 @@ export class HSM {
 
 export class HState {
 
-  topState: null;
-  HStateEventHandler: (event: ArEventType, stateData: HSMStateData) => string;
+  topState: HState;
+  HStateEventHandler: (event: ArEventType, stateData: HSMStateData) => string;  // TODO - doesn't return a string
   stateMachine: HSM;
   superState: HState;
   id: string;
 
   constructor(stateMachine: HSM, id: string) {
-    this.topState = null;
 
     // filled in by HState instance
     // this.HStateEventHandler = null; TEDTODO - ts doesn't like this
