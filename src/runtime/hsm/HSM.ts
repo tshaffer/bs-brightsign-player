@@ -4,23 +4,23 @@ import {
 } from '../../type/runtime';
 
 import { isNil } from 'lodash';
-import { setActiveHState, addHSM } from '../../index';
+import { setActiveHState, addHSM, BsBrightSignPlayerState } from '../../index';
+import { Store } from 'redux';
 
 export class HSM {
 
   hsmId: string;
-  reduxStore: any;
+  reduxStore: Store<BsBrightSignPlayerState>;
   dispatchEvent: ((event: ArEventType) => void);
-  topState: HState | null;
+  topState: HState;
   activeState: HState | null;
   constructorHandler: (() => void) | null;
-  initialPseudoStateHandler: ((reduxStore: any) => (HState | null)) | null;
+  initialPseudoStateHandler: ((reduxStore: Store<BsBrightSignPlayerState>) => (HState | null)) | null;
 
-  constructor(hsmId: string, reduxStore: any, dispatchEvent: ((event: ArEventType) => void)) {
+  constructor(hsmId: string, reduxStore: Store<BsBrightSignPlayerState>, dispatchEvent: ((event: ArEventType) => void)) {
     this.hsmId = hsmId;
     this.reduxStore = reduxStore;
     this.dispatchEvent = dispatchEvent;
-    this.topState = null;
     this.activeState = null;
     this.constructorHandler = null;
     this.initialPseudoStateHandler = null;
@@ -120,7 +120,7 @@ export class HSM {
   // TEDTODO - remove casts
   Dispatch(event: ArEventType) {
 
-    return ((dispatch: any, getState: Function) => {
+    return ((dispatch: Function, getState: Function) => {
 
       // if there is no activeState, the playlist is empty
       if (this.activeState == null) {

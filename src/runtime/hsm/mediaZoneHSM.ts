@@ -75,7 +75,8 @@ export class MediaZoneHSM extends ZoneHSM {
     console.log('VideoOrImagesZoneConstructor invoked');
 
     // const mediaStateIds = dmGetZoneSimplePlaylist(this.bsdm, { id: this.zoneId });
-    // should really look at initialMediaStateId, but the following should work for non interactive playlists
+    // TODO - should really look at initialMediaStateId, but the following should work for non interactive playlists
+    // TODO - doesn't work if the playlist is empty
     this.activeState = this.mediaStates[0];
   }
 
