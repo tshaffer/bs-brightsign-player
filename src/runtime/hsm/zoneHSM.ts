@@ -9,7 +9,6 @@ import { DmZone } from '@brightsign/bsdatamodel';
 
 import { Store } from 'redux';
 import { BsBrightSignPlayerState } from '../../index';
-import { MediaHState } from './mediaHState';
 
 export class ZoneHSM extends HSM {
 
@@ -28,7 +27,6 @@ export class ZoneHSM extends HSM {
   height: number;
   initialMediaStateId: string;
   mediaStateIds: BsDmId[];
-  mediaStates: MediaHState[];
 
   constructor(hsmId: string, autotronStore: Store<BsBrightSignPlayerState>, zoneId: string, dispatchEvent: any) {
 

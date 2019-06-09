@@ -6,25 +6,31 @@ import { DmZone } from '@brightsign/bsdatamodel';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState } from '@brightsign/bsdatamodel';
 
-import { 
-  dmGetZoneById, 
-  dmGetMediaStateIdsForZone, 
-  dmGetMediaStateById, 
-  dmGetEventIdsForMediaState} from "@brightsign/bsdatamodel";
+import {
+  dmGetZoneById,
+  dmGetMediaStateIdsForZone,
+  dmGetMediaStateById,
+  dmGetEventIdsForMediaState,
+  dmGetInitialMediaStateIdForZone
+} from "@brightsign/bsdatamodel";
 import { MediaHState } from './mediaHState';
 import { LUT } from "../../type/runtime";
 import { HState } from "./HSM";
 import ImageState from "./imageState";
 import VideoState from "./videoState";
+import { isNil } from "lodash";
 
+// TEDTODO - what kind of ZoneHSM's are not MediaZoneHSM?
 export class MediaZoneHSM extends ZoneHSM {
+
+  mediaHStates: MediaHState[];
 
   mediaStateIdToHState: LUT = {};
 
   constructor(hsmId: string, autotronStore: Store<BsBrightSignPlayerState>, zoneId: string, dispatchEvent: any) {
 
     super(hsmId, autotronStore, zoneId, dispatchEvent);
-    
+
     this.type = 'media';
 
     this.constructorHandler = this.videoOrImagesZoneConstructor;
@@ -44,7 +50,7 @@ export class MediaZoneHSM extends ZoneHSM {
 
     this.initialMediaStateId = this.bsdmZone.initialMediaStateId;
     this.mediaStateIds = dmGetMediaStateIdsForZone(bsdm, { id: zoneId });
-    this.mediaStates = [];
+    this.mediaHStates = [];
 
     // states
     let newState: MediaHState;
@@ -56,17 +62,17 @@ export class MediaZoneHSM extends ZoneHSM {
       else if (bsdmMediaState.contentItem.type === 'Video') {
         newState = new VideoState(this, bsdmMediaState);
       }
-      this.mediaStates.push(newState);
+      this.mediaHStates.push(newState);
 
       this.mediaStateIdToHState[mediaStateId] = newState;
     });
 
     // events / transitions
-    this.mediaStateIds.forEach( (mediaStateId : BsDmId, index : number) => {
+    this.mediaStateIds.forEach((mediaStateId: BsDmId, index: number) => {
 
-      const targetHState : MediaHState = this.mediaStateIdToHState[mediaStateId];
+      const targetHState: MediaHState = this.mediaStateIdToHState[mediaStateId];
 
-      const eventIds : BsDmId[] = dmGetEventIdsForMediaState(bsdm, { id : mediaStateId });
+      const eventIds: BsDmId[] = dmGetEventIdsForMediaState(bsdm, { id: mediaStateId });
       targetHState.addEvents(this, eventIds);
     });
   }
@@ -74,10 +80,22 @@ export class MediaZoneHSM extends ZoneHSM {
   videoOrImagesZoneConstructor() {
     console.log('VideoOrImagesZoneConstructor invoked');
 
-    // const mediaStateIds = dmGetZoneSimplePlaylist(this.bsdm, { id: this.zoneId });
-    // TODO - should really look at initialMediaStateId, but the following should work for non interactive playlists
-    // TODO - doesn't work if the playlist is empty
-    this.activeState = this.mediaStates[0];
+
+    const bsdm: DmState = this.autotronStore.getState().bsdm;
+    const initialMediaStateId: BsDmId | null = dmGetInitialMediaStateIdForZone(bsdm, { id: this.zoneId });
+    if (!isNil(initialMediaStateId)) {
+      const initialMediaState: DmMediaState = dmGetMediaStateById(bsdm, { id: initialMediaStateId }) as DmMediaState;
+      for (const mediaHState of this.mediaHStates) {
+        if (mediaHState.mediaState.id === initialMediaState.id) {
+          this.activeState = mediaHState;
+          return;
+        }
+      }
+    }
+
+    // TEDTODO - verify that setting activeState to null is correct OR log error
+    this.activeState = null;
+
   }
 
   videoOrImagesZoneGetInitialState(): HState | null {
