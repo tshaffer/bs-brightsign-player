@@ -14,7 +14,7 @@ export class HSM {
   topState: HState | null;
   activeState: HState | null;
   constructorHandler: (() => void) | null;
-  initialPseudoStateHandler: ((args: any, reduxStore: any) => (HState | null)) | null;
+  initialPseudoStateHandler: ((reduxStore: any) => (HState | null)) | null;
 
   constructor(hsmId: string, reduxStore: any, dispatchEvent: ((event: ArEventType) => void)) {
     this.hsmId = hsmId;
@@ -51,11 +51,8 @@ export class HSM {
     const initEvent: ArEventType = { EventType: 'INIT_SIGNAL' };
 
     // execute initial transition
-    // this.activeState = this.initialPseudoStateHandler(...arguments);
-    // TEDTODO - what is arguments here? do any initialPseudoStateHandler functions take an argument?
-    const [a] = Array.prototype.slice.call(arguments);
     if (!isNil(this.initialPseudoStateHandler)) {
-      this.activeState = this.initialPseudoStateHandler(a, this.reduxStore);
+      this.activeState = this.initialPseudoStateHandler(this.reduxStore);
     }
 
     // if there is no activeState, the playlist is empty

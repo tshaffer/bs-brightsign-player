@@ -42,8 +42,7 @@ export class PlayerHSM extends HSM {
     this.postMessage = postMessage;
   }
 
-  // TEDTODO - args
-  initializePlayerStateMachine(args: any, reduxStore: any): HState {
+  initializePlayerStateMachine(reduxStore: any): HState {
 
     console.log('initializePlayerStateMachine invoked');
 
