@@ -28,25 +28,84 @@ import {
 import { ZoneHSM } from '../runtime/hsm/zoneHSM';
 import { MediaZoneHSM } from '../runtime/hsm/mediaZoneHSM';
 
+// const platform = 'Desktop';
+const platform: string = 'BrightSign';
+
 // TEDTODO - this should come from platform
 
-// const srcDirectory = '/Users/tedshaffer/Desktop/ag';
-const srcDirectory = '/Users/tedshaffer/Desktop/ag';
-// srcDirectory = '/storage/sd';
-// srcDirectory = '/sd:/';
-
-// TEDTODO - use the following when running on a BrightSign
-// const process = require('process');
-// process.chdir('/storage/sd');
-// srcDirectory = '';
+let srcDirectory = '';
+if (platform === 'Desktop') {
+  // const srcDirectory = '/Users/tedshaffer/Desktop/ag';
+  // const srcDirectory = '/Users/tedshaffer/Desktop/af';
+  srcDirectory = '/Users/tedshaffer/Desktop/ae';
+}
+else {
+  // TEDTODO - use the following when running on a BrightSign
+  const process = require('process');
+  process.chdir('/storage/sd');
+  srcDirectory = '';
+}
 
 import Registry from '@brightsign/registry';
 const registry: Registry = new Registry();
 registry.read('networking', 'ru')
-  .then( (keyValue) => {
+  .then((keyValue) => {
     console.log('rs registry value is:');
     console.log(keyValue);
-});
+  });
+
+declare class BSControlPort {
+  constructor(portName : string);
+}
+
+// var gpio = new BSControlPort("BrightSign");
+const getGpioControlPortPromise: Promise<any> = getControlPort('BrightSign');
+getGpioControlPortPromise
+  .then( (controlPort) => {
+    console.log('GpioControlPort created');
+
+    controlPort.oncontroldown = function (e: any) {
+      console.log('### oncontroldown ' + e.code);
+      const newtext = " DOWN: " + e.code + "\n";
+      console.log(newtext);
+    };
+
+    const ok0 = controlPort.ConfigureAsInput(0);
+    console.log('ok0: ');
+    console.log(ok0);
+
+    const ok1 = controlPort.ConfigureAsInput(1);
+    console.log('ok1: ');
+    console.log(ok1);
+  })
+  .catch( (err) => {
+    console.log(err);
+  })
+
+// const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
+// getBP900ControlPort0Promise
+//   .then( (controlPort) => {
+//     console.log('bp900ControlPort created');
+
+//     controlPort.oncontroldown = function (e: any) {
+//       console.log('### oncontroldown ' + e.code);
+//       const newtext = " DOWN: " + e.code + "\n";
+//       console.log(newtext);
+//     };
+
+//     const ok0 = controlPort.ConfigureAsInput(0);
+//     console.log('ok0: ');
+//     console.log(ok0);
+
+//     const ok1 = controlPort.ConfigureAsInput(1);
+//     console.log('ok1: ');
+//     console.log(ok1);
+//   })
+//   .catch( (err) => {
+//     console.log(err);
+//   })
+
+
 
 // TEDTODO
 let _autotronStore: Store<BsBrightSignPlayerState>;
@@ -56,6 +115,20 @@ let _autoSchedule: any;
 
 let _hsmList: HSM[] = [];
 let _playerHSM: PlayerHSM;
+
+function getControlPort(portName : string) : any {
+  return new Promise( (resolve : any) => {
+    let controlPort : any = null;
+    try {
+      controlPort = new BSControlPort(portName);    
+    }
+    catch (e) {
+      console.log('failed to create controlPort: ');
+      console.log(portName);
+    }
+    resolve(controlPort);
+  });
+}
 
 // -----------------------------------------------------------------------
 // Controller Methods

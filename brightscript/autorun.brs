@@ -60,7 +60,7 @@ Sub processHtmlWidgetEvent(event As Object) as boolean
 
   retval = false
   
-  event = event.GetData()
+  eventData = event.GetData()
 	if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
     if eventData.reason = "load-error" then
       print "message = " + eventData.message
