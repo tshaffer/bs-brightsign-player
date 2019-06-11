@@ -8,7 +8,7 @@ import { ZoneHSM } from "./zoneHSM";
 import { getReduxStore } from "../../index";
 // import { dispatchPostMessage } from "../../index";
 import { BsDmId } from '@brightsign/bsdatamodel';
-import { DmMediaState } from '@brightsign/bsdatamodel';
+import { DmMediaState, DmcEvent, DmcMediaState } from '@brightsign/bsdatamodel';
 import { isNil } from "lodash";
 
 export class MediaHState extends HState {
@@ -23,6 +23,13 @@ export class MediaHState extends HState {
 
     eventIds.forEach((eventId: BsDmId) => {
 
+      // current implementation
+      //    eventKey is a unique string comprised of
+      //      string for eventName
+      //      id of 'this' (the media state id)
+      //      future - additional parameters as needed? e.g., specific serial input, specific GPIO, specific BP, etc.
+
+      //      
       // generate eventKey
       const event: DmEvent = dmGetEventStateById(zoneHSM.autotronStore.getState().bsdm, { id: eventId }) as DmEvent;
       const eventKey: string = this.getHStateEventKey(event);
@@ -48,6 +55,11 @@ export class MediaHState extends HState {
 
       // TODO - use a function - don't use LUT directly
       const targetMediaHState: HState = mediaZoneHSM.mediaStateIdToHState[targetMediaStateId];
+
+      // current implementation
+      //  map the unique eventKey is a target media HState
+      //    this will need enhancing as there are different things that can happen when an eventKey is encountered.
+      //    e.g. execute commands and stay on state; go to prior state; etc.
       this.eventLUT[eventKey] = targetMediaHState;
     });
   }
@@ -57,7 +69,10 @@ export class MediaHState extends HState {
     // iterate through the events for which this state has transitions - if any match the supplied event,
     // execute the associated transition
 
-    // const eventList : DmcEvent[] = (this.mediaState as DmcMediaState).eventList;
+    const eventList : DmcEvent[] = (this.mediaState as DmcMediaState).eventList;
+    console.log('Event list for mediaState:');
+    console.log(this.mediaState);
+    console.log(eventList);
 
     // for (let stateEvent of eventList) {
     const bsEventKey: string = this.getBsEventKey(event);

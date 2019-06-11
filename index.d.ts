@@ -269,19 +269,19 @@ export function isBsBrightSignPlayerError(error: Error): error is BsBrightSignPl
 
 export class HSM {
     hsmId: string;
-    reduxStore: any;
+    reduxStore: Store<BsBrightSignPlayerState>;
     dispatchEvent: ((event: ArEventType) => void);
-    topState: HState | null;
+    topState: HState;
     activeState: HState | null;
     constructorHandler: (() => void) | null;
-    initialPseudoStateHandler: ((args: any, reduxStore: any) => (HState | null)) | null;
-    constructor(hsmId: string, reduxStore: any, dispatchEvent: ((event: ArEventType) => void));
+    initialPseudoStateHandler: ((reduxStore: Store<BsBrightSignPlayerState>) => (HState | null));
+    constructor(hsmId: string, reduxStore: Store<BsBrightSignPlayerState>, dispatchEvent: ((event: ArEventType) => void));
     constructorFunction(): void;
     initialize(): void;
-    Dispatch(event: ArEventType): (dispatch: any, getState: Function) => void;
+    Dispatch(event: ArEventType): (dispatch: Function, getState: Function) => void;
 }
 export class HState {
-    topState: null;
+    topState: HState;
     HStateEventHandler: (event: ArEventType, stateData: HSMStateData) => string;
     stateMachine: HSM;
     superState: HState;

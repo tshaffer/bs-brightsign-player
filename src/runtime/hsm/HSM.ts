@@ -54,6 +54,32 @@ export class HSM {
       this.activeState = this.initialPseudoStateHandler(this.reduxStore);
     }
 
+    // if (!isNil(this.activeState)) {
+    //   let activeState: HState = this.activeState;
+
+    //   // start at the top state
+    //   if (isNil(this.topState)) {
+    //     // TODO
+    //     debugger;
+    //   }
+    //   let sourceState = this.topState;
+
+    //   while (true) {
+    //     const entryStates = [];
+    //     let entryStateIndex = 0;
+
+    //     // target of the initial transition
+    //     entryStates[0] = activeState;
+
+    //     // send an empty event to get the super state
+    //     let status: string = this.activeState.HStateEventHandler(emptyEvent, stateData);
+
+    //     activeState = stateData.nextState;
+    //     this.activeState = stateData.nextState;
+  
+    //   }
+    // }
+
     // if there is no activeState, the playlist is empty
     if (isNil(this.activeState)) {
       this.reduxStore.dispatch(setActiveHState(this.hsmId, null));

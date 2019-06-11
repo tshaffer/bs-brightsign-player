@@ -58,34 +58,10 @@ declare class BSControlPort {
   constructor(portName : string);
 }
 
-// var gpio = new BSControlPort("BrightSign");
-const getGpioControlPortPromise: Promise<any> = getControlPort('BrightSign');
-getGpioControlPortPromise
-  .then( (controlPort) => {
-    console.log('GpioControlPort created');
-
-    controlPort.oncontroldown = function (e: any) {
-      console.log('### oncontroldown ' + e.code);
-      const newtext = " DOWN: " + e.code + "\n";
-      console.log(newtext);
-    };
-
-    const ok0 = controlPort.ConfigureAsInput(0);
-    console.log('ok0: ');
-    console.log(ok0);
-
-    const ok1 = controlPort.ConfigureAsInput(1);
-    console.log('ok1: ');
-    console.log(ok1);
-  })
-  .catch( (err) => {
-    console.log(err);
-  })
-
-// const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
-// getBP900ControlPort0Promise
+// const getGpioControlPortPromise: Promise<any> = getControlPort('BrightSign');
+// getGpioControlPortPromise
 //   .then( (controlPort) => {
-//     console.log('bp900ControlPort created');
+//     console.log('GpioControlPort created');
 
 //     controlPort.oncontroldown = function (e: any) {
 //       console.log('### oncontroldown ' + e.code);
@@ -104,6 +80,29 @@ getGpioControlPortPromise
 //   .catch( (err) => {
 //     console.log(err);
 //   })
+
+const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
+getBP900ControlPort0Promise
+  .then( (controlPort) => {
+    console.log('bp900ControlPort created');
+
+    controlPort.oncontroldown = function (e: any) {
+      console.log('### oncontroldown ' + e.code);
+      const newtext = " DOWN: " + e.code + "\n";
+      console.log(newtext);
+    };
+
+    const ok0 = controlPort.ConfigureAsInput(0);
+    console.log('ok0: ');
+    console.log(ok0);
+
+    const ok1 = controlPort.ConfigureAsInput(1);
+    console.log('ok1: ');
+    console.log(ok1);
+  })
+  .catch( (err) => {
+    console.log(err);
+  })
 
 
 
