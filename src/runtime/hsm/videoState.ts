@@ -1,5 +1,5 @@
 import {
-  EventType,
+  CommandSequenceType,
 } from '@brightsign/bscore';
 
 import { DmState } from '@brightsign/bsdatamodel';
@@ -8,6 +8,7 @@ import { DmMediaState } from '@brightsign/bsdatamodel';
 import { ZoneHSM } from "./zoneHSM";
 import { MediaHState } from "./mediaHState";
 import { HSMStateData, ArEventType } from "../../type/runtime";
+import { MediaZoneHSM } from './mediaZoneHSM';
 
 export default class VideoState extends MediaHState {
 
@@ -31,17 +32,11 @@ export default class VideoState extends MediaHState {
 
     if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
       console.log('entry signal');
+      this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry);
       this.launchTimer();
       return 'HANDLED';
     } else if (event.EventType && event.EventType === 'EXIT_SIGNAL') {
       this.mediaHStateExitHandler();
-    } else if (event.EventType === EventType.MediaEnd) {
-      // const eventList : DmcEvent[] = (this.mediaState as DmcMediaState).eventList;
-      const bsEventKey: string = this.getBsEventKey(event);
-      if (this.eventLUT.hasOwnProperty(bsEventKey)) {
-        stateData.nextState = this.eventLUT[bsEventKey];
-        return 'TRANSITION';
-      }
     } else {
       return this.mediaHStateEventHandler(event, stateData);
     }

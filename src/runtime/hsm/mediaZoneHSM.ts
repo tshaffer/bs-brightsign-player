@@ -10,7 +10,6 @@ import {
   dmGetZoneById,
   dmGetMediaStateIdsForZone,
   dmGetMediaStateById,
-  dmGetEventIdsForMediaState,
   dmGetInitialMediaStateIdForZone
 } from "@brightsign/bsdatamodel";
 import { MediaHState } from './mediaHState';
@@ -20,7 +19,6 @@ import ImageState from "./imageState";
 import VideoState from "./videoState";
 import { isNil } from "lodash";
 
-// TEDTODO - what kind of ZoneHSM's are not MediaZoneHSM?
 export class MediaZoneHSM extends ZoneHSM {
 
   mediaHStates: MediaHState[];
@@ -65,15 +63,6 @@ export class MediaZoneHSM extends ZoneHSM {
       this.mediaHStates.push(newState);
 
       this.mediaStateIdToHState[mediaStateId] = newState;
-    });
-
-    // events / transitions
-    this.mediaStateIds.forEach((mediaStateId: BsDmId, index: number) => {
-
-      const targetHState: MediaHState = this.mediaStateIdToHState[mediaStateId];
-
-      const eventIds: BsDmId[] = dmGetEventIdsForMediaState(bsdm, { id: mediaStateId });
-      targetHState.addEvents(this, eventIds);
     });
   }
 
