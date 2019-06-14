@@ -1,11 +1,11 @@
 import { HState } from "./HSM";
-import { EventType, CommandSequenceType } from "@brightsign/bscore";
+import { EventType, CommandSequenceType, EventIntrinsicAction } from "@brightsign/bscore";
 import { ArEventType, HSMStateData } from "../../type/runtime";
 import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById } from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from "./mediaZoneHSM";
 import { getReduxStore } from "../../index";
 import { BsDmId } from '@brightsign/bsdatamodel';
-import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmcTransition } from '@brightsign/bsdatamodel';
+import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition } from '@brightsign/bsdatamodel';
 import { isNil } from "lodash";
 
 export class MediaHState extends HState {
@@ -15,36 +15,184 @@ export class MediaHState extends HState {
   timeoutInterval: number;
   timeout: any = null;
 
-  mediaHStateEventHandler(dispatchedEvent: ArEventType, stateData: HSMStateData): string {
+  // AUTOTRONTODO - check to see if event is disabled?
 
-    const eventList: DmcEvent[] = (this.mediaState as DmcMediaState).eventList;
-    console.log('Event list for mediaState:');
-    console.log(this.mediaState);
-    console.log(eventList);
-    
-    if (dispatchedEvent.EventType === 'Timer') {
-
-      for (const event of eventList) {
-        if (event.type === EventType.Timer) {
-
-          debugger;
-
-          const transition: DmcTransition = event.defaultTransition as DmcTransition;
-          const targetMediaStateId = transition.targetMediaStateId;
-
-          console.log(targetMediaStateId);
-          // TEDTODO - I assert that sourceMediaState === this.mediaState
-          // const sourceMediaStateId = event.mediaStateId;
-          // const sourceMediaState = mediaStatesById[sourceMediaStateId];
-        
-          // see autoplayGenerator.ts#getArTransitionFromDmcEvent
-
-
-          // TEDTODO - validate that this timer is for this state
-          return 'TRANSITION';
+  eventDataMatches(matchedEvent: DmcEvent, dispatchedEvent: ArEventType): boolean {
+    if (!isNil(matchedEvent.data)) {
+      const eventData: DmEventData = matchedEvent.data;
+      switch (matchedEvent.type) {
+        case EventType.Bp: {
+          const bpEventData: DmBpEventData = eventData as DmBpEventData;
+          if ((bpEventData.bpIndex !== dispatchedEvent.EventData.bpIndex) ||
+            (bpEventData.bpType !== dispatchedEvent.EventData.bpType) ||
+            (bpEventData.buttonNumber !== dispatchedEvent.EventData.buttonNumber)) {
+            return false;
+          }
         }
       }
     }
+    return true;
+  }
+
+  getMatchedEvent(mediaState: DmMediaState, dispatchedEvent: ArEventType): DmcEvent | null {
+    const mediaStateEvents: DmcEvent[] = (this.mediaState as DmcMediaState).eventList;
+    for (const mediaStateEvent of mediaStateEvents) {
+      if (mediaStateEvent.type === dispatchedEvent.EventType) {
+        if (this.eventDataMatches(mediaStateEvent, dispatchedEvent)) {
+          return mediaStateEvent;
+        }
+      }
+    }
+    return null;
+  }
+
+  // event is like transition in ExecuteTransition
+  executeEventMatchAction(event: DmcEvent, stateData: HSMStateData): string {
+    // AUTOTRONTODO - conditional transitions
+    // AUTOTRONTODO - event.disabled
+
+    if (isNil(event.transitionList) || event.transitionList.length === 0) {
+      switch (event.action) {
+        case EventIntrinsicAction.None: {
+          // remain on current state, playContinuous
+          /*
+        return "HANDLED"
+          */
+         return 'HANDLED';
+        }
+        case EventIntrinsicAction.ReturnToPriorState: {
+          // return to prior state
+          /*
+        nextStateId = ...previousStateId
+        nextState = m.stateMachine.stateTable[nextState$]
+          */
+          break;
+        }
+        case EventIntrinsicAction.StopPlayback: {
+          // remain on current state, stopPlayback
+          /*
+			if type(m.stateMachine.videoPlayer) = "roVideoPlayer" then
+				m.stateMachine.videoPlayer.Stop()
+			endif
+      return "HANDLED"
+          */
+         return 'HANDLED';
+        }
+        case EventIntrinsicAction.StopPlaybackAndClearScreen: {
+          // remain on current state, stopPlaybackAndClearScreen
+          /*
+			if type(m.stateMachine.videoPlayer) = "roVideoPlayer" then
+				m.stateMachine.videoPlayer.StopClear()
+			endif
+			if type(m.stateMachine.imagePlayer) = "roImageWidget" then
+				m.stateMachine.imagePlayer.StopDisplay()
+      endif
+      return "HANDLED"
+          */
+          return 'HANDLED';
+        }
+        default: {
+          // AUTOTRONTODO
+          debugger;
+        }
+      }
+    }
+    else {
+      const transition: DmcTransition = event.transitionList[0]; // AUTOTRONTODO - or event.defaultTransition?
+      console.log(transition);
+      /*
+    nextStateId = targetMediaStateId
+    nextState = m.stateMachine.stateTable[nextState$]
+      */
+      // AUTOTRONTODO - any reason I can't do this?
+      const targetMediaStateId: BsDmId = transition.targetMediaStateId;
+      const zoneHSM: MediaZoneHSM = this.stateMachine as MediaZoneHSM;
+      const targetHSMState: HState = zoneHSM.mediaStateIdToHState[targetMediaStateId];
+      if (!isNil(targetHSMState)) {
+        stateData.nextState = targetHSMState;
+        return 'TRANSITION';
+      }
+    }
+
+    // AUTOTRONTODO - should it ever do this?
+    stateData.nextState = this.superState;
+    return 'SUPER';
+  }
+
+  mediaHStateEventHandler(dispatchedEvent: ArEventType, stateData: HSMStateData): string {
+
+    const matchedEvent: DmcEvent | null = this.getMatchedEvent(this.mediaState, dispatchedEvent);
+
+    if (!isNil(matchedEvent)) {
+      console.log(matchedEvent);
+
+      return this.executeEventMatchAction(matchedEvent, stateData);
+
+
+
+
+
+
+
+
+
+      // AUTOTRONTODO - check for defaultTransition?
+      // console.log('defaultTransition');
+      // console.log(matchedEvent.defaultTransition);
+
+
+      // AUTOTRONTODO - check transitionList
+      // console.log('transitionList');
+      // console.log(matchedEvent.transitionList);
+
+      // AUTOTRONTODO - check action
+      // console.log('action');
+      // console.log(matchedEvent.action);
+
+      // defaultTransition === null
+      // transitionList === empty
+      // action === null
+      // => remain on current state, playContinuous
+
+      // defaultTransition === null
+      // transitionList === empty
+      // action === StopPlayback
+      // => remain on current state, stopPlayback
+
+      // defaultTransition === null
+      // transitionList === empty
+      // action === StopPlaybackAndClearScreen
+      // => remain on current state, stopPlaybackAndClearScreen
+
+      // defaultTransition === a DmcTransition
+      // transitionList === [the DmcTransition]
+      // action === None
+      // => transition using DmcTransition
+
+    }
+    // if (dispatchedEvent.EventType === 'Timer') {
+
+    //   for (const event of mediaStateEvents) {
+    //     if (event.type === EventType.Timer) {
+
+    //       debugger;
+
+    //       const transition: DmcTransition = event.defaultTransition as DmcTransition;
+    //       const targetMediaStateId = transition.targetMediaStateId;
+
+    //       console.log(targetMediaStateId);
+    //       // TEDTODO - I assert that sourceMediaState === this.mediaState
+    //       // const sourceMediaStateId = event.mediaStateId;
+    //       // const sourceMediaState = mediaStatesById[sourceMediaStateId];
+
+    //       // see autoplayGenerator.ts#getArTransitionFromDmcEvent
+
+
+    //       // TEDTODO - validate that this timer is for this state
+    //       return 'TRANSITION';
+    //     }
+    //   }
+    // }
 
     stateData.nextState = this.superState;
     return 'SUPER';
@@ -59,7 +207,7 @@ export class MediaHState extends HState {
   }
 
   launchTimer(): void {
-    
+
     // at least part of this will move somwhere else
     const reduxStore: any = getReduxStore();
     const bsdm: DmState = reduxStore.getState().bsdm;

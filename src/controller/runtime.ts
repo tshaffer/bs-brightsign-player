@@ -28,16 +28,17 @@ import {
 import { ZoneHSM } from '../runtime/hsm/zoneHSM';
 import { MediaZoneHSM } from '../runtime/hsm/mediaZoneHSM';
 
-// const platform = 'Desktop';
-const platform: string = 'BrightSign';
+const platform = 'Desktop';
+// const platform: string = 'BrightSign';
 
 // TEDTODO - this should come from platform
 
 let srcDirectory = '';
 if (platform === 'Desktop') {
-  // const srcDirectory = '/Users/tedshaffer/Desktop/ag';
+  srcDirectory = '/Users/tedshaffer/Desktop/ag';
   // const srcDirectory = '/Users/tedshaffer/Desktop/af';
-  srcDirectory = '/Users/tedshaffer/Desktop/ae';
+  // srcDirectory = '/Users/tedshaffer/Desktop/ae';
+  // srcDirectory = '/Users/tedshaffer/Desktop/aa';
 }
 else {
   // TEDTODO - use the following when running on a BrightSign
@@ -54,9 +55,9 @@ registry.read('networking', 'ru')
     console.log(keyValue);
   });
 
-declare class BSControlPort {
-  constructor(portName : string);
-}
+// declare class BSControlPort {
+//   constructor(portName : string);
+// }
 
 // const getGpioControlPortPromise: Promise<any> = getControlPort('BrightSign');
 // getGpioControlPortPromise
@@ -81,33 +82,33 @@ declare class BSControlPort {
 //     console.log(err);
 //   })
 
-const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
-getBP900ControlPort0Promise
-  .then( (controlPort) => {
-    console.log('bp900ControlPort created');
+// const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
+// getBP900ControlPort0Promise
+//   .then( (controlPort) => {
+//     console.log('bp900ControlPort created');
 
-    controlPort.oncontroldown = function (e: any) {
-      console.log('### oncontroldown ' + e.code);
-      const newtext = " DOWN: " + e.code + "\n";
-      console.log(newtext);
-    };
+//     controlPort.oncontroldown = function (e: any) {
+//       console.log('### oncontroldown ' + e.code);
+//       const newtext = " DOWN: " + e.code + "\n";
+//       console.log(newtext);
+//     };
 
-    const ok0 = controlPort.ConfigureAsInput(0);
-    console.log('ok0: ');
-    console.log(ok0);
+//     const ok0 = controlPort.ConfigureAsInput(0);
+//     console.log('ok0: ');
+//     console.log(ok0);
 
-    const ok1 = controlPort.ConfigureAsInput(1);
-    console.log('ok1: ');
-    console.log(ok1);
-  })
-  .catch( (err) => {
-    console.log(err);
-  })
+//     const ok1 = controlPort.ConfigureAsInput(1);
+//     console.log('ok1: ');
+//     console.log(ok1);
+//   })
+//   .catch( (err) => {
+//     console.log(err);
+//   })
 
+  // TEDTODO
 
+  let _autotronStore: Store<BsBrightSignPlayerState>;
 
-// TEDTODO
-let _autotronStore: Store<BsBrightSignPlayerState>;
 let _syncSpec: ArSyncSpec;
 let _poolAssetFiles: ArFileLUT;
 let _autoSchedule: any;
@@ -115,19 +116,19 @@ let _autoSchedule: any;
 let _hsmList: HSM[] = [];
 let _playerHSM: PlayerHSM;
 
-function getControlPort(portName : string) : any {
-  return new Promise( (resolve : any) => {
-    let controlPort : any = null;
-    try {
-      controlPort = new BSControlPort(portName);    
-    }
-    catch (e) {
-      console.log('failed to create controlPort: ');
-      console.log(portName);
-    }
-    resolve(controlPort);
-  });
-}
+// function getControlPort(portName : string) : any {
+//   return new Promise( (resolve : any) => {
+//     let controlPort : any = null;
+//     try {
+//       controlPort = new BSControlPort(portName);    
+//     }
+//     catch (e) {
+//       console.log('failed to create controlPort: ');
+//       console.log(portName);
+//     }
+//     resolve(controlPort);
+//   });
+// }
 
 // -----------------------------------------------------------------------
 // Controller Methods
