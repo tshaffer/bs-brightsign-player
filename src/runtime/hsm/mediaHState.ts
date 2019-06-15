@@ -1,9 +1,9 @@
 import { HState } from './HSM';
-import { EventType, CommandSequenceType, EventIntrinsicAction } from '@brightsign/bscore';
+import { EventType, CommandSequenceType, EventIntrinsicAction, CommandType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById } from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from './mediaZoneHSM';
-import { getReduxStore } from '../../index';
+import { getReduxStore, tmpGetVideoElementRef } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition, DmCommandOperation } from '@brightsign/bsdatamodel';
 import { isNil } from 'lodash';
@@ -232,13 +232,29 @@ export class MediaHState extends HState {
 
   executeCommand(command: DmcCommand, zoneHSM: MediaZoneHSM) {
     console.log('executeCommand:');
-    // console.log(command);
 
     const operations = command.operations;
     if (operations.length === 1) {
+
       const operation: DmCommandOperation = operations[0];
       console.log('CommandType');
       console.log(operation.type);
+
+      switch (operation.type) {
+        case CommandType.PauseVideo:
+          console.log('pause');
+          console.log(tmpGetVideoElementRef());
+          tmpGetVideoElementRef().pause();
+          break;
+        case CommandType.ResumeVideo:
+          console.log('play');
+          console.log(tmpGetVideoElementRef());
+          tmpGetVideoElementRef().play();
+          break;
+        default:
+          break;
+      }
+
     }
   }
 

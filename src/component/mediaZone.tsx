@@ -27,7 +27,7 @@ import {
   dmGetEventById,
   DmcEvent,
 } from '@brightsign/bsdatamodel';
-import { getPoolFilePath, getReduxStore, dispatchHsmEvent } from '../index';
+import { getPoolFilePath, getReduxStore, dispatchHsmEvent, tmpSetVideoElementRef } from '../index';
 import { connect } from 'react-redux';
 // import { Dispatch } from 'redux';
 // import { bindActionCreators } from 'redux';
@@ -62,6 +62,12 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
     };
     const reduxStore: any = getReduxStore();
     reduxStore.dispatch(dispatchHsmEvent(event));
+  }
+
+  videoRefRetrieved(videoElementRef: any) {
+    console.log('mediaZone.tsx#videoRefRetrieved');
+    console.log(videoElementRef);
+    tmpSetVideoElementRef(videoElementRef);
   }
 
   renderMediaItem(mediaState: DmMediaState, contentItem: DmDerivedContentItem) {
@@ -99,8 +105,9 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
             height={this.props.height}
             src={src}
             onVideoEnd={self.postMediaEndEvent.bind(this)}
+            onVideoRefRetrieved={self.videoRefRetrieved}
           />
-        )
+        );
       }
       default: {
         debugger;

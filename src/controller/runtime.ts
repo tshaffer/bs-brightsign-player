@@ -190,6 +190,14 @@ export function getReduxStore(): Store<BsBrightSignPlayerState> {
   return _autotronStore;
 }
 
+let _videoElementRef: any;
+export function tmpSetVideoElementRef(videoElementRef: any) {
+  _videoElementRef = videoElementRef;
+}
+export function tmpGetVideoElementRef(): any {
+  return _videoElementRef;
+}
+
 export function getRuntimeFiles(): Promise<void> {
   return getSyncSpec()
     .then((syncSpec: ArSyncSpec) => {
