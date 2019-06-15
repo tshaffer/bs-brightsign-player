@@ -5,15 +5,15 @@ import {
 import { DmState } from '@brightsign/bsdatamodel';
 import { DmMediaState } from '@brightsign/bsdatamodel';
 
-import { ZoneHSM } from "./zoneHSM";
-import { MediaHState } from "./mediaHState";
-import { HSMStateData, ArEventType } from "../../type/runtime";
+import { ZoneHSM } from './zoneHSM';
+import { MediaHState } from './mediaHState';
+import { HSMStateData, ArEventType } from '../../type/runtime';
 import { MediaZoneHSM } from './mediaZoneHSM';
 
 export default class VideoState extends MediaHState {
 
   bsdm: DmState;
-  dispatch: Function;
+  dispatch: any;
   stateMachine: ZoneHSM;
 
   constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState) {

@@ -1,6 +1,6 @@
-import { ZoneHSM } from "./zoneHSM";
-import { Store } from "redux";
-import { BsBrightSignPlayerState } from "../../index";
+import { ZoneHSM } from './zoneHSM';
+import { Store } from 'redux';
+import { BsBrightSignPlayerState } from '../../index';
 import { DmState } from '@brightsign/bsdatamodel';
 import { DmZone } from '@brightsign/bsdatamodel';
 import { BsDmId } from '@brightsign/bsdatamodel';
@@ -11,13 +11,13 @@ import {
   dmGetMediaStateIdsForZone,
   dmGetMediaStateById,
   dmGetInitialMediaStateIdForZone
-} from "@brightsign/bsdatamodel";
+} from '@brightsign/bsdatamodel';
 import { MediaHState } from './mediaHState';
-import { LUT } from "../../type/runtime";
-import { HState } from "./HSM";
-import ImageState from "./imageState";
-import VideoState from "./videoState";
-import { isNil } from "lodash";
+import { LUT } from '../../type/runtime';
+import { HState } from './HSM';
+import ImageState from './imageState';
+import VideoState from './videoState';
+import { isNil } from 'lodash';
 
 export class MediaZoneHSM extends ZoneHSM {
 

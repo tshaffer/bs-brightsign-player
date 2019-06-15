@@ -6,7 +6,7 @@ import isomorphicPath from 'isomorphic-path';
 import { ArSyncSpec, ArFileLUT, ArSyncSpecDownload, ArEventType } from '../type/runtime';
 import { HSM } from '../runtime/hsm/HSM';
 import { PlayerHSM } from '../runtime/hsm/playerHSM';
-import { BsBrightSignPlayerState, addUserVariable } from '../index';
+import { BsBrightSignPlayerState, addUserVariable, BsBrightSignPlayerModelThunkAction } from '../index';
 import { Store } from 'redux';
 import { BsDmId, dmGetUserVariableIdsForSign, dmGetUserVariableById, DmcUserVariable } from '@brightsign/bsdatamodel';
 import { DmState } from '@brightsign/bsdatamodel';
@@ -166,7 +166,7 @@ let _playerHSM: PlayerHSM;
 // Controller Methods
 // -----------------------------------------------------------------------
 export function initRuntime(store: Store<BsBrightSignPlayerState>) {
-  return ((dispatch: any, getState: Function) => {
+  return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
     _autotronStore = store;
     const autotronState: BsBrightSignPlayerState = _autotronStore.getState();
     console.log(autotronState);
@@ -393,14 +393,16 @@ function restartPlayback(presentationName: string): Promise<void> {
 }
 
 export function postMessage(event: ArEventType) {
-  return ((dispatch: any, getState: Function) => {
+  return ((dispatch: any) => {
     dispatch(dispatchHsmEvent(event));
   });
 }
 
-export function dispatchHsmEvent(event: ArEventType): Function {
+export function dispatchHsmEvent(
+  event: ArEventType
+): BsBrightSignPlayerModelThunkAction<undefined | void> {
 
-  return ((dispatch: any, getState: Function) => {
+  return ((dispatch: any) => {
     dispatch(_playerHSM.Dispatch(event));
 
     _hsmList.forEach((hsm) => {

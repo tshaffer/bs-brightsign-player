@@ -1,7 +1,7 @@
-import { HSMList } from "../type/hsm";
-import { ActionWithPayload } from "./baseAction";
-import { HSM } from "../runtime/hsm/HSM";
-import { isObject } from "lodash";
+import { HSMList } from '../type/hsm';
+import { ActionWithPayload } from './baseAction';
+import { HSM } from '../runtime/hsm/HSM';
+import { isObject } from 'lodash';
 
 // ------------------------------------
 // Constants
@@ -12,10 +12,6 @@ export const ADD_HSM = 'ADD_HSM';
 // Actions
 // ------------------------------------
 export function addHSM(hsm: HSM) {
-
-  console.log('addHSM:');
-  console.log(hsm);
-
   return {
     type: ADD_HSM,
     payload: hsm,

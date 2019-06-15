@@ -1,9 +1,9 @@
-import { ZoneHSM } from "./zoneHSM";
-import { MediaHState } from "./mediaHState";
-import { DmMediaState } from "@brightsign/bsdatamodel";
-import { HSMStateData, ArEventType } from "../../type/runtime";
-import { CommandSequenceType } from "@brightsign/bscore";
-import { MediaZoneHSM } from "./mediaZoneHSM";
+import { ZoneHSM } from './zoneHSM';
+import { MediaHState } from './mediaHState';
+import { DmMediaState } from '@brightsign/bsdatamodel';
+import { HSMStateData, ArEventType } from '../../type/runtime';
+import { CommandSequenceType } from '@brightsign/bscore';
+import { MediaZoneHSM } from './mediaZoneHSM';
 
 export default class ImageState extends MediaHState {
 

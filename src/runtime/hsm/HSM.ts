@@ -146,7 +146,7 @@ export class HSM {
   // TEDTODO - remove casts
   Dispatch(event: ArEventType) {
 
-    return ((dispatch: Function, getState: Function) => {
+    return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
 
       // if there is no activeState, the playlist is empty
       if (this.activeState == null) {
