@@ -20,9 +20,16 @@ export interface VideoProps {
 
 export class VideoComponent extends React.Component<VideoProps> {
 
+  videoElement: any;
+
   onVideoEnd() {
     console.log('onVideoEnd invoked');
     this.props.onVideoEnd();
+  }
+
+  timeoutHandler(self: any) {
+    console.log('videoElement timeoutHandler invoked');
+    self.videoElement.pause();
   }
 
   render() {
@@ -36,6 +43,11 @@ export class VideoComponent extends React.Component<VideoProps> {
         autoPlay={true}
         width={this.props.width.toString()}
         height={this.props.height.toString()}
+        ref={(videoElement) => {
+          self.videoElement = videoElement;
+          console.log('videoElement retrieved');
+          setTimeout(self.timeoutHandler, 1000, self);
+        }}
         onEnded={() => {
           console.log('**** - videoEnd');
           self.onVideoEnd();

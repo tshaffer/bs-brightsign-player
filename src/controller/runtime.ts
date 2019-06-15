@@ -92,54 +92,57 @@ getBP900ControlPort0Promise
     console.log(err);
   });
 
-let bp900LEDControlPort: any;
-const getBP900LEDSetupPortPromise: Promise<any> = getControlPort('TouchBoard-0-LED-SETUP');
-const getBP900LEDControlPortPromise: Promise<any> = getControlPort('TouchBoard-0-LED');
+// const bp900LEDControlPort: any;
+// const getBP900LEDSetupPortPromise: Promise<any> = getControlPort('TouchBoard-0-LED-SETUP');
+// const getBP900LEDControlPortPromise: Promise<any> = getControlPort('TouchBoard-0-LED');
 
-getBP900LEDSetupPortPromise
-  .then((ledSetupPort) => {
-    console.log('led setup port created');
-    // ledSetupPort.SetOutputValue(0, 22);
-    // ledSetupPort.SetOutputValue(1, 0);
-    // ledSetupPort.SetOutputValue(2, 0);
+// getBP900LEDSetupPortPromise
+//   .then((ledSetupPort) => {
+//     console.log('led setup port created');
+//     // ledSetupPort.SetOutputValue(0, 22);
+//     // ledSetupPort.SetOutputValue(1, 0);
+//     // ledSetupPort.SetOutputValue(2, 0);
 
-    getBP900LEDControlPortPromise
-      .then((ledControlPort) => {
-        ledSetupPort.SetOutputValue(0, 0x000B00A0)
-        bp900LEDControlPort.SetOutputValue(0, 0x07fe)
-        bp900LEDControlPort.SetOutputValue(1, 0x07fd)
-        bp900LEDControlPort.SetOutputValue(2, 0x07fb)
-        bp900LEDControlPort.SetOutputValue(3, 0x07f7)
-        bp900LEDControlPort.SetOutputValue(4, 0x07ef)
-        bp900LEDControlPort.SetOutputValue(5, 0x07df)
-        bp900LEDControlPort.SetOutputValue(6, 0x07bf)
-        bp900LEDControlPort.SetOutputValue(7, 0x077f)
-        bp900LEDControlPort.SetOutputValue(8, 0x06ff)
-        bp900LEDControlPort.SetOutputValue(9, 0x05ff)
-        bp900LEDControlPort.SetOutputValue(10, 0x03ff)
+//     getBP900LEDControlPortPromise
+//       .then((ledControlPort) => {
+//         ledSetupPort.SetOutputValue(0, 0x000B00A0)
+//         bp900LEDControlPort.SetOutputValue(0, 0x07fe)
+//         bp900LEDControlPort.SetOutputValue(1, 0x07fd)
+//         bp900LEDControlPort.SetOutputValue(2, 0x07fb)
+//         bp900LEDControlPort.SetOutputValue(3, 0x07f7)
+//         bp900LEDControlPort.SetOutputValue(4, 0x07ef)
+//         bp900LEDControlPort.SetOutputValue(5, 0x07df)
+//         bp900LEDControlPort.SetOutputValue(6, 0x07bf)
+//         bp900LEDControlPort.SetOutputValue(7, 0x077f)
+//         bp900LEDControlPort.SetOutputValue(8, 0x06ff)
+//         bp900LEDControlPort.SetOutputValue(9, 0x05ff)
+//         bp900LEDControlPort.SetOutputValue(10, 0x03ff)
 
-        // console.log('led control port created');
-        // bp900LEDControlPort = ledControlPort;
-        // bp900LEDControlPort.SetOutputValue(0, 1)
-        // bp900LEDControlPort.SetOutputValue(1, 1)
-        // bp900LEDControlPort.SetOutputValue(2, 1)
-        // bp900LEDControlPort.SetOutputValue(3, 1)
-        // bp900LEDControlPort.SetOutputValue(4, 1)
-        // bp900LEDControlPort.SetOutputValue(5, 1)
-        // bp900LEDControlPort.SetOutputValue(6, 1)
-        // bp900LEDControlPort.SetOutputValue(7, 1)
-        // bp900LEDControlPort.SetOutputValue(8, 1)
-        // bp900LEDControlPort.SetOutputValue(9, 1)
-        // bp900LEDControlPort.SetOutputValue(10, 1)
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+//         // console.log('led control port created');
+//         // bp900LEDControlPort = ledControlPort;
+//         // bp900LEDControlPort.SetOutputValue(0, 1)
+//         // bp900LEDControlPort.SetOutputValue(1, 1)
+//         // bp900LEDControlPort.SetOutputValue(2, 1)
+//         // bp900LEDControlPort.SetOutputValue(3, 1)
+//         // bp900LEDControlPort.SetOutputValue(4, 1)
+//         // bp900LEDControlPort.SetOutputValue(5, 1)
+//         // bp900LEDControlPort.SetOutputValue(6, 1)
+//         // bp900LEDControlPort.SetOutputValue(7, 1)
+//         // bp900LEDControlPort.SetOutputValue(8, 1)
+//         // bp900LEDControlPort.SetOutputValue(9, 1)
+//         // bp900LEDControlPort.SetOutputValue(10, 1)
+//       })
+//       .catch((err) => {
+//         console.log(err);
+//       });
 
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   });
+
+
+
 
 
 

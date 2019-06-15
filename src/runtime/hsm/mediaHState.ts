@@ -1,12 +1,12 @@
-import { HState } from "./HSM";
-import { EventType, CommandSequenceType, EventIntrinsicAction } from "@brightsign/bscore";
-import { ArEventType, HSMStateData } from "../../type/runtime";
+import { HState } from './HSM';
+import { EventType, CommandSequenceType, EventIntrinsicAction } from '@brightsign/bscore';
+import { ArEventType, HSMStateData } from '../../type/runtime';
 import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById } from '@brightsign/bsdatamodel';
-import { MediaZoneHSM } from "./mediaZoneHSM";
-import { getReduxStore } from "../../index";
+import { MediaZoneHSM } from './mediaZoneHSM';
+import { getReduxStore } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition, DmCommandOperation } from '@brightsign/bsdatamodel';
-import { isNil } from "lodash";
+import { isNil } from 'lodash';
 
 export class MediaHState extends HState {
 
@@ -28,6 +28,10 @@ export class MediaHState extends HState {
             (bpEventData.buttonNumber !== dispatchedEvent.EventData.buttonNumber)) {
             return false;
           }
+          break;
+        }
+        default: {
+          console.log('no match');
         }
       }
     }
@@ -54,8 +58,8 @@ export class MediaHState extends HState {
     if (isNil(event.transitionList) || event.transitionList.length === 0) {
       switch (event.action) {
         case EventIntrinsicAction.None: {
-         console.log('remain on current state, playContinuous');
-         return 'HANDLED';
+          console.log('remain on current state, playContinuous');
+          return 'HANDLED';
         }
         case EventIntrinsicAction.ReturnToPriorState: {
           console.log('return prior state');
@@ -64,24 +68,24 @@ export class MediaHState extends HState {
         nextState = m.stateMachine.stateTable[nextState$]
         return 'TRANSITION'
           */
-         return 'HANDLED';
+          return 'HANDLED';
         }
         case EventIntrinsicAction.StopPlayback: {
           console.log('remain on current state, stopPlayback');
           /*
-			if type(m.stateMachine.videoPlayer) = "roVideoPlayer" then
+			if type(m.stateMachine.videoPlayer) = 'roVideoPlayer' then
 				m.stateMachine.videoPlayer.Stop()
 			endif
           */
-         return 'HANDLED';
+          return 'HANDLED';
         }
         case EventIntrinsicAction.StopPlaybackAndClearScreen: {
           console.log('remain on current state, stopPlaybackClearScreen');
           /*
-			if type(m.stateMachine.videoPlayer) = "roVideoPlayer" then
+			if type(m.stateMachine.videoPlayer) = 'roVideoPlayer' then
 				m.stateMachine.videoPlayer.StopClear()
 			endif
-			if type(m.stateMachine.imagePlayer) = "roImageWidget" then
+			if type(m.stateMachine.imagePlayer) = 'roImageWidget' then
 				m.stateMachine.imagePlayer.StopDisplay()
       endif
           */
@@ -122,15 +126,11 @@ export class MediaHState extends HState {
     if (!isNil(matchedEvent)) {
       console.log(matchedEvent);
 
+      // AUTOTRONTODO - anytime we don't want to do this? that is, should it be conditional
+      // within executeEventMatchAction?
+      this.executeTransitionCommands(matchedEvent);
+
       return this.executeEventMatchAction(matchedEvent, stateData);
-
-
-
-
-
-
-
-
 
       // AUTOTRONTODO - check for defaultTransition?
       // console.log('defaultTransition');
@@ -262,5 +262,27 @@ export class MediaHState extends HState {
     }
   }
 
+  executeTransitionCommands(event: DmcEvent) {
 
+    console.log('execute transition commands');
+
+    const reduxStore: any = getReduxStore();
+    const bsdm: DmState = reduxStore.getState().bsdm;
+    const sequenceId: BsDmId | null =
+      dmGetCommandSequenceIdForParentAndType(bsdm, { id: event.id, type: CommandSequenceType.Event });
+    if (!isNil(sequenceId)) {
+      const sequence: DmCommandSequence | null = dmGetCommandSequenceStateById(bsdm, { id: sequenceId as string });
+      if (isNil(sequence)) {
+        return;
+      }
+      console.log('transition commands exist');
+      const validatedSequence: DmCommandSequence = sequence as DmCommandSequence;
+      for (const commandId of validatedSequence.sequence) {
+        const command: DmcCommand | null = dmGetCommandById(bsdm, { id: commandId });
+        if (!isNil(command)) {
+          this.executeCommand(command, this.stateMachine as MediaZoneHSM);
+        }
+      }
+    }
+  }
 }
