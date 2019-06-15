@@ -8,8 +8,6 @@ import { isNil } from 'lodash';
 import * as fs from 'fs-extra';
 import isomorphicPath from 'isomorphic-path';
 
-// import PlatformService from '../platform';
-
 import { ArSyncSpec, ArFileLUT, ArSyncSpecDownload, ArEventType } from '../type/runtime';
 import { HSM } from '../runtime/hsm/HSM';
 import { PlayerHSM } from '../runtime/hsm/playerHSM';
@@ -28,8 +26,9 @@ import {
 import { ZoneHSM } from '../runtime/hsm/zoneHSM';
 import { MediaZoneHSM } from '../runtime/hsm/mediaZoneHSM';
 
-const platform = 'Desktop';
-// const platform: string = 'BrightSign';
+// const platform = 'Desktop';
+const platform: string = 'BrightSign';
+console.log('Platform: ', platform);
 
 // TEDTODO - this should come from platform
 
@@ -46,8 +45,11 @@ else {
   process.chdir('/storage/sd');
   srcDirectory = '';
 }
+console.log('srcDirectory');
+console.log(srcDirectory);
 
 import Registry from '@brightsign/registry';
+import { EventType } from '@brightsign/bscore';
 const registry: Registry = new Registry();
 registry.read('networking', 'ru')
   .then((keyValue) => {
@@ -55,59 +57,38 @@ registry.read('networking', 'ru')
     console.log(keyValue);
   });
 
-// declare class BSControlPort {
-//   constructor(portName : string);
-// }
+declare class BSControlPort {
+  constructor(portName : string);
+}
 
 // const getGpioControlPortPromise: Promise<any> = getControlPort('BrightSign');
-// getGpioControlPortPromise
-//   .then( (controlPort) => {
-//     console.log('GpioControlPort created');
+const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
+getBP900ControlPort0Promise
+  .then( (controlPort) => {
+    console.log('bp900ControlPort created');
 
-//     controlPort.oncontroldown = function (e: any) {
-//       console.log('### oncontroldown ' + e.code);
-//       const newtext = " DOWN: " + e.code + "\n";
-//       console.log(newtext);
-//     };
+    controlPort.oncontroldown = function (e: any) {
+      console.log('### oncontroldown ' + e.code);
+      const newtext = " DOWN: " + e.code + "\n";
+      console.log(newtext);
 
-//     const ok0 = controlPort.ConfigureAsInput(0);
-//     console.log('ok0: ');
-//     console.log(ok0);
+      const event: ArEventType = {
+        EventType: EventType.Bp,
+      };
+  
+      console.log('********------- dispatch bp event');
 
-//     const ok1 = controlPort.ConfigureAsInput(1);
-//     console.log('ok1: ');
-//     console.log(ok1);
-//   })
-//   .catch( (err) => {
-//     console.log(err);
-//   })
-
-// const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
-// getBP900ControlPort0Promise
-//   .then( (controlPort) => {
-//     console.log('bp900ControlPort created');
-
-//     controlPort.oncontroldown = function (e: any) {
-//       console.log('### oncontroldown ' + e.code);
-//       const newtext = " DOWN: " + e.code + "\n";
-//       console.log(newtext);
-//     };
-
-//     const ok0 = controlPort.ConfigureAsInput(0);
-//     console.log('ok0: ');
-//     console.log(ok0);
-
-//     const ok1 = controlPort.ConfigureAsInput(1);
-//     console.log('ok1: ');
-//     console.log(ok1);
-//   })
-//   .catch( (err) => {
-//     console.log(err);
-//   })
+      const reduxStore: any = getReduxStore();
+      reduxStore.dispatch(dispatchHsmEvent(event));  
+    };
+  })
+  .catch( (err) => {
+    console.log(err);
+  })
 
   // TEDTODO
 
-  let _autotronStore: Store<BsBrightSignPlayerState>;
+let _autotronStore: Store<BsBrightSignPlayerState>;
 
 let _syncSpec: ArSyncSpec;
 let _poolAssetFiles: ArFileLUT;
@@ -116,19 +97,19 @@ let _autoSchedule: any;
 let _hsmList: HSM[] = [];
 let _playerHSM: PlayerHSM;
 
-// function getControlPort(portName : string) : any {
-//   return new Promise( (resolve : any) => {
-//     let controlPort : any = null;
-//     try {
-//       controlPort = new BSControlPort(portName);    
-//     }
-//     catch (e) {
-//       console.log('failed to create controlPort: ');
-//       console.log(portName);
-//     }
-//     resolve(controlPort);
-//   });
-// }
+function getControlPort(portName : string) : any {
+  return new Promise( (resolve : any) => {
+    let controlPort : any = null;
+    try {
+      controlPort = new BSControlPort(portName);    
+    }
+    catch (e) {
+      console.log('failed to create controlPort: ');
+      console.log(portName);
+    }
+    resolve(controlPort);
+  });
+}
 
 // -----------------------------------------------------------------------
 // Controller Methods
@@ -242,6 +223,7 @@ function getPoolAssetFiles(syncSpec: ArSyncSpec, pathToRoot: string): ArFileLUT 
 }
 
 function getSyncSpecFilePath(): Promise<string | null> {
+  console.log('invoked getLocalSyncSpec');
   return getLocalSyncSpec()
     .then((localSyncSpecFilePath) => {
       if (isNil(localSyncSpecFilePath)) {
@@ -268,6 +250,8 @@ function getNetworkedSyncSpec(): Promise<string | null> {
 
 function getLocalSyncSpec(): Promise<string | null> {
   const filePath: string = getLocalSyncSpecFilePath();
+  console.log('getLocalSyncSpec');
+  console.log(filePath);
   return fs.pathExists(filePath)
     .then((exists: boolean) => {
       if (exists) {
@@ -338,49 +322,11 @@ function restartPlayback(presentationName: string): Promise<void> {
     });
 }
 
-// failed try??
-/*
-export function dispatchPostMessage(event : ArEventType): void {
-  _autotronStore.dispatch(postMessage(event));
-  // postMessage(event);
-}
-
-function postMessage(event: ArEventType): () => void {
-  return () => {
-    dispatchHsmEvent(event);
-  };
-}
-
-// export function postRuntimeMessage(event: ArEventType) {
-//   console.log('flibbet');
-//   dispatchHsmEvent(event);
-// }
-
-// export function postMessage(event: ArEventType) {
-//   console.log('pizza');
-//   dispatchHsmEvent(event);
-// }
-*/
-
-// restored code
-// function dispatchPostMessage(event : ArEventType): void {
-//   postMessage(event);
-// }
-
-export function postRuntimeMessage(event: ArEventType) {
-  return ((dispatch: any, getState: Function) => {
-    console.log('flibbet');
-    dispatch(dispatchHsmEvent(event));
-  });
-}
-
 export function postMessage(event: ArEventType) {
   return ((dispatch: any, getState: Function) => {
-    console.log('flibbet');
     dispatch(dispatchHsmEvent(event));
   });
 }
-// end of restored code
 
 export function dispatchHsmEvent(event: ArEventType): Function {
 

@@ -90,7 +90,6 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
     const event : ArEventType = {
       EventType : EventType.MediaEnd,
     };
-    // this.props.postBSPMessage(event);
     const reduxStore: any = getReduxStore();
     reduxStore.dispatch(dispatchHsmEvent(event));
   }
@@ -185,7 +184,7 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
 
 // const mapDispatchToProps = (dispatch: Dispatch<any>) => {
 //   return bindActionCreators({
-//     postBSPMessage: postRuntimeMessage,
+//     postBSPMessage: postMessage,
 //   }, dispatch);
 // };
 

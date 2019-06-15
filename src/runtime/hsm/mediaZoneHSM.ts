@@ -69,7 +69,6 @@ export class MediaZoneHSM extends ZoneHSM {
   videoOrImagesZoneConstructor() {
     console.log('VideoOrImagesZoneConstructor invoked');
 
-
     const bsdm: DmState = this.autotronStore.getState().bsdm;
     const initialMediaStateId: BsDmId | null = dmGetInitialMediaStateIdForZone(bsdm, { id: this.zoneId });
     if (!isNil(initialMediaStateId)) {
