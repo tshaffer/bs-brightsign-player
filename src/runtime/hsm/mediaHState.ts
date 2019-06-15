@@ -5,7 +5,7 @@ import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandS
 import { MediaZoneHSM } from "./mediaZoneHSM";
 import { getReduxStore } from "../../index";
 import { BsDmId } from '@brightsign/bsdatamodel';
-import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition } from '@brightsign/bsdatamodel';
+import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition, DmCommandOperation } from '@brightsign/bsdatamodel';
 import { isNil } from "lodash";
 
 export class MediaHState extends HState {
@@ -232,7 +232,14 @@ export class MediaHState extends HState {
 
   executeCommand(command: DmcCommand, zoneHSM: MediaZoneHSM) {
     console.log('executeCommand:');
-    console.log(command);
+    // console.log(command);
+
+    const operations = command.operations;
+    if (operations.length === 1) {
+      const operation: DmCommandOperation = operations[0];
+      console.log('CommandType');
+      console.log(operation.type);
+    }
   }
 
   executeMediaStateCommands(mediaStateId: BsDmId, zoneHSM: MediaZoneHSM, commandSequenceType: CommandSequenceType) {

@@ -2,23 +2,8 @@ import * as React from 'react';
 
 import isomorphicPath from 'isomorphic-path';
 
-// import {
-//   ArEventType,
-// } from '../types';
-
-// import DesktopPlatformService from '../platform/desktop/DesktopPlatformService';
-
-// import MrssDisplayItemContainer from '../containers/mrssDisplayItemContainer';
-
-// import { getPoolFilePath } from '../utilities/utilities';
-
 import { Image } from './index';
 import { Video } from './index';
-
-import {
-  // dmGetAssetItemById,
-} from '@brightsign/bsdatamodel';
-// import { BsAssetItem } from "@brightsign/bscore";
 
 import {
   ContentItemType,
@@ -42,7 +27,6 @@ import {
   dmGetEventById,
   DmcEvent,
 } from '@brightsign/bsdatamodel';
-// import { ArEventType } from '../type/runtime';
 import { getPoolFilePath, getReduxStore, dispatchHsmEvent } from '../index';
 import { connect } from 'react-redux';
 // import { Dispatch } from 'redux';
@@ -70,20 +54,6 @@ export interface MediaZoneProps {
 // Component
 // -----------------------------------------------------------------------
 export default class MediaZoneComponent extends React.Component<MediaZoneProps> {
-
-  // postBpEvent() {
-  //   const event : ArEventType = {
-  //     EventType : 'bpEvent',
-  //   };
-  //   this.props.postBSPMessage(event);
-  // }
-
-  // postTimeoutEvent()  {
-  //   const event : ArEventType = {
-  //     EventType : 'timeoutEvent',
-  //   };
-  //   this.props.postBSPMessage(event);
-  // }
 
   postMediaEndEvent()  {
     console.log('postMediaEndEvent');
