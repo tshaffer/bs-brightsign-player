@@ -35,9 +35,9 @@ const platform = 'Desktop';
 
 let srcDirectory = '';
 if (platform === 'Desktop') {
-  srcDirectory = '/Users/tedshaffer/Desktop/ag';
+  // srcDirectory = '/Users/tedshaffer/Desktop/ag';
   // const srcDirectory = '/Users/tedshaffer/Desktop/af';
-  // srcDirectory = '/Users/tedshaffer/Desktop/ae';
+  srcDirectory = '/Users/tedshaffer/Desktop/ae';
   // srcDirectory = '/Users/tedshaffer/Desktop/aa';
 }
 else {

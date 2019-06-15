@@ -54,32 +54,29 @@ export class MediaHState extends HState {
     if (isNil(event.transitionList) || event.transitionList.length === 0) {
       switch (event.action) {
         case EventIntrinsicAction.None: {
-          // remain on current state, playContinuous
-          /*
-        return "HANDLED"
-          */
+         console.log('remain on current state, playContinuous');
          return 'HANDLED';
         }
         case EventIntrinsicAction.ReturnToPriorState: {
-          // return to prior state
+          console.log('return prior state');
           /*
         nextStateId = ...previousStateId
         nextState = m.stateMachine.stateTable[nextState$]
+        return 'TRANSITION'
           */
-          break;
+         return 'HANDLED';
         }
         case EventIntrinsicAction.StopPlayback: {
-          // remain on current state, stopPlayback
+          console.log('remain on current state, stopPlayback');
           /*
 			if type(m.stateMachine.videoPlayer) = "roVideoPlayer" then
 				m.stateMachine.videoPlayer.Stop()
 			endif
-      return "HANDLED"
           */
          return 'HANDLED';
         }
         case EventIntrinsicAction.StopPlaybackAndClearScreen: {
-          // remain on current state, stopPlaybackAndClearScreen
+          console.log('remain on current state, stopPlaybackClearScreen');
           /*
 			if type(m.stateMachine.videoPlayer) = "roVideoPlayer" then
 				m.stateMachine.videoPlayer.StopClear()
@@ -87,7 +84,6 @@ export class MediaHState extends HState {
 			if type(m.stateMachine.imagePlayer) = "roImageWidget" then
 				m.stateMachine.imagePlayer.StopDisplay()
       endif
-      return "HANDLED"
           */
           return 'HANDLED';
         }
