@@ -9,6 +9,7 @@ import { activeHStateReducer, isValidActiveHStates } from './activeHState';
 import { BsBrightSignPlayerModelBaseAction, BsBrightSignPlayerModelBatchAction, BSBSBRIGHTSIGNPLAYERMODEL_BATCH } from '.';
 import { hsmReducer, isValidHSMs } from './hsm';
 import { isObject } from 'lodash';
+import { userVariableReducer, isValidUserVariableState } from './userVariable';
 
 // -----------------------------------------------------------------------
 // Defaults
@@ -39,6 +40,7 @@ const enableBatching = (
 export const bsBrightSignPlayerReducer: BsBrightSignPlayerReducer = enableBatching(combineReducers<BsBrightSignPlayerModelState>({
   activeHStates: activeHStateReducer,
   hsms: hsmReducer,
+  userVariables: userVariableReducer,
 }));
 
 // -----------------------------------------------------------------------
@@ -48,11 +50,13 @@ export const bsBrightSignPlayerReducer: BsBrightSignPlayerReducer = enableBatchi
 export const isValidBsBrightSignPlayerModelState = (state: any): boolean => {
   return isObject(state)
     && state.hasOwnProperty('activeHStates') && isValidActiveHStates(state.activeHStates)
-    && state.hasOwnProperty('hsms') && isValidHSMs(state.activeHStates);
+    && state.hasOwnProperty('hsms') && isValidHSMs(state.hsms)
+    && state.hasOwnProperty('userVariables') && isValidUserVariableState(state.userVariables);
 };
 
 export const isValidBsBrightSignPlayerModelStateShallow = (state: any): boolean => {
   return isObject(state)
   && state.hasOwnProperty('activeHStates') 
-  && state.hasOwnProperty('hsms');
+  && state.hasOwnProperty('hsms')
+  && state.hasOwnProperty('userVariables');
 };

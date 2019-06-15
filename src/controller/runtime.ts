@@ -1,19 +1,14 @@
 import { isNil } from 'lodash';
 
-// import {
-//   // BsDmThunkAction,
-//   dmOpenSign,
-// } from '@brightsign/bsdatamodel';
-
 import * as fs from 'fs-extra';
 import isomorphicPath from 'isomorphic-path';
 
 import { ArSyncSpec, ArFileLUT, ArSyncSpecDownload, ArEventType } from '../type/runtime';
 import { HSM } from '../runtime/hsm/HSM';
 import { PlayerHSM } from '../runtime/hsm/playerHSM';
-import { BsBrightSignPlayerState } from '../index';
+import { BsBrightSignPlayerState, addUserVariable } from '../index';
 import { Store } from 'redux';
-import { BsDmId } from '@brightsign/bsdatamodel';
+import { BsDmId, dmGetUserVariableIdsForSign, dmGetUserVariableById, DmcUserVariable } from '@brightsign/bsdatamodel';
 import { DmState } from '@brightsign/bsdatamodel';
 import { DmZone } from '@brightsign/bsdatamodel';
 
@@ -26,18 +21,15 @@ import {
 import { ZoneHSM } from '../runtime/hsm/zoneHSM';
 import { MediaZoneHSM } from '../runtime/hsm/mediaZoneHSM';
 
-// const platform = 'Desktop';
-const platform: string = 'BrightSign';
+const platform = 'Desktop';
+// const platform: string = 'BrightSign';
 console.log('Platform: ', platform);
 
 // TEDTODO - this should come from platform
 
 let srcDirectory = '';
 if (platform === 'Desktop') {
-  // srcDirectory = '/Users/tedshaffer/Desktop/ag';
-  // const srcDirectory = '/Users/tedshaffer/Desktop/af';
-  srcDirectory = '/Users/tedshaffer/Desktop/ae';
-  // srcDirectory = '/Users/tedshaffer/Desktop/aa';
+  srcDirectory = '/Users/tedshaffer/Desktop/ad';
 }
 else {
   // TEDTODO - use the following when running on a BrightSign
@@ -49,7 +41,6 @@ console.log('srcDirectory');
 console.log(srcDirectory);
 
 import Registry from '@brightsign/registry';
-import { EventType } from '@brightsign/bscore';
 const registry: Registry = new Registry();
 registry.read('networking', 'ru')
   .then((keyValue) => {
@@ -57,40 +48,58 @@ registry.read('networking', 'ru')
     console.log(keyValue);
   });
 
-declare class BSControlPort {
-  constructor(portName: string);
-}
+// for BrightSign only
+
+// import { EventType } from '@brightsign/bscore';
+
+// declare class BSControlPort {
+//   constructor(portName: string);
+// }
+
+// function getControlPort(portName: string): any {
+//   return new Promise((resolve: any) => {
+//     let controlPort: any = null;
+//     try {
+//       controlPort = new BSControlPort(portName);
+//     }
+//     catch (e) {
+//       console.log('failed to create controlPort: ');
+//       console.log(portName);
+//     }
+//     resolve(controlPort);
+//   });
+// }
 
 // const getGpioControlPortPromise: Promise<any> = getControlPort('BrightSign');
-const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
+// const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
 
-getBP900ControlPort0Promise
-  .then((controlPort) => {
-    console.log('bp900ControlPort created');
+// getBP900ControlPort0Promise
+//   .then((controlPort) => {
+//     console.log('bp900ControlPort created');
 
-    controlPort.oncontroldown = function (e: any) {
-      console.log('### oncontroldown ' + e.code);
-      const newtext = " DOWN: " + e.code + "\n";
-      console.log(newtext);
+//     controlPort.oncontroldown = function (e: any) {
+//       console.log('### oncontroldown ' + e.code);
+//       const newtext = " DOWN: " + e.code + "\n";
+//       console.log(newtext);
 
-      const event: ArEventType = {
-        EventType: EventType.Bp,
-        EventData: {
-          bpIndex: 'a',
-          bpType: 'bp900',
-          buttonNumber: Number(e.code),
-        }
-      };
+//       const event: ArEventType = {
+//         EventType: EventType.Bp,
+//         EventData: {
+//           bpIndex: 'a',
+//           bpType: 'bp900',
+//           buttonNumber: Number(e.code),
+//         }
+//       };
 
-      console.log('********------- dispatch bp event');
+//       console.log('********------- dispatch bp event');
 
-      const reduxStore: any = getReduxStore();
-      reduxStore.dispatch(dispatchHsmEvent(event));
-    };
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+//       const reduxStore: any = getReduxStore();
+//       reduxStore.dispatch(dispatchHsmEvent(event));
+//     };
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   });
 
 // const bp900LEDControlPort: any;
 // const getBP900LEDSetupPortPromise: Promise<any> = getControlPort('TouchBoard-0-LED-SETUP');
@@ -141,13 +150,7 @@ getBP900ControlPort0Promise
 //     console.log(err);
 //   });
 
-
-
-
-
-
-
-
+// end of for BrightSign only
 
 let _autotronStore: Store<BsBrightSignPlayerState>;
 let _syncSpec: ArSyncSpec;
@@ -156,20 +159,6 @@ let _autoSchedule: any;
 
 let _hsmList: HSM[] = [];
 let _playerHSM: PlayerHSM;
-
-function getControlPort(portName: string): any {
-  return new Promise((resolve: any) => {
-    let controlPort: any = null;
-    try {
-      controlPort = new BSControlPort(portName);
-    }
-    catch (e) {
-      console.log('failed to create controlPort: ');
-      console.log(portName);
-    }
-    resolve(controlPort);
-  });
-}
 
 
 
@@ -388,6 +377,17 @@ function restartPlayback(presentationName: string): Promise<void> {
       const signState = autoPlay as DmSignState;
       _autotronStore.dispatch(dmOpenSign(signState));
       console.log(_autotronStore.getState());
+
+      // populate user variables from the sign.
+      // set current values === default values for now
+      const bsdm: DmState = _autotronStore.getState().bsdm;
+      const userVariableIds: BsDmId[] = dmGetUserVariableIdsForSign(bsdm);
+      for (const userVariableId of userVariableIds) {
+        const userVariable = dmGetUserVariableById(bsdm, { id: userVariableId }) as DmcUserVariable;
+        _autotronStore.dispatch(addUserVariable(userVariableId, userVariable.defaultValue));
+      }
+      console.log(_autotronStore.getState());
+
       return Promise.resolve();
     });
 }

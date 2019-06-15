@@ -18,6 +18,7 @@ const fetchModelAsync = (): Promise<BsBrightSignPlayerModelState> => {
     const model: BsBrightSignPlayerModelState = {
       activeHStates: {},
       hsms: [],
+      userVariables: {},
     };
     resolve(model);
   });
