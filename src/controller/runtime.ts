@@ -74,6 +74,11 @@ getBP900ControlPort0Promise
 
       const event: ArEventType = {
         EventType: EventType.Bp,
+        EventData: {
+          bpIndex: 'a',
+          bpType: 'bp900',
+          buttonNumber: Number(e.code),
+        }
       };
   
       console.log('********------- dispatch bp event');
