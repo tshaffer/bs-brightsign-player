@@ -126,6 +126,8 @@ export class MediaHState extends HState {
       clearTimeout(this.timeout);
       this.timeout = null;
     }
+    this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateExit);
+
   }
 
   launchTimer(): void {
