@@ -15,8 +15,6 @@ import 'normalize.css/normalize.css';
 import 'flexboxgrid/dist/flexboxgrid.min.css';
 import 'font-awesome/css/font-awesome.min.css';
 
-console.log('bootstrap.tsx: start');
-
 const getStore = () => {
   const reducers = combineReducers<BsBrightSignPlayerState>({
     bsdm: bsDmReducer,
@@ -28,11 +26,7 @@ const getStore = () => {
   ));
 };
 
-console.log('bootstrap.tsx: before getStore()');
-
 const store = getStore();
-
-console.log('bootstrap.tsx: before getStore()');
 
 store.dispatch(initRuntime(store));
 

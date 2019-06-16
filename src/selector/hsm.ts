@@ -1,9 +1,9 @@
 import { isObject } from 'lodash';
 import { BsBrightSignPlayerState } from '../index';
-import { MediaHState } from '../runtime/hsm/mediaHState';
+import { MediaHState } from '../controller/hsm/mediaHState';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState } from '@brightsign/bsdatamodel';
-import { ZoneHSM } from '../runtime/hsm/zoneHSM';
+import { ZoneHSM } from '../controller/hsm/zoneHSM';
 
 // ------------------------------------
 // Selectors

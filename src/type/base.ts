@@ -2,7 +2,7 @@
 
 import { DmState } from '@brightsign/bsdatamodel';
 import { HStateMap } from './activeHState';
-import { HSM } from '../runtime/hsm/HSM';
+import { HSM } from '../controller/hsm/HSM';
 import { UserVariableMap } from './userVariable';
 
 /** @internal */

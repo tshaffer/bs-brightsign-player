@@ -4,8 +4,8 @@ import * as fs from 'fs-extra';
 import isomorphicPath from 'isomorphic-path';
 
 import { ArSyncSpec, ArFileLUT, ArSyncSpecDownload, ArEventType } from '../type/runtime';
-import { HSM } from '../runtime/hsm/HSM';
-import { PlayerHSM } from '../runtime/hsm/playerHSM';
+import { HSM } from './hsm/HSM';
+import { PlayerHSM } from './hsm/playerHSM';
 import { BsBrightSignPlayerState, addUserVariable, BsBrightSignPlayerModelThunkAction } from '../index';
 import { Store } from 'redux';
 import { BsDmId, dmGetUserVariableIdsForSign, dmGetUserVariableById, DmcUserVariable } from '@brightsign/bsdatamodel';
@@ -18,8 +18,8 @@ import {
   dmGetZonesForSign,
   dmGetZoneById
 } from '@brightsign/bsdatamodel';
-import { ZoneHSM } from '../runtime/hsm/zoneHSM';
-import { MediaZoneHSM } from '../runtime/hsm/mediaZoneHSM';
+import { ZoneHSM } from './hsm/zoneHSM';
+import { MediaZoneHSM } from './hsm/mediaZoneHSM';
 
 const platform = 'Desktop';
 // const platform: string = 'BrightSign';

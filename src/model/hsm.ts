@@ -1,6 +1,6 @@
 import { HSMList } from '../type/hsm';
 import { ActionWithPayload } from './baseAction';
-import { HSM } from '../runtime/hsm/HSM';
+import { HSM } from '../controller/hsm/HSM';
 import { isObject } from 'lodash';
 
 // ------------------------------------
