@@ -109,7 +109,6 @@ export class MediaHState extends HState {
     const matchedEvent: DmcEvent | null = this.getMatchedEvent(this.mediaState, dispatchedEvent);
 
     if (!isNil(matchedEvent)) {
-      console.log(matchedEvent);
 
       // AUTOTRONTODO - anytime we don't want to do this? that is, should it be conditional
       // within executeEventMatchAction?
@@ -123,7 +122,6 @@ export class MediaHState extends HState {
   }
 
   mediaHStateExitHandler(): void {
-    console.log(this.id + ': exit signal');
     if (this.timeout) {
       clearTimeout(this.timeout);
       this.timeout = null;
@@ -170,13 +168,9 @@ export class MediaHState extends HState {
 
       switch (operation.type) {
         case CommandType.PauseVideo:
-          console.log('pause');
-          console.log(tmpGetVideoElementRef());
           tmpGetVideoElementRef().pause();
           break;
         case CommandType.ResumeVideo:
-          console.log('play');
-          console.log(tmpGetVideoElementRef());
           tmpGetVideoElementRef().play();
           break;
         default:
@@ -208,8 +202,6 @@ export class MediaHState extends HState {
 
   executeTransitionCommands(event: DmcEvent) {
 
-    console.log('execute transition commands');
-
     const reduxStore: any = getReduxStore();
     const bsdm: DmState = reduxStore.getState().bsdm;
     const sequenceId: BsDmId | null =
@@ -219,7 +211,6 @@ export class MediaHState extends HState {
       if (isNil(sequence)) {
         return;
       }
-      console.log('transition commands exist');
       const validatedSequence: DmCommandSequence = sequence as DmCommandSequence;
       for (const commandId of validatedSequence.sequence) {
         const command: DmcCommand | null = dmGetCommandById(bsdm, { id: commandId });

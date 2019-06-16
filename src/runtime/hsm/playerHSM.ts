@@ -46,10 +46,7 @@ export class PlayerHSM extends HSM {
 
   initializePlayerStateMachine(reduxStore: any): HState {
 
-    console.log('initializePlayerStateMachine invoked');
-
     this.restartPlayback('').then(() => {
-      // send event to cause transition to stPlaying
       const event = {
         EventType: 'TRANSITION_TO_PLAYING'
       };

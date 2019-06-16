@@ -67,7 +67,6 @@ export class MediaZoneHSM extends ZoneHSM {
   }
 
   videoOrImagesZoneConstructor() {
-    console.log('VideoOrImagesZoneConstructor invoked');
 
     const bsdm: DmState = this.autotronStore.getState().bsdm;
     const initialMediaStateId: BsDmId | null = dmGetInitialMediaStateIdForZone(bsdm, { id: this.zoneId });
@@ -87,8 +86,6 @@ export class MediaZoneHSM extends ZoneHSM {
   }
 
   videoOrImagesZoneGetInitialState(): HState | null {
-    console.log('videoOrImagesZoneGetInitialState invoked');
-
     return this.activeState;
   }
 

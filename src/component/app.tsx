@@ -23,8 +23,6 @@ class AppComponent extends React.Component<any, object> {
 
   render() {
 
-    console.log('app render invoked');
-
     // not sure about this check
     if (this.props.bsdm.zones.allZones.length === 0 ||
       Object.keys(this.props.activeHStates).length === 0) {

@@ -32,17 +32,10 @@ export const userVariableReducer = (
   state: UserVariableMap = initialState,
   action: ActionWithPayload) => {
   switch (action.type) {
-
     case ADD_USER_VARIABLE: {
-
       const newState: UserVariableMap = Object.assign({}, state);
-
       const { userVariableId, currentValue } = action.payload;
-
       newState[userVariableId] = currentValue;
-      
-      console.log(newState);
-
       return newState;
     }
     default:

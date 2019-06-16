@@ -23,7 +23,6 @@ import { MediaZoneHSM } from '../runtime/hsm/mediaZoneHSM';
 
 const platform = 'Desktop';
 // const platform: string = 'BrightSign';
-console.log('Platform: ', platform);
 
 // TEDTODO - this should come from platform
 
@@ -37,15 +36,11 @@ else {
   process.chdir('/storage/sd');
   srcDirectory = '';
 }
-console.log('srcDirectory');
-console.log(srcDirectory);
 
 import Registry from '@brightsign/registry';
 const registry: Registry = new Registry();
 registry.read('networking', 'ru')
   .then((keyValue) => {
-    console.log('rs registry value is:');
-    console.log(keyValue);
   });
 
 // for BrightSign only
@@ -168,9 +163,6 @@ let _playerHSM: PlayerHSM;
 export function initRuntime(store: Store<BsBrightSignPlayerState>) {
   return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
     _autotronStore = store;
-    const autotronState: BsBrightSignPlayerState = _autotronStore.getState();
-    console.log(autotronState);
-
     return getRuntimeFiles();
   });
 }
@@ -282,7 +274,6 @@ function getPoolAssetFiles(syncSpec: ArSyncSpec, pathToRoot: string): ArFileLUT 
 }
 
 function getSyncSpecFilePath(): Promise<string | null> {
-  console.log('invoked getLocalSyncSpec');
   return getLocalSyncSpec()
     .then((localSyncSpecFilePath) => {
       if (isNil(localSyncSpecFilePath)) {
@@ -309,8 +300,6 @@ function getNetworkedSyncSpec(): Promise<string | null> {
 
 function getLocalSyncSpec(): Promise<string | null> {
   const filePath: string = getLocalSyncSpecFilePath();
-  console.log('getLocalSyncSpec');
-  console.log(filePath);
   return fs.pathExists(filePath)
     .then((exists: boolean) => {
       if (exists) {
@@ -325,24 +314,18 @@ function getLocalSyncSpec(): Promise<string | null> {
 function getLocalSyncSpecFilePath(): string {
   // return isomorphicPath.join(PlatformService.default.getRootDirectory(), 'local-sync.json');
   const rootDirectory: string = getRootDirectory();
-  console.log('rootDirectory:');
-  console.log(rootDirectory);
   const syncSpecFilePath = isomorphicPath.join(rootDirectory, 'local-sync.json');
-  console.log('syncSpecFilePath:');
-  console.log(syncSpecFilePath);
   // return isomorphicPath.join(getRootDirectory(), 'local-sync.json');
   return syncSpecFilePath;
 }
 
 function getNetworkedSyncSpecFilePath(): string {
-  console.log('getNetworkedSyncSpecFilePath');
   // return isomorphicPath.join(PlatformService.default.getRootDirectory(), 'current-sync.json');
   return isomorphicPath.join(getRootDirectory(), 'current-sync.json');
 }
 
 export function getPoolFilePath(fileName: string): string {
   const filePath: string = _poolAssetFiles[fileName];
-  console.log('fileName: ' + fileName + ', filePath: ' + filePath);
   return filePath;
 }
 
@@ -355,8 +338,6 @@ function getRootDirectory(): string {
 }
 
 function restartPlayback(presentationName: string): Promise<void> {
-
-  console.log('restart: ', presentationName);
 
   const rootPath = getRootDirectory();
 
@@ -372,11 +353,9 @@ function restartPlayback(presentationName: string): Promise<void> {
 
   return getSyncSpecReferencedFile(autoplayFileName, _syncSpec, rootPath)
     .then((bpfxState: any) => {
-      console.log(bpfxState);
       const autoPlay: any = bpfxState.bsdm;
       const signState = autoPlay as DmSignState;
       _autotronStore.dispatch(dmOpenSign(signState));
-      console.log(_autotronStore.getState());
 
       // populate user variables from the sign.
       // set current values === default values for now
@@ -386,7 +365,6 @@ function restartPlayback(presentationName: string): Promise<void> {
         const userVariable = dmGetUserVariableById(bsdm, { id: userVariableId }) as DmcUserVariable;
         _autotronStore.dispatch(addUserVariable(userVariableId, userVariable.defaultValue));
       }
-      console.log(_autotronStore.getState());
 
       return Promise.resolve();
     });
