@@ -418,6 +418,32 @@ export function postMessage(event: ArEventType) {
   });
 }
 
+export function debugCode(event: ArEventType): any
+{
+  debugger;
+  let action: any = _playerHSM.Dispatch(event);
+  return action;
+}
+
+export function debugCode2(event: ArEventType): any
+{
+  let action: any;
+
+  debugger;
+  return ((dispatch: any) => {
+
+    action = _playerHSM.Dispatch(event);
+    action = action.bind(_playerHSM);
+    dispatch(action);
+
+    _hsmList.forEach((hsm) => {
+      action = hsm.Dispatch(event);
+      action = action.bind(hsm);
+      dispatch(action);
+    });
+  });
+}
+
 export function dispatchHsmEvent(
   event: ArEventType
 ): BsBrightSignPlayerModelThunkAction<undefined | void> {

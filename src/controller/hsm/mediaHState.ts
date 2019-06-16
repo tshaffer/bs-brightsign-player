@@ -1,9 +1,10 @@
 import { HState } from './HSM';
 import { EventType, CommandSequenceType, EventIntrinsicAction, CommandType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
-import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById } from '@brightsign/bsdatamodel';
+import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData } from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from './mediaZoneHSM';
-import { getReduxStore, tmpGetVideoElementRef } from '../../index';
+// import { getReduxStore, tmpGetVideoElementRef, dispatchHsmEvent, debugCode } from '../../index';
+import { getReduxStore, tmpGetVideoElementRef, debugCode2 } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition, DmCommandOperation } from '@brightsign/bsdatamodel';
 import { isNil } from 'lodash';
@@ -50,7 +51,7 @@ export class MediaHState extends HState {
 
   // event here is like the transition parameter in ExecuteTransition
   executeEventMatchAction(event: DmcEvent, stateData: HSMStateData): string {
-    
+
     // AUTOTRONTODO - conditional transitions
     // AUTOTRONTODO - event.disabled
 
@@ -158,6 +159,36 @@ export class MediaHState extends HState {
     reduxStore.dispatch(mediaHState.stateMachine.dispatchEvent(event));
   }
 
+  executePauseVideoCommand() {
+    tmpGetVideoElementRef().pause();
+  }
+
+  executeResumeVideoCommand() {
+    tmpGetVideoElementRef().play();
+  }
+
+  executeSendZoneMessage(operation: DmCommandOperation) {
+    console.log(operation);
+    const commandData: DmCommandData = operation.data as DmCommandData;
+    const zoneMessage: DmMessageCommandData = commandData as DmMessageCommandData;
+    const event: ArEventType = {
+      EventType: EventType.ZoneMessage,
+      EventData: {
+        zoneMessage,
+      }
+    };
+
+    debugger;
+    // let action: any = debugCode(event);
+    const action: any = debugCode2(event);
+    // action = action.bind(this);
+    // action = action.bind(this.stateMachine);
+    // const action: any = this.stateMachine.dispatchEvent(event);
+
+    const reduxStore: any = getReduxStore();
+    reduxStore.dispatch(action);
+  }
+
   executeCommand(command: DmcCommand, zoneHSM: MediaZoneHSM) {
     console.log('executeCommand:');
 
@@ -170,15 +201,17 @@ export class MediaHState extends HState {
 
       switch (operation.type) {
         case CommandType.PauseVideo:
-          tmpGetVideoElementRef().pause();
+          this.executePauseVideoCommand();
           break;
         case CommandType.ResumeVideo:
-          tmpGetVideoElementRef().play();
+          this.executeResumeVideoCommand();
+          break;
+        case CommandType.SendZoneMessage:
+          this.executeSendZoneMessage(operation);
           break;
         default:
           break;
       }
-
     }
   }
 
