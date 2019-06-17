@@ -205,7 +205,10 @@ let _playerHSM: PlayerHSM;
 export function initRuntime(store: Store<BsBrightSignPlayerState>) {
   return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
     _autotronStore = store;
-    return getRuntimeFiles();
+    return getRuntimeFiles()
+      .then(() => {
+        dispatch(launchHSM());
+      });
   });
 }
 
@@ -230,14 +233,16 @@ export function getRuntimeFiles(): Promise<void> {
     }).then((autoSchedule: any) => {
       _autoSchedule = autoSchedule;
       _hsmList = [];
-      launchHSM();
+      // launchHSM();
       return Promise.resolve();
     });
 }
 
 function launchHSM() {
-  _playerHSM = new PlayerHSM('playerHSM', _autotronStore, startPlayback, restartPlayback, postMessage, dispatchHsmEvent);
-  _playerHSM.initialize();
+  return ((dispatch: any) => {
+    _playerHSM = new PlayerHSM('playerHSM', _autotronStore, startPlayback, restartPlayback, postMessage, dispatchHsmEvent);
+    dispatch(_playerHSM.initialize());
+  });
 }
 
 function getAutoschedule(syncSpec: ArSyncSpec, rootPath: string) {
@@ -418,15 +423,7 @@ export function postMessage(event: ArEventType) {
   });
 }
 
-export function debugCode(event: ArEventType): any
-{
-  debugger;
-  let action: any = _playerHSM.Dispatch(event);
-  return action;
-}
-
-export function debugCode2(event: ArEventType): any
-{
+export function debugCode2(event: ArEventType): any {
   let action: any;
 
   debugger;
@@ -458,32 +455,34 @@ export function dispatchHsmEvent(
 }
 
 
-
 function startPlayback() {
 
-  const bsdm: DmState = _autotronStore.getState().bsdm;
+  return (dispatch: any, getState: any) => {
 
-  const zoneHSMs: ZoneHSM[] = [];
-  const zoneIds: BsDmId[] = dmGetZonesForSign(bsdm);
-  zoneIds.forEach((zoneId: BsDmId) => {
-    const bsdmZone: DmZone = dmGetZoneById(bsdm, { id: zoneId }) as DmZone;
+    const bsdm: DmState = getState().bsdm;
 
-    let zoneHSM: ZoneHSM;
+    const zoneHSMs: ZoneHSM[] = [];
+    const zoneIds: BsDmId[] = dmGetZonesForSign(bsdm);
+    zoneIds.forEach((zoneId: BsDmId) => {
+      const bsdmZone: DmZone = dmGetZoneById(bsdm, { id: zoneId }) as DmZone;
 
-    switch (bsdmZone.type) {
-      default: {
-        zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, _autotronStore, zoneId, dispatchHsmEvent);
-        break;
+      let zoneHSM: ZoneHSM;
+
+      switch (bsdmZone.type) {
+        default: {
+          zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, _autotronStore, zoneId, dispatchHsmEvent);
+          break;
+        }
       }
-    }
-    zoneHSMs.push(zoneHSM);
-    _hsmList.push(zoneHSM);
-  });
+      zoneHSMs.push(zoneHSM);
+      _hsmList.push(zoneHSM);
+    });
 
-  zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
-    zoneHSM.constructorFunction();
-    zoneHSM.initialize();
-  });
+    zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
+      zoneHSM.constructorFunction();
+      dispatch(zoneHSM.initialize());
+    });
+  };
 
 }
 

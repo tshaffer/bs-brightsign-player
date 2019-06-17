@@ -179,11 +179,7 @@ export class MediaHState extends HState {
     };
 
     debugger;
-    // let action: any = debugCode(event);
     const action: any = debugCode2(event);
-    // action = action.bind(this);
-    // action = action.bind(this.stateMachine);
-    // const action: any = this.stateMachine.dispatchEvent(event);
 
     const reduxStore: any = getReduxStore();
     reduxStore.dispatch(action);

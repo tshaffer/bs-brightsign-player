@@ -14,7 +14,7 @@ import {
 } from '@brightsign/bsdatamodel';
 import { MediaHState } from './mediaHState';
 import { LUT } from '../../type/runtime';
-import { HState } from './HSM';
+// import { HState } from './HSM';
 import ImageState from './imageState';
 import VideoState from './videoState';
 import { isNil } from 'lodash';
@@ -82,11 +82,13 @@ export class MediaZoneHSM extends ZoneHSM {
 
     // TEDTODO - verify that setting activeState to null is correct OR log error
     this.activeState = null;
-
   }
 
-  videoOrImagesZoneGetInitialState(): HState | null {
-    return this.activeState;
+  // videoOrImagesZoneGetInitialState(): HState | null {
+  videoOrImagesZoneGetInitialState(): any {
+    return (dispatch: any) => {
+      return this.activeState;
+    };
   }
 
 }

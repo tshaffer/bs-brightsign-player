@@ -34,114 +34,118 @@ export class HSM {
   // TEDTODO - remove casts
   initialize() {
 
-    this.reduxStore.dispatch(addHSM(this));
+    return ((dispatch: any) => {
 
-    this.reduxStore.dispatch(setActiveHState(this.hsmId, null));
+      dispatch(addHSM(this));
 
-    const stateData: HSMStateData = { nextState: null };
+      dispatch(setActiveHState(this.hsmId, null));
 
-    // empty event used to get super states
-    const emptyEvent: ArEventType = { EventType: 'EMPTY_SIGNAL' };
+      const stateData: HSMStateData = { nextState: null };
 
-    // entry event
-    const entryEvent: ArEventType = { EventType: 'ENTRY_SIGNAL' };
+      // empty event used to get super states
+      const emptyEvent: ArEventType = { EventType: 'EMPTY_SIGNAL' };
 
-    // init event
-    const initEvent: ArEventType = { EventType: 'INIT_SIGNAL' };
+      // entry event
+      const entryEvent: ArEventType = { EventType: 'ENTRY_SIGNAL' };
 
-    // execute initial transition
-    if (!isNil(this.initialPseudoStateHandler)) {
-      this.activeState = this.initialPseudoStateHandler(this.reduxStore);
-    }
+      // init event
+      const initEvent: ArEventType = { EventType: 'INIT_SIGNAL' };
 
-    // thought this would avoid needing casts....
-    // if (!isNil(this.activeState)) {
-    //   let activeState: HState = this.activeState;
-
-    //   // start at the top state
-    //   if (isNil(this.topState)) {
-    //     // TODO
-    //     debugger;
-    //   }
-    //   let sourceState = this.topState;
-
-    //   while (true) {
-    //     const entryStates = [];
-    //     let entryStateIndex = 0;
-
-    //     // target of the initial transition
-    //     entryStates[0] = activeState;
-
-    //     // send an empty event to get the super state
-    //     let status: string = this.activeState.HStateEventHandler(emptyEvent, stateData);
-
-    //     activeState = stateData.nextState;
-    //     this.activeState = stateData.nextState;
-  
-    //   }
-    // }
-
-    // if there is no activeState, the playlist is empty
-    if (isNil(this.activeState)) {
-      this.reduxStore.dispatch(setActiveHState(this.hsmId, null));
-      return;
-    }
-
-    let activeState: HState = this.activeState;
-
-    // start at the top state
-    if (isNil(this.topState)) {
-      // TODO
-      debugger;
-    }
-    let sourceState = this.topState;
-
-    while (true) {
-
-      const entryStates = [];
-      let entryStateIndex = 0;
-
-      // target of the initial transition
-      entryStates[0] = activeState;
-
-      // send an empty event to get the super state
-      let status: string = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData);
-
-      activeState = stateData.nextState as HState;
-      this.activeState = stateData.nextState;
-
-      // walk up the tree until the current source state is hit
-      while (activeState.id !== (sourceState as HState).id) {
-        entryStateIndex = entryStateIndex + 1;
-        entryStates[entryStateIndex] = activeState;
-        status = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData);
-        activeState = stateData.nextState as HState;
-        this.activeState = stateData.nextState;
+      // execute initial transition
+      if (!isNil(this.initialPseudoStateHandler)) {
+        this.activeState = dispatch(this.initialPseudoStateHandler(this.reduxStore));
+        console.log(this.activeState);
       }
 
-      // restore the target of the initial transition
-      // activeState = entryStates[0];
+      // thought this would avoid needing casts....
+      // if (!isNil(this.activeState)) {
+      //   let activeState: HState = this.activeState;
 
-      // retrace the entry path in reverse (desired) order
-      while (entryStateIndex >= 0) {
-        const entryState = entryStates[entryStateIndex];
-        status = entryState.HStateEventHandler(entryEvent, stateData);
-        entryStateIndex = entryStateIndex - 1;
-      }
+      //   // start at the top state
+      //   if (isNil(this.topState)) {
+      //     // TODO
+      //     debugger;
+      //   }
+      //   let sourceState = this.topState;
 
-      // new source state is the current state
-      sourceState = entryStates[0];
+      //   while (true) {
+      //     const entryStates = [];
+      //     let entryStateIndex = 0;
 
-      status = sourceState.HStateEventHandler(initEvent, stateData);
-      if (status !== 'TRANSITION') {
-        this.activeState = sourceState;
-        this.reduxStore.dispatch(setActiveHState(this.hsmId, this.activeState));
+      //     // target of the initial transition
+      //     entryStates[0] = activeState;
+
+      //     // send an empty event to get the super state
+      //     let status: string = this.activeState.HStateEventHandler(emptyEvent, stateData);
+
+      //     activeState = stateData.nextState;
+      //     this.activeState = stateData.nextState;
+
+      //   }
+      // }
+
+      // if there is no activeState, the playlist is empty
+      if (isNil(this.activeState)) {
+        dispatch(setActiveHState(this.hsmId, null));
         return;
       }
 
-      activeState = stateData.nextState as HState;
-      this.activeState = stateData.nextState;
-    }
+      let activeState: HState = this.activeState;
+
+      // start at the top state
+      if (isNil(this.topState)) {
+        // TODO
+        debugger;
+      }
+      let sourceState = this.topState;
+
+      while (true) {
+
+        const entryStates = [];
+        let entryStateIndex = 0;
+
+        // target of the initial transition
+        entryStates[0] = activeState;
+
+        // send an empty event to get the super state
+        let status: string = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData);
+
+        activeState = stateData.nextState as HState;
+        this.activeState = stateData.nextState;
+
+        // walk up the tree until the current source state is hit
+        while (activeState.id !== (sourceState as HState).id) {
+          entryStateIndex = entryStateIndex + 1;
+          entryStates[entryStateIndex] = activeState;
+          status = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData);
+          activeState = stateData.nextState as HState;
+          this.activeState = stateData.nextState;
+        }
+
+        // restore the target of the initial transition
+        // activeState = entryStates[0];
+
+        // retrace the entry path in reverse (desired) order
+        while (entryStateIndex >= 0) {
+          const entryState = entryStates[entryStateIndex];
+          status = entryState.HStateEventHandler(entryEvent, stateData);
+          entryStateIndex = entryStateIndex - 1;
+        }
+
+        // new source state is the current state
+        sourceState = entryStates[0];
+
+        status = sourceState.HStateEventHandler(initEvent, stateData);
+        if (status !== 'TRANSITION') {
+          this.activeState = sourceState;
+          dispatch(setActiveHState(this.hsmId, this.activeState));
+          return;
+        }
+
+        activeState = stateData.nextState as HState;
+        this.activeState = stateData.nextState;
+      }
+    });
   }
 
   // TEDTODO - remove casts
@@ -151,7 +155,7 @@ export class HSM {
 
       // if there is no activeState, the playlist is empty
       if (this.activeState == null) {
-        this.reduxStore.dispatch(setActiveHState(this.hsmId, this.activeState));
+        dispatch(setActiveHState(this.hsmId, this.activeState));
         return;
       }
 
@@ -328,7 +332,7 @@ export class HSM {
       // set the new state or restore the current state
       this.activeState = t;
 
-      this.reduxStore.dispatch(setActiveHState(this.hsmId, this.activeState));
+      dispatch(setActiveHState(this.hsmId, this.activeState));
 
     });
   }

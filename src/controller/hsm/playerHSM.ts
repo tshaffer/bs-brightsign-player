@@ -10,14 +10,16 @@ export class PlayerHSM extends HSM {
   stPlaying: HState;
   stWaiting: HState;
 
-  startPlayback: () => void;
+  // startPlayback: () => void;
+  startPlayback: () => any;
   restartPlayback: (presentationName: string) => Promise<void>;
   postMessage: (event: any) => Action;
 
   constructor(
     hsmId: string,
     reduxStore: any,
-    startPlayback: () => void,
+    // startPlayback: () => void,
+    startPlayback: () => any,
     restartPlayback: (presentationName: string) => Promise<void>,
     // postMessage: (event: ArEventType) => Action,
     postMessage: (event: ArEventType) => any, // TODO
@@ -44,16 +46,19 @@ export class PlayerHSM extends HSM {
     this.postMessage = postMessage;
   }
 
-  initializePlayerStateMachine(reduxStore: any): HState {
+  // initializePlayerStateMachine(reduxStore: any): HState {
+  initializePlayerStateMachine(reduxStore: any): any {
 
-    this.restartPlayback('').then(() => {
-      const event = {
-        EventType: 'TRANSITION_TO_PLAYING'
-      };
-      this.reduxStore.dispatch(this.postMessage(event));
-    });
+    return (dispatch: any) => {
+      this.restartPlayback('').then(() => {
+        const event = {
+          EventType: 'TRANSITION_TO_PLAYING'
+        };
+        this.reduxStore.dispatch(this.postMessage(event));
+      });
 
-    return this.stWaiting;
+      return this.stWaiting;
+    };
   }
 }
 
@@ -96,7 +101,9 @@ class STPlaying extends HState {
       // const stateMachine = this.stateMachine as PlayerHSM;
 
       // launch playback
-      (this.stateMachine as PlayerHSM).startPlayback();
+      debugger;
+      const action: any = (this.stateMachine as PlayerHSM).startPlayback();
+      this.stateMachine.reduxStore.dispatch(action);
 
       return 'HANDLED';
     }
