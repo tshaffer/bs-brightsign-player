@@ -54,6 +54,7 @@ export class HSM {
       this.activeState = this.initialPseudoStateHandler(this.reduxStore);
     }
 
+    // thought this would avoid needing casts....
     // if (!isNil(this.activeState)) {
     //   let activeState: HState = this.activeState;
 

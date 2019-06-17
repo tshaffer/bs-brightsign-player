@@ -1,4 +1,4 @@
-import { isObject } from 'lodash';
+import { isNil, isObject } from 'lodash';
 import { BsBrightSignPlayerState } from '../index';
 import { MediaHState } from '../controller/hsm/mediaHState';
 import { BsDmId } from '@brightsign/bsdatamodel';
@@ -16,6 +16,9 @@ export function getActiveMediaStateId(state: BsBrightSignPlayerState, zoneId: st
         if (isObject(hsm.activeState)) {
           const activeMediaHState: MediaHState = hsm.activeState as MediaHState;
           const mediaState: DmMediaState = activeMediaHState.mediaState;
+          if (isNil(mediaState)) {
+            return null;
+          }
           return mediaState.id;
         }
       }
