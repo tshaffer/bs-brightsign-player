@@ -18,21 +18,23 @@ export default class ImageState extends MediaHState {
 
     this.HStateEventHandler = this.STDisplayingImageEventHandler;
   }
-  
-  STDisplayingImageEventHandler(event: ArEventType, stateData: HSMStateData): string {
 
-    if (event.EventType === 'ENTRY_SIGNAL') {
-      console.log(this.id + ': entry signal');
-      this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry);
-      this.launchTimer();
-      return 'HANDLED';
-    } else if (event.EventType === 'EXIT_SIGNAL') {
-      this.mediaHStateExitHandler();
-    } else {
-      return this.mediaHStateEventHandler(event, stateData);
-    }
+  STDisplayingImageEventHandler(event: ArEventType, stateData: HSMStateData): any {
 
-    stateData.nextState = this.superState;
-    return 'SUPER';
+    return (dispatch: any) => {
+      if (event.EventType === 'ENTRY_SIGNAL') {
+        console.log(this.id + ': entry signal');
+        this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry);
+        this.launchTimer();
+        return 'HANDLED';
+      } else if (event.EventType === 'EXIT_SIGNAL') {
+        this.mediaHStateExitHandler();
+      } else {
+        return this.mediaHStateEventHandler(event, stateData);
+      }
+
+      stateData.nextState = this.superState;
+      return 'SUPER';
+    };
   }
 }

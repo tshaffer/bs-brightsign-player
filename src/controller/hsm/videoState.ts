@@ -26,22 +26,24 @@ export default class VideoState extends MediaHState {
     this.HStateEventHandler = this.STDisplayingVideoEventHandler;
   }
 
-  STDisplayingVideoEventHandler(event: ArEventType, stateData: HSMStateData): string {
+  STDisplayingVideoEventHandler(event: ArEventType, stateData: HSMStateData): any {
 
-    stateData.nextState = null;
+    return (dispatch: any) => {
+      stateData.nextState = null;
 
-    if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
-      console.log('entry signal');
-      this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry);
-      this.launchTimer();
-      return 'HANDLED';
-    } else if (event.EventType && event.EventType === 'EXIT_SIGNAL') {
-      this.mediaHStateExitHandler();
-    } else {
-      return this.mediaHStateEventHandler(event, stateData);
-    }
-
-    stateData.nextState = this.superState;
-    return 'SUPER';
+      if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
+        console.log('entry signal');
+        this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry);
+        this.launchTimer();
+        return 'HANDLED';
+      } else if (event.EventType && event.EventType === 'EXIT_SIGNAL') {
+        this.mediaHStateExitHandler();
+      } else {
+        return this.mediaHStateEventHandler(event, stateData);
+      }
+  
+      stateData.nextState = this.superState;
+      return 'SUPER';
+      };
   }
 }

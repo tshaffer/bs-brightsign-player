@@ -71,12 +71,14 @@ class STPlayer extends HState {
     this.superState = superState;
   }
 
-  STPlayerEventHandler(event: ArEventType, stateData: HSMStateData): string {
+  STPlayerEventHandler(event: ArEventType, stateData: HSMStateData): any {
 
-    stateData.nextState = null;
+    return (dispatch: any) => {
+      stateData.nextState = null;
 
-    stateData.nextState = this.superState;
-    return 'SUPER';
+      stateData.nextState = this.superState;
+      return 'SUPER';
+    };
   }
 }
 
@@ -89,25 +91,27 @@ class STPlaying extends HState {
     this.superState = superState;
   }
 
-  STPlayingEventHandler(event: ArEventType, stateData: HSMStateData): string {
+  STPlayingEventHandler(event: ArEventType, stateData: HSMStateData): any {
 
-    stateData.nextState = null;
+    return (dispatch: any) => {
+      stateData.nextState = null;
 
-    if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
+      if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
 
-      console.log(this.id + ': entry signal');
+        console.log(this.id + ': entry signal');
 
-      // const stateMachine = this.stateMachine as PlayerHSM;
+        // const stateMachine = this.stateMachine as PlayerHSM;
 
-      // launch playback
-      const action: any = (this.stateMachine as PlayerHSM).startPlayback();
-      this.stateMachine.reduxStore.dispatch(action);
+        // launch playback
+        const action: any = (this.stateMachine as PlayerHSM).startPlayback();
+        this.stateMachine.reduxStore.dispatch(action);
 
-      return 'HANDLED';
-    }
+        return 'HANDLED';
+      }
 
-    stateData.nextState = this.superState;
-    return 'SUPER';
+      stateData.nextState = this.superState;
+      return 'SUPER';
+    };
   }
 }
 
@@ -120,21 +124,23 @@ class STWaiting extends HState {
     this.superState = superState;
   }
 
-  STWaitingEventHandler(event: ArEventType, stateData: HSMStateData): string {
+  STWaitingEventHandler(event: ArEventType, stateData: HSMStateData): any {
 
-    stateData.nextState = null;
+    return (dispatch: any) => {
+      stateData.nextState = null;
 
-    if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
-      console.log(this.id + ': entry signal');
-      return 'HANDLED';
-    } else if (event.EventType && event.EventType === 'TRANSITION_TO_PLAYING') {
-      console.log(this.id + ': TRANSITION_TO_PLAYING event received');
-      stateData.nextState = (this.stateMachine as PlayerHSM).stPlaying;
-      return 'TRANSITION';
-    }
+      if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
+        console.log(this.id + ': entry signal');
+        return 'HANDLED';
+      } else if (event.EventType && event.EventType === 'TRANSITION_TO_PLAYING') {
+        console.log(this.id + ': TRANSITION_TO_PLAYING event received');
+        stateData.nextState = (this.stateMachine as PlayerHSM).stPlaying;
+        return 'TRANSITION';
+      }
 
-    stateData.nextState = this.superState;
-    return 'SUPER';
+      stateData.nextState = this.superState;
+      return 'SUPER';
+    };
   }
 }
 
