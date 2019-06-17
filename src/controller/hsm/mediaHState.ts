@@ -178,7 +178,6 @@ export class MediaHState extends HState {
       }
     };
 
-    debugger;
     const action: any = debugCode2(event);
 
     const reduxStore: any = getReduxStore();

@@ -15,7 +15,7 @@ export class HSM {
   topState: HState;
   activeState: HState | null;
   constructorHandler: (() => void) | null;
-  initialPseudoStateHandler: ((reduxStore: Store<BsBrightSignPlayerState>) => (HState | null));
+  initialPseudoStateHandler: () => (HState | null);
 
   constructor(hsmId: string, reduxStore: Store<BsBrightSignPlayerState>, dispatchEvent: ((event: ArEventType) => void)) {
     this.hsmId = hsmId;
@@ -53,7 +53,7 @@ export class HSM {
 
       // execute initial transition
       if (!isNil(this.initialPseudoStateHandler)) {
-        this.activeState = dispatch(this.initialPseudoStateHandler(this.reduxStore));
+        this.activeState = dispatch(this.initialPseudoStateHandler());
         console.log(this.activeState);
       }
 

@@ -46,15 +46,14 @@ export class PlayerHSM extends HSM {
     this.postMessage = postMessage;
   }
 
-  // initializePlayerStateMachine(reduxStore: any): HState {
-  initializePlayerStateMachine(reduxStore: any): any {
+  initializePlayerStateMachine(): any {
 
     return (dispatch: any) => {
       this.restartPlayback('').then(() => {
         const event = {
           EventType: 'TRANSITION_TO_PLAYING'
         };
-        this.reduxStore.dispatch(this.postMessage(event));
+        dispatch(this.postMessage(event));
       });
 
       return this.stWaiting;
@@ -101,7 +100,6 @@ class STPlaying extends HState {
       // const stateMachine = this.stateMachine as PlayerHSM;
 
       // launch playback
-      debugger;
       const action: any = (this.stateMachine as PlayerHSM).startPlayback();
       this.stateMachine.reduxStore.dispatch(action);
 
