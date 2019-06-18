@@ -5,21 +5,18 @@ import {
 
 import { isNil } from 'lodash';
 import { setActiveHState, addHSM, BsBrightSignPlayerState } from '../../index';
-import { Store } from 'redux';
 
 export class HSM {
 
   hsmId: string;
-  reduxStore: Store<BsBrightSignPlayerState>;
   dispatchEvent: ((event: ArEventType) => void);
   topState: HState;
   activeState: HState | null;
   constructorHandler: (() => void) | null;
   initialPseudoStateHandler: () => (HState | null);
 
-  constructor(hsmId: string, reduxStore: Store<BsBrightSignPlayerState>, dispatchEvent: ((event: ArEventType) => void)) {
+  constructor(hsmId: string, dispatchEvent: ((event: ArEventType) => void)) {
     this.hsmId = hsmId;
-    this.reduxStore = reduxStore;
     this.dispatchEvent = dispatchEvent;
     this.activeState = null;
     this.constructorHandler = null;

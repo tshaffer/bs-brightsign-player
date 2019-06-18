@@ -1,6 +1,4 @@
 import { ZoneHSM } from './zoneHSM';
-import { Store } from 'redux';
-import { BsBrightSignPlayerState } from '../../index';
 import { DmState } from '@brightsign/bsdatamodel';
 import { DmZone } from '@brightsign/bsdatamodel';
 import { BsDmId } from '@brightsign/bsdatamodel';
@@ -21,21 +19,22 @@ import { isNil } from 'lodash';
 
 export class MediaZoneHSM extends ZoneHSM {
 
+  bsdm: DmState;
   mediaHStates: MediaHState[];
 
   mediaStateIdToHState: LUT = {};
 
-  constructor(hsmId: string, autotronStore: Store<BsBrightSignPlayerState>, zoneId: string, dispatchEvent: any) {
+  constructor(hsmId: string, zoneId: string, dispatchEvent: any, bsdm: DmState) {
 
-    super(hsmId, autotronStore, zoneId, dispatchEvent);
+    super(hsmId, zoneId, dispatchEvent, bsdm);
 
     this.type = 'media';
+    this.bsdm = bsdm;
 
     this.constructorHandler = this.videoOrImagesZoneConstructor;
     this.initialPseudoStateHandler = this.videoOrImagesZoneGetInitialState;
 
     // build playlist
-    const bsdm: DmState = autotronStore.getState().bsdm;
     this.bsdmZone = dmGetZoneById(bsdm, { id: zoneId }) as DmZone;
 
     this.id = this.bsdmZone.id;
@@ -68,10 +67,9 @@ export class MediaZoneHSM extends ZoneHSM {
 
   videoOrImagesZoneConstructor() {
 
-    const bsdm: DmState = this.autotronStore.getState().bsdm;
-    const initialMediaStateId: BsDmId | null = dmGetInitialMediaStateIdForZone(bsdm, { id: this.zoneId });
+    const initialMediaStateId: BsDmId | null = dmGetInitialMediaStateIdForZone(this.bsdm, { id: this.zoneId });
     if (!isNil(initialMediaStateId)) {
-      const initialMediaState: DmMediaState = dmGetMediaStateById(bsdm, { id: initialMediaStateId }) as DmMediaState;
+      const initialMediaState: DmMediaState = dmGetMediaStateById(this.bsdm, { id: initialMediaStateId }) as DmMediaState;
       for (const mediaHState of this.mediaHStates) {
         if (mediaHState.mediaState.id === initialMediaState.id) {
           this.activeState = mediaHState;
@@ -84,7 +82,6 @@ export class MediaZoneHSM extends ZoneHSM {
     this.activeState = null;
   }
 
-  // videoOrImagesZoneGetInitialState(): HState | null {
   videoOrImagesZoneGetInitialState(): any {
     return (dispatch: any) => {
       return this.activeState;

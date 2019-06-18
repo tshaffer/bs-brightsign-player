@@ -240,7 +240,7 @@ export function getRuntimeFiles(): Promise<void> {
 
 function launchHSM() {
   return ((dispatch: any) => {
-    _playerHSM = new PlayerHSM('playerHSM', _autotronStore, startPlayback, restartPlayback, postMessage, dispatchHsmEvent);
+    _playerHSM = new PlayerHSM('playerHSM', startPlayback, restartPlayback, postMessage, dispatchHsmEvent);
     dispatch(_playerHSM.initialize());
   });
 }
@@ -423,23 +423,6 @@ export function postMessage(event: ArEventType) {
   });
 }
 
-export function debugCode2(event: ArEventType): any {
-  let action: any;
-
-  debugger;
-  return ((dispatch: any) => {
-
-    action = _playerHSM.Dispatch(event);
-    action = action.bind(_playerHSM);
-    dispatch(action);
-
-    _hsmList.forEach((hsm) => {
-      action = hsm.Dispatch(event);
-      action = action.bind(hsm);
-      dispatch(action);
-    });
-  });
-}
 
 export function dispatchHsmEvent(
   event: ArEventType
@@ -470,7 +453,7 @@ function startPlayback() {
 
       switch (bsdmZone.type) {
         default: {
-          zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, _autotronStore, zoneId, dispatchHsmEvent);
+          zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, zoneId, dispatchHsmEvent, bsdm);
           break;
         }
       }

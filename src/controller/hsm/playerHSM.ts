@@ -10,29 +10,24 @@ export class PlayerHSM extends HSM {
   stPlaying: HState;
   stWaiting: HState;
 
-  // startPlayback: () => void;
   startPlayback: () => any;
   restartPlayback: (presentationName: string) => Promise<void>;
   postMessage: (event: any) => Action;
 
   constructor(
     hsmId: string,
-    reduxStore: any,
-    // startPlayback: () => void,
     startPlayback: () => any,
     restartPlayback: (presentationName: string) => Promise<void>,
-    // postMessage: (event: ArEventType) => Action,
     postMessage: (event: ArEventType) => any, // TODO
     dispatchEvent: any) {
 
-    super(hsmId, reduxStore, dispatchEvent);
+    super(hsmId, dispatchEvent);
 
     this.type = 'player';
 
     this.stTop = new HState(this, 'Top');
     this.stTop.HStateEventHandler = STTopEventHandler;
 
-    // TEDTODO - who owns this??
     this.initialPseudoStateHandler = this.initializePlayerStateMachine;
 
     this.stPlayer = new STPlayer(this, 'Player', this.stTop);
@@ -104,7 +99,7 @@ class STPlaying extends HState {
 
         // launch playback
         const action: any = (this.stateMachine as PlayerHSM).startPlayback();
-        this.stateMachine.reduxStore.dispatch(action);
+        dispatch(action);
 
         return 'HANDLED';
       }
