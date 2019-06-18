@@ -1,7 +1,8 @@
 import { HState } from './HSM';
 import { EventType, CommandSequenceType, EventIntrinsicAction, CommandType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
-import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData } from '@brightsign/bsdatamodel';
+import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData, 
+  DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from './mediaZoneHSM';
 import { getReduxStore, tmpGetVideoElementRef, dispatchHsmEvent } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
@@ -24,6 +25,15 @@ export class MediaHState extends HState {
           if ((bpEventData.bpIndex !== dispatchedEvent.EventData.bpIndex) ||
             (bpEventData.bpType !== dispatchedEvent.EventData.bpType) ||
             (bpEventData.buttonNumber !== dispatchedEvent.EventData.buttonNumber)) {
+            return false;
+          }
+          break;
+        }
+        case EventType.ZoneMessage: {
+          const zoneMessageData: DmZoneMessageEventData = eventData as DmZoneMessageEventData;
+          const dispatchedZoneMessagePS: DmParameterizedString = dispatchedEvent.EventData.zoneMessage.messageData as DmParameterizedString;
+          const dispatchedString: string = dmGetSimpleStringFromParameterizedString(dispatchedZoneMessagePS) as string;
+          if (zoneMessageData.data !== dispatchedString) {
             return false;
           }
           break;
