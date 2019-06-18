@@ -3,7 +3,6 @@ import { EventType, CommandSequenceType, EventIntrinsicAction, CommandType } fro
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData } from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from './mediaZoneHSM';
-// import { getReduxStore, tmpGetVideoElementRef, dispatchHsmEvent, debugCode } from '../../index';
 import { getReduxStore, tmpGetVideoElementRef, debugCode2 } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition, DmCommandOperation } from '@brightsign/bsdatamodel';
@@ -105,48 +104,56 @@ export class MediaHState extends HState {
     return 'SUPER';
   }
 
-  mediaHStateEventHandler(dispatchedEvent: ArEventType, stateData: HSMStateData): string {
+  mediaHStateEventHandler(dispatchedEvent: ArEventType, stateData: HSMStateData): any {
 
-    const matchedEvent: DmcEvent | null = this.getMatchedEvent(this.mediaState, dispatchedEvent);
+    return (dispatch: any) => {
 
-    if (!isNil(matchedEvent)) {
+      const matchedEvent: DmcEvent | null = this.getMatchedEvent(this.mediaState, dispatchedEvent);
 
-      // AUTOTRONTODO - anytime we don't want to do this? that is, should it be conditional
-      // within executeEventMatchAction?
-      this.executeTransitionCommands(matchedEvent);
+      if (!isNil(matchedEvent)) {
 
-      return this.executeEventMatchAction(matchedEvent, stateData);
-    }
+        // AUTOTRONTODO - anytime we don't want to do this? that is, should it be conditional
+        // within executeEventMatchAction?
+        dispatch(this.executeTransitionCommands(matchedEvent));
 
-    stateData.nextState = this.superState;
-    return 'SUPER';
+        return this.executeEventMatchAction(matchedEvent, stateData);
+      }
+
+      stateData.nextState = this.superState;
+      return 'SUPER';
+    };
   }
 
-  mediaHStateExitHandler(): void {
-    if (this.timeout) {
-      clearTimeout(this.timeout);
-      this.timeout = null;
-    }
-    this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateExit);
+  mediaHStateExitHandler(): any {
+    return (dispatch: any) => {
+
+      if (this.timeout) {
+        clearTimeout(this.timeout);
+        this.timeout = null;
+      }
+      dispatch(this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateExit));
+    };
 
   }
 
-  launchTimer(): void {
+  launchTimer(): any {
 
-    // at least part of this will move somwhere else
-    const reduxStore: any = getReduxStore();
-    const bsdm: DmState = reduxStore.getState().bsdm;
+    return (dispatch: any, getState: any) => {
 
-    const eventIds: BsDmId[] = dmGetEventIdsForMediaState(bsdm, { id: this.id });
-    for (const eventId of eventIds) {
-      const event: DmEvent = dmGetEventStateById(bsdm, { id: eventId }) as DmEvent;
-      if (event.type === EventType.Timer) {
-        const interval: number = (event.data as DmTimer).interval;
-        if (interval && interval > 0) {
-          this.timeout = setTimeout(this.timeoutHandler, interval * 1000, this);
+      // at least part of this will move somwhere else
+      const bsdm: DmState = getState().bsdm;
+
+      const eventIds: BsDmId[] = dmGetEventIdsForMediaState(bsdm, { id: this.id });
+      for (const eventId of eventIds) {
+        const event: DmEvent = dmGetEventStateById(bsdm, { id: eventId }) as DmEvent;
+        if (event.type === EventType.Timer) {
+          const interval: number = (event.data as DmTimer).interval;
+          if (interval && interval > 0) {
+            this.timeout = setTimeout(this.timeoutHandler, interval * 1000, this);
+          }
         }
       }
-    }
+    };
   }
 
   timeoutHandler(mediaHState: MediaHState) {
@@ -168,86 +175,93 @@ export class MediaHState extends HState {
   }
 
   executeSendZoneMessage(operation: DmCommandOperation) {
-    console.log(operation);
-    const commandData: DmCommandData = operation.data as DmCommandData;
-    const zoneMessage: DmMessageCommandData = commandData as DmMessageCommandData;
-    const event: ArEventType = {
-      EventType: EventType.ZoneMessage,
-      EventData: {
-        zoneMessage,
-      }
+    return (dispatch: any) => {
+
+      console.log(operation);
+      const commandData: DmCommandData = operation.data as DmCommandData;
+      const zoneMessage: DmMessageCommandData = commandData as DmMessageCommandData;
+      const event: ArEventType = {
+        EventType: EventType.ZoneMessage,
+        EventData: {
+          zoneMessage,
+        }
+      };
+
+      const action: any = debugCode2(event);
+      dispatch(action);
     };
-
-    const action: any = debugCode2(event);
-
-    const reduxStore: any = getReduxStore();
-    reduxStore.dispatch(action);
   }
 
   executeCommand(command: DmcCommand, zoneHSM: MediaZoneHSM) {
-    console.log('executeCommand:');
+    return (dispatch: any) => {
 
-    const operations = command.operations;
-    if (operations.length === 1) {
+      console.log('executeCommand:');
 
-      const operation: DmCommandOperation = operations[0];
-      console.log('CommandType');
-      console.log(operation.type);
+      const operations = command.operations;
+      if (operations.length === 1) {
 
-      switch (operation.type) {
-        case CommandType.PauseVideo:
-          this.executePauseVideoCommand();
-          break;
-        case CommandType.ResumeVideo:
-          this.executeResumeVideoCommand();
-          break;
-        case CommandType.SendZoneMessage:
-          this.executeSendZoneMessage(operation);
-          break;
-        default:
-          break;
+        const operation: DmCommandOperation = operations[0];
+        console.log('CommandType');
+        console.log(operation.type);
+
+        switch (operation.type) {
+          case CommandType.PauseVideo:
+            this.executePauseVideoCommand();
+            break;
+          case CommandType.ResumeVideo:
+            this.executeResumeVideoCommand();
+            break;
+          case CommandType.SendZoneMessage:
+            dispatch(this.executeSendZoneMessage(operation));
+            break;
+          default:
+            break;
+        }
       }
-    }
+    };
   }
 
   executeMediaStateCommands(mediaStateId: BsDmId, zoneHSM: MediaZoneHSM, commandSequenceType: CommandSequenceType) {
-    const reduxStore: any = getReduxStore();
-    const bsdm: DmState = reduxStore.getState().bsdm;
-    const sequenceId: BsDmId | null =
-      dmGetCommandSequenceIdForParentAndType(bsdm, { id: mediaStateId, type: commandSequenceType.toString() });
-    if (!isNil(sequenceId)) {
-      const sequence: DmCommandSequence | null = dmGetCommandSequenceStateById(bsdm, { id: sequenceId as string });
-      if (isNil(sequence)) {
-        return;
-      }
-      const validatedSequence: DmCommandSequence = sequence as DmCommandSequence;
-      for (const commandId of validatedSequence.sequence) {
-        const command: DmcCommand | null = dmGetCommandById(bsdm, { id: commandId });
-        if (!isNil(command)) {
-          this.executeCommand(command, zoneHSM);
+    return (dispatch: any, getState: any) => {
+
+      const bsdm: DmState = getState().bsdm;
+      const sequenceId: BsDmId | null =
+        dmGetCommandSequenceIdForParentAndType(bsdm, { id: mediaStateId, type: commandSequenceType.toString() });
+      if (!isNil(sequenceId)) {
+        const sequence: DmCommandSequence | null = dmGetCommandSequenceStateById(bsdm, { id: sequenceId as string });
+        if (isNil(sequence)) {
+          return;
+        }
+        const validatedSequence: DmCommandSequence = sequence as DmCommandSequence;
+        for (const commandId of validatedSequence.sequence) {
+          const command: DmcCommand | null = dmGetCommandById(bsdm, { id: commandId });
+          if (!isNil(command)) {
+            dispatch(this.executeCommand(command, zoneHSM));
+          }
         }
       }
-    }
+    };
   }
 
   executeTransitionCommands(event: DmcEvent) {
-
-    const reduxStore: any = getReduxStore();
-    const bsdm: DmState = reduxStore.getState().bsdm;
-    const sequenceId: BsDmId | null =
-      dmGetCommandSequenceIdForParentAndType(bsdm, { id: event.id, type: CommandSequenceType.Event });
-    if (!isNil(sequenceId)) {
-      const sequence: DmCommandSequence | null = dmGetCommandSequenceStateById(bsdm, { id: sequenceId as string });
-      if (isNil(sequence)) {
-        return;
-      }
-      const validatedSequence: DmCommandSequence = sequence as DmCommandSequence;
-      for (const commandId of validatedSequence.sequence) {
-        const command: DmcCommand | null = dmGetCommandById(bsdm, { id: commandId });
-        if (!isNil(command)) {
-          this.executeCommand(command, this.stateMachine as MediaZoneHSM);
+    return (dispatch: any, getState: any) => {
+      const bsdm: DmState = getState().bsdm;
+      const sequenceId: BsDmId | null =
+        dmGetCommandSequenceIdForParentAndType(bsdm, { id: event.id, type: CommandSequenceType.Event });
+      if (!isNil(sequenceId)) {
+        const sequence: DmCommandSequence | null = dmGetCommandSequenceStateById(bsdm, { id: sequenceId as string });
+        if (isNil(sequence)) {
+          return;
+        }
+        const validatedSequence: DmCommandSequence = sequence as DmCommandSequence;
+        for (const commandId of validatedSequence.sequence) {
+          const command: DmcCommand | null = dmGetCommandById(bsdm, { id: commandId });
+          if (!isNil(command)) {
+            dispatch(this.executeCommand(command, this.stateMachine as MediaZoneHSM));
+          }
         }
       }
-    }
+    };
   }
+
 }

@@ -33,17 +33,17 @@ export default class VideoState extends MediaHState {
 
       if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
         console.log('entry signal');
-        this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry);
-        this.launchTimer();
+        dispatch(this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry));
+        dispatch(this.launchTimer());
         return 'HANDLED';
       } else if (event.EventType && event.EventType === 'EXIT_SIGNAL') {
-        this.mediaHStateExitHandler();
+        dispatch(this.mediaHStateExitHandler());
       } else {
-        return this.mediaHStateEventHandler(event, stateData);
+        return dispatch(this.mediaHStateEventHandler(event, stateData));
       }
-  
+
       stateData.nextState = this.superState;
       return 'SUPER';
-      };
+    };
   }
 }
