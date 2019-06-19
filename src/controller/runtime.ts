@@ -67,33 +67,7 @@ if (platform === 'BrightSign') {
 
   initializeBrightSign();
 
-  // const bp900Setup = new BSControlPort('TouchBoard-0-LED-SETUP') as any;
-  // bp900Setup.SetPinValue(0, 11);
 
-  // const bp900 = new BSControlPort('TouchBoard-0-LED') as any;
-  // bp900.SetPinValue(0, 0x07fe)
-  // bp900.SetPinValue(1, 0x07fd)
-  // bp900.SetPinValue(2, 0x07fb)
-  // bp900.SetPinValue(3, 0x07f7)
-  // bp900.SetPinValue(4, 0x07ef)
-  // bp900.SetPinValue(5, 0x07df)
-  // bp900.SetPinValue(6, 0x07bf)
-  // bp900.SetPinValue(7, 0x077f)
-  // bp900.SetPinValue(8, 0x06ff)
-  // bp900.SetPinValue(9, 0x05ff)
-  // bp900.SetPinValue(10, 0x03ff)
-
-  // bp900.SetPinValue(0, 0x038e38c);
-  // bp900.SetPinValue(1, 0x038e38c);
-  // bp900.SetPinValue(2, 0x038e38c);
-  // bp900.SetPinValue(3, 0x038e38c);
-  // bp900.SetPinValue(4, 0x038e38c);
-  // bp900.SetPinValue(5, 0x038e38c);
-  // bp900.SetPinValue(6, 0x038e38c);
-  // bp900.SetPinValue(7, 0x038e38c);
-  // bp900.SetPinValue(8, 0x038e38c);
-  // bp900.SetPinValue(9, 0x038e38c);
-  // bp900.SetPinValue(10, 0x038e38c);
 
   // // const getGpioControlPortPromise: Promise<any> = getControlPort('BrightSign');
   const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
