@@ -5,6 +5,7 @@ import {
 
 import { isNil } from 'lodash';
 import { setActiveHState, addHSM, BsBrightSignPlayerState } from '../../index';
+import { ActionWithPayload } from '../../..';
 
 export class HSM {
 
@@ -38,7 +39,8 @@ export class HSM {
 
       dispatch(addHSM(this));
 
-      dispatch(setActiveHState(this.hsmId, null));
+      const hStateAction: ActionWithPayload = setActiveHState(this.hsmId, null);
+      dispatch(hStateAction);
 
       const stateData: HSMStateData = { nextState: null };
 

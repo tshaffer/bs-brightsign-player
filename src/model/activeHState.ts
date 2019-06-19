@@ -10,7 +10,7 @@ export const SET_ACTIVE_HSTATE = 'SET_ACTIVE_HSTATE';
 // ------------------------------------
 // Actions
 // ------------------------------------
-export function setActiveHState(hsmId: string, activeState: any) {
+export function setActiveHState(hsmId: string, activeState: any): ActionWithPayload {
   return {
     type: SET_ACTIVE_HSTATE,
     payload: {
