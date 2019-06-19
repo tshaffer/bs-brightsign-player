@@ -21,8 +21,12 @@ import {
 import { ZoneHSM } from './hsm/zoneHSM';
 import { MediaZoneHSM } from './hsm/mediaZoneHSM';
 
-const platform: string = 'Desktop';
-// const platform: string = 'BrightSign';
+import {
+  initializeBrightSign
+} from '../platform/brightSign';
+
+// const platform: string = 'Desktop';
+const platform: string = 'BrightSign';
 
 let srcDirectory = '';
 if (platform === 'Desktop') {
@@ -35,6 +39,7 @@ else {
 }
 
 import Registry from '@brightsign/registry';
+import { EventType } from '@brightsign/bscore';
 const registry: Registry = new Registry();
 registry.read('networking', 'ru')
   .then((keyValue) => {
@@ -44,14 +49,28 @@ declare class BSControlPort {
   constructor(portName: string);
 }
 
+function getControlPort(portName: string): any {
+  return new Promise((resolve: any) => {
+    let controlPort: any = null;
+    try {
+      controlPort = new BSControlPort(portName);
+    }
+    catch (e) {
+      console.log('failed to create controlPort: ');
+      console.log(portName);
+    }
+    resolve(controlPort);
+  });
+}
+
 if (platform === 'BrightSign') {
 
-  // import { EventType } from '@brightsign/bscore';
+  initializeBrightSign();
 
-  const bp900Setup = new BSControlPort('TouchBoard-0-LED-SETUP') as any;
-  bp900Setup.SetPinValue(0, 11);
+  // const bp900Setup = new BSControlPort('TouchBoard-0-LED-SETUP') as any;
+  // bp900Setup.SetPinValue(0, 11);
 
-  const bp900 = new BSControlPort('TouchBoard-0-LED') as any;
+  // const bp900 = new BSControlPort('TouchBoard-0-LED') as any;
   // bp900.SetPinValue(0, 0x07fe)
   // bp900.SetPinValue(1, 0x07fd)
   // bp900.SetPinValue(2, 0x07fb)
@@ -64,62 +83,48 @@ if (platform === 'BrightSign') {
   // bp900.SetPinValue(9, 0x05ff)
   // bp900.SetPinValue(10, 0x03ff)
 
-  bp900.SetPinValue(0, 0x038e38c);
-  bp900.SetPinValue(1, 0x038e38c);
-  bp900.SetPinValue(2, 0x038e38c);
-  bp900.SetPinValue(3, 0x038e38c);
-  bp900.SetPinValue(4, 0x038e38c);
-  bp900.SetPinValue(5, 0x038e38c);
-  bp900.SetPinValue(6, 0x038e38c);
-  bp900.SetPinValue(7, 0x038e38c);
-  bp900.SetPinValue(8, 0x038e38c);
-  bp900.SetPinValue(9, 0x038e38c);
-  bp900.SetPinValue(10, 0x038e38c);
-
-  // function getControlPort(portName: string): any {
-  //   return new Promise((resolve: any) => {
-  //     let controlPort: any = null;
-  //     try {
-  //       controlPort = new BSControlPort(portName);
-  //     }
-  //     catch (e) {
-  //       console.log('failed to create controlPort: ');
-  //       console.log(portName);
-  //     }
-  //     resolve(controlPort);
-  //   });
-  // }
+  // bp900.SetPinValue(0, 0x038e38c);
+  // bp900.SetPinValue(1, 0x038e38c);
+  // bp900.SetPinValue(2, 0x038e38c);
+  // bp900.SetPinValue(3, 0x038e38c);
+  // bp900.SetPinValue(4, 0x038e38c);
+  // bp900.SetPinValue(5, 0x038e38c);
+  // bp900.SetPinValue(6, 0x038e38c);
+  // bp900.SetPinValue(7, 0x038e38c);
+  // bp900.SetPinValue(8, 0x038e38c);
+  // bp900.SetPinValue(9, 0x038e38c);
+  // bp900.SetPinValue(10, 0x038e38c);
 
   // // const getGpioControlPortPromise: Promise<any> = getControlPort('BrightSign');
-  // const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
+  const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
 
-  // getBP900ControlPort0Promise
-  //   .then((controlPort) => {
-  //     console.log('bp900ControlPort created');
+  getBP900ControlPort0Promise
+    .then((controlPort) => {
+      console.log('bp900ControlPort created');
 
-  //     controlPort.oncontroldown = function (e: any) {
-  //       console.log('### oncontroldown ' + e.code);
-  //       const newtext = ' DOWN: ' + e.code + '\n';
-  //       console.log(newtext);
+      controlPort.oncontroldown = function (e: any) {
+        console.log('### oncontroldown ' + e.code);
+        const newtext = ' DOWN: ' + e.code + '\n';
+        console.log(newtext);
 
-  //       const event: ArEventType = {
-  //         EventType: EventType.Bp,
-  //         EventData: {
-  //           bpIndex: 'a',
-  //           bpType: 'bp900',
-  //           buttonNumber: Number(e.code),
-  //         }
-  //       };
+        const event: ArEventType = {
+          EventType: EventType.Bp,
+          EventData: {
+            bpIndex: 'a',
+            bpType: 'bp900',
+            buttonNumber: Number(e.code),
+          }
+        };
 
-  //       console.log('********------- dispatch bp event');
+        console.log('********------- dispatch bp event');
 
-  //       const reduxStore: any = getReduxStore();
-  //       reduxStore.dispatch(dispatchHsmEvent(event));
-  //     };
-  //   })
-  //   .catch((err) => {
-  //     console.log(err);
-  //   });
+        const reduxStore: any = getReduxStore();
+        reduxStore.dispatch(dispatchHsmEvent(event));
+      };
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 
   // let bp900LEDControlPort: any;
   // const getBP900LEDSetupPortPromise: Promise<any> = getControlPort('TouchBoard-0-LED-SETUP');

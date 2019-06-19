@@ -1,13 +1,16 @@
 import { HState } from './HSM';
 import { EventType, CommandSequenceType, EventIntrinsicAction, CommandType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
-import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData, 
-  DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
+import {
+  DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData,
+  DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString, DmBpOutputCommandData
+} from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from './mediaZoneHSM';
 import { getReduxStore, tmpGetVideoElementRef, dispatchHsmEvent } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition, DmCommandOperation } from '@brightsign/bsdatamodel';
 import { isNil } from 'lodash';
+import { setBpOutput } from '../../platform/brightSign';
 
 export class MediaHState extends HState {
 
@@ -202,6 +205,11 @@ export class MediaHState extends HState {
     };
   }
 
+  executeSendBpOutput(operation: DmCommandOperation) {
+    const bpOutputCommandData: DmBpOutputCommandData = operation.data as DmBpOutputCommandData;
+    setBpOutput(bpOutputCommandData);
+  }
+
   executeCommand(command: DmcCommand, zoneHSM: MediaZoneHSM) {
     return (dispatch: any) => {
 
@@ -223,6 +231,9 @@ export class MediaHState extends HState {
             break;
           case CommandType.SendZoneMessage:
             dispatch(this.executeSendZoneMessage(operation));
+            break;
+          case CommandType.SendBpOutput:
+            this.executeSendBpOutput(operation);
             break;
           default:
             break;
