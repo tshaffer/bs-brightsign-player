@@ -14,6 +14,7 @@ import { DmcZone } from '@brightsign/bsdatamodel';
 import { Store } from 'redux';
 import { Action, Dispatch, ActionCreator } from 'redux';
 import { Reducer } from 'redux';
+import { DmParameterizedString } from '@brightsign/bsdatamodel';
 import { BsDmId } from '@brightsign/bsdatamodel';
 
 /** @module Controller:index */
@@ -41,10 +42,13 @@ export interface VideoProps {
     width: number;
     height: number;
     onVideoEnd: () => void;
+    onVideoRefRetrieved: (videoElementRef: any) => void;
     src: string;
 }
 export class VideoComponent extends React.Component<VideoProps> {
+    videoElementRef: any;
     onVideoEnd(): void;
+    onVideoRefRetrieved(videoElementRef: any): void;
     render(): JSX.Element;
 }
 export const Video: React.ComponentClass<any> & {
@@ -63,6 +67,7 @@ export interface MediaZoneProps {
 }
 export default class MediaZoneComponent extends React.Component<MediaZoneProps> {
     postMediaEndEvent(): void;
+    videoRefRetrieved(videoElementRef: any): void;
     renderMediaItem(mediaState: DmMediaState, contentItem: DmDerivedContentItem): JSX.Element | null;
     getEvents(bsdm: DmState, mediaStateId: string): DmEvent[];
     render(): JSX.Element | null;
@@ -98,13 +103,15 @@ export const App: React.ComponentClass<Pick<{
 export const initModel: () => BsBrightSignPlayerModelThunkAction<Promise<any>>;
 export const resetModel: () => BsBrightSignPlayerModelThunkAction<BsBrightSignPlayerModelAction<null>>;
 
-export function initRuntime(store: Store<BsBrightSignPlayerState>): (dispatch: any, getState: Function) => Promise<void>;
+export function getPlatform(): string;
+export function initRuntime(store: Store<BsBrightSignPlayerState>): (dispatch: any, getState: () => BsBrightSignPlayerState) => Promise<void>;
 export function getReduxStore(): Store<BsBrightSignPlayerState>;
+export function tmpSetVideoElementRef(videoElementRef: any): void;
+export function tmpGetVideoElementRef(): any;
 export function getRuntimeFiles(): Promise<void>;
 export function getPoolFilePath(fileName: string): string;
-export function postRuntimeMessage(event: ArEventType): (dispatch: any, getState: Function) => void;
-export function postMessage(event: ArEventType): (dispatch: any, getState: Function) => void;
-export function dispatchHsmEvent(event: ArEventType): Function;
+export function postMessage(event: ArEventType): (dispatch: any) => void;
+export function dispatchHsmEvent(event: ArEventType): BsBrightSignPlayerModelThunkAction<undefined | void>;
 
 export const ADD_HSM = "ADD_HSM";
 export function addHSM(hsm: HSM): {
@@ -116,13 +123,7 @@ export const hsmReducer: (state: HSM[] | undefined, action: ActionWithPayload) =
 export const isValidHSMs: (state: any) => boolean;
 
 export const SET_ACTIVE_HSTATE = "SET_ACTIVE_HSTATE";
-export function setActiveHState(hsmId: string, activeState: any): {
-    type: string;
-    payload: {
-        hsmId: string;
-        activeState: any;
-    };
-};
+export function setActiveHState(hsmId: string, activeState: any): ActionWithPayload;
 export const activeHStateReducer: (state: HStateMap | undefined, action: ActionWithPayload) => HStateMap;
 /** @private */
 export const isValidActiveHStates: (state: any) => boolean;
@@ -179,6 +180,18 @@ export const bsBrightSignPlayerReducer: BsBrightSignPlayerReducer;
 export const isValidBsBrightSignPlayerModelState: (state: any) => boolean;
 export const isValidBsBrightSignPlayerModelStateShallow: (state: any) => boolean;
 
+export const ADD_USER_VARIABLE = "ADD_USER_VARIABLE";
+export function addUserVariable(userVariableId: string, currentValue: DmParameterizedString): {
+    type: string;
+    payload: {
+        userVariableId: string;
+        currentValue: DmParameterizedString;
+    };
+};
+export const userVariableReducer: (state: UserVariableMap | undefined, action: ActionWithPayload) => UserVariableMap;
+/** @private */
+export const isValidUserVariableState: (state: any) => boolean;
+
 /** @module Selector:base */
 /** @private */
 export const bsBrightSignPlayerModelFilterBaseState: (state: any) => BsBrightSignPlayerModelState;
@@ -188,6 +201,8 @@ export const bsBrightSignPlayerModelGetBaseState: (state: BsBrightSignPlayerMode
 export function getActiveHStateId(state: BsBrightSignPlayerState, hsmId: string): string | null;
 
 export function getActiveMediaStateId(state: BsBrightSignPlayerState, zoneId: string): BsDmId | null;
+
+export function getUserVariableById(state: BsBrightSignPlayerState, userVariableId: string): UserVariable | null;
 
 /** @module Types:base */
 /** @private */
@@ -202,6 +217,7 @@ export interface BsBrightSignPlayerState {
 export interface BsBrightSignPlayerModelState {
     hsms: HSM[];
     activeHStates: HStateMap;
+    userVariables: UserVariableMap;
 }
 
 export interface HStateMap {
@@ -269,24 +285,31 @@ export function isBsBrightSignPlayerError(error: Error): error is BsBrightSignPl
 
 export class HSM {
     hsmId: string;
-    reduxStore: Store<BsBrightSignPlayerState>;
     dispatchEvent: ((event: ArEventType) => void);
     topState: HState;
     activeState: HState | null;
     constructorHandler: (() => void) | null;
-    initialPseudoStateHandler: ((reduxStore: Store<BsBrightSignPlayerState>) => (HState | null));
-    constructor(hsmId: string, reduxStore: Store<BsBrightSignPlayerState>, dispatchEvent: ((event: ArEventType) => void));
+    initialPseudoStateHandler: () => (HState | null);
+    constructor(hsmId: string, dispatchEvent: ((event: ArEventType) => void));
     constructorFunction(): void;
-    initialize(): void;
-    Dispatch(event: ArEventType): (dispatch: Function, getState: Function) => void;
+    initialize(): (dispatch: any) => void;
+    Dispatch(event: ArEventType): (dispatch: any, getState: () => BsBrightSignPlayerState) => void;
 }
 export class HState {
     topState: HState;
-    HStateEventHandler: (event: ArEventType, stateData: HSMStateData) => string;
+    HStateEventHandler: (event: ArEventType, stateData: HSMStateData) => any;
     stateMachine: HSM;
     superState: HState;
     id: string;
     constructor(stateMachine: HSM, id: string);
 }
-export function STTopEventHandler(_: ArEventType, stateData: HSMStateData): string;
+export function STTopEventHandler(_: ArEventType, stateData: HSMStateData): (dispatch: any) => string;
+
+export interface UserVariable {
+    userVariableId: string;
+    currentValue: DmParameterizedString;
+}
+export interface UserVariableMap {
+    [userVariableId: string]: UserVariable;
+}
 

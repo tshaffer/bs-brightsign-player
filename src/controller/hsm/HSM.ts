@@ -61,6 +61,7 @@ export class HSM {
 
       // thought this would avoid needing casts....
       // if (!isNil(this.activeState)) {
+        
       //   let activeState: HState = this.activeState;
 
       //   // start at the top state
@@ -78,7 +79,7 @@ export class HSM {
       //     entryStates[0] = activeState;
 
       //     // send an empty event to get the super state
-      //     let status: string = this.activeState.HStateEventHandler(emptyEvent, stateData);
+      //     // let status: string = this.activeState.HStateEventHandler(emptyEvent, stateData);
 
       //     activeState = stateData.nextState;
       //     this.activeState = stateData.nextState;

@@ -11,6 +11,8 @@ import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition, DmCommandOperation } from '@brightsign/bsdatamodel';
 import { isNil } from 'lodash';
 import { setBpOutput } from '../../platform/brightSign';
+import { getPlatform } from '../runtime';
+// import { BsDmStateVersion } from '@brightsign/bsdatamodel';
 
 export class MediaHState extends HState {
 
@@ -207,7 +209,9 @@ export class MediaHState extends HState {
 
   executeSendBpOutput(operation: DmCommandOperation) {
     const bpOutputCommandData: DmBpOutputCommandData = operation.data as DmBpOutputCommandData;
-    setBpOutput(bpOutputCommandData);
+    if (getPlatform() === 'BrightSign') {
+      setBpOutput(bpOutputCommandData);
+    }
   }
 
   executeCommand(command: DmcCommand, zoneHSM: MediaZoneHSM) {
