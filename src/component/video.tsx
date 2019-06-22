@@ -56,31 +56,6 @@ export class VideoComponent extends React.Component<VideoProps> {
     // type="video/mp4"
     return (
       <video
-        autoPlay={true}
-        width={this.props.width.toString()}
-        height={this.props.height.toString()}
-        ref={(videoElementRef) => {
-          console.log('videoElementRef retrieved');
-          self.onVideoRefRetrieved(videoElementRef);
-        }}
-        onEnded={() => {
-          console.log('**** - videoEnd');
-          self.props.onVideoEnd();
-        }}
-      >
-        <source
-          src={this.props.src}
-          ref={(videoElementSource) => {
-            console.log('videoElementSource retrieved');
-            self.onVideoElementSourceRetrieved(videoElementSource);
-          }}
-        />
-      </video>
-    );
-  }
-}
-
-/*
         src={this.props.src}
         autoPlay={true}
         width={this.props.width.toString()}
@@ -93,17 +68,48 @@ export class VideoComponent extends React.Component<VideoProps> {
           console.log('**** - videoEnd');
           self.props.onVideoEnd();
         }}
-*/
+      />
+    );
+  }
+}
 
 /*
-        <source
-          src={this.props.src}
-          ref={(videoElementSource) => {
-            console.log('videoElementSource retrieved');
-            self.onVideoElementSourceRetrieved(videoElementSource);
-          }}
-        />
-      </video>
+    src={this.props.src}
+    autoPlay={true}
+    width={this.props.width.toString()}
+    height={this.props.height.toString()}
+    ref={(videoElementRef) => {
+      console.log('videoElementRef retrieved');
+      self.onVideoRefRetrieved(videoElementRef);
+    }}
+    onEnded={() => {
+      console.log('**** - videoEnd');
+      self.props.onVideoEnd();
+    }}
+    */
+
+/*
+<video
+  autoPlay={true}
+  width={this.props.width.toString()}
+  height={this.props.height.toString()}
+  ref={(videoElementRef) => {
+    console.log('videoElementRef retrieved');
+    self.onVideoRefRetrieved(videoElementRef);
+  }}
+  onEnded={() => {
+    console.log('**** - videoEnd');
+    self.props.onVideoEnd();
+  }}
+>
+  <source
+    src={this.props.src}
+    ref={(videoElementSource) => {
+      console.log('videoElementSource retrieved');
+      self.onVideoElementSourceRetrieved(videoElementSource);
+    }}
+  />
+</video>
 */
 
 // -----------------------------------------------------------------------

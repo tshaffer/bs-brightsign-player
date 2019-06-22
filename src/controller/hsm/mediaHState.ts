@@ -178,12 +178,24 @@ export class MediaHState extends HState {
   }
 
   executePauseVideoCommand() {
+    console.log('pause video');
     tmpGetVideoElementRef().pause();
-    console.log('get assetPlayerSource');
-    const assetPlayerSource: any = tmpGetVideoElementSourceRef();
-    console.log('assetPlayerSource:');
-    console.log(assetPlayerSource);
-    assetPlayerSource.removeAttribute('src');
+
+    const videoElementRef = tmpGetVideoElementRef();
+    console.log('videoElementRef');
+    console.log(videoElementRef);
+    console.log('set source to null');
+    videoElementRef.setAttribute('src', null);
+    const src = videoElementRef.getAttribute('src');
+    console.log('src');
+    console.log(src);
+    videoElementRef.removeAttribute('src');
+    
+    // console.log('get assetPlayerSource');
+    // const assetPlayerSource: any = tmpGetVideoElementSourceRef();
+    // console.log('assetPlayerSource:');
+    // console.log(assetPlayerSource);
+    // assetPlayerSource.removeAttribute('src');
   }
 
   executeResumeVideoCommand() {
