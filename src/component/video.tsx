@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-// import { Dispatch } from 'redux';
-// import { bindActionCreators } from 'redux';
+import { Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
+import { postVideoEnd } from '../controller/device/player';
 
 // -----------------------------------------------------------------------
 // Types
@@ -10,7 +11,7 @@ import { connect } from 'react-redux';
 export interface VideoProps {
   width: number;
   height: number;
-  onVideoEnd : () => void;
+  onVideoEnd: () => void;
   onVideoRefRetrieved: (videoElementRef: any) => void;
   src: string;
 }
@@ -22,11 +23,6 @@ export interface VideoProps {
 export class VideoComponent extends React.Component<VideoProps> {
 
   videoElementRef: any;
-
-  onVideoEnd() {
-    console.log('onVideoEnd invoked');
-    this.props.onVideoEnd();
-  }
 
   onVideoRefRetrieved(videoElementRef: any) {
     this.videoElementRef = videoElementRef;
@@ -50,7 +46,7 @@ export class VideoComponent extends React.Component<VideoProps> {
         }}
         onEnded={() => {
           console.log('**** - videoEnd');
-          self.onVideoEnd();
+          self.props.onVideoEnd();
         }} 
       />
     );
@@ -61,11 +57,11 @@ export class VideoComponent extends React.Component<VideoProps> {
 // Container
 // -----------------------------------------------------------------------
 
-// const mapDispatchToProps = (dispatch: Dispatch<any>) => {
-//   return bindActionCreators({
-//     onVideoEnd: videoEnded,
-//   }, dispatch);
-// };
+const mapDispatchToProps = (dispatch: Dispatch<any>) => {
+  return bindActionCreators({
+    onVideoEnd: postVideoEnd,
+  }, dispatch);
+};
 
 const mapStateToProps = (state: any, ownProps: any): any => {
   return {
@@ -75,6 +71,5 @@ const mapStateToProps = (state: any, ownProps: any): any => {
   };
 };
 
-// export const Image = connect(mapStateToProps, mapDispatchToProps)(VideoComponent);
-export const Video = connect(mapStateToProps)(VideoComponent);
+export const Video = connect(mapStateToProps, mapDispatchToProps)(VideoComponent);
 

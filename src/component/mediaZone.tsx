@@ -7,7 +7,6 @@ import { Video } from './index';
 
 import {
   ContentItemType,
-  EventType,
 } from '@brightsign/bscore';
 
 import { BsDmId } from '@brightsign/bsdatamodel';
@@ -17,22 +16,16 @@ import { DmZone } from '@brightsign/bsdatamodel';
 import { DmEvent } from '@brightsign/bsdatamodel';
 
 import {
-  // DmDataFeedContentItem,
   DmDerivedContentItem,
   DmMediaContentItem,
-  // DmEventData,
-  // DmTimer,
   dmGetMediaStateById,
   dmGetEventIdsForMediaState,
   dmGetEventById,
   DmcEvent,
 } from '@brightsign/bsdatamodel';
-import { getPoolFilePath, getReduxStore, dispatchHsmEvent, tmpSetVideoElementRef } from '../index';
+import { getPoolFilePath, tmpSetVideoElementRef } from '../index';
 import { connect } from 'react-redux';
-// import { Dispatch } from 'redux';
-// import { bindActionCreators } from 'redux';
 import { getActiveMediaStateId } from '../selector/hsm';
-import { ArEventType } from '../type/runtime';
 import { isString } from 'lodash';
 
 // -----------------------------------------------------------------------
@@ -55,23 +48,8 @@ export interface MediaZoneProps {
 // -----------------------------------------------------------------------
 export default class MediaZoneComponent extends React.Component<MediaZoneProps> {
 
-  constructor(props: any) {
-    super(props);
-    this.postMediaEndEvent = this.postMediaEndEvent.bind(this);
-  }
-
-  postMediaEndEvent()  {
-    console.log('postMediaEndEvent');
-    const event : ArEventType = {
-      EventType : EventType.MediaEnd,
-    };
-    const reduxStore: any = getReduxStore();
-    reduxStore.dispatch(dispatchHsmEvent(event));
-  }
-
   videoRefRetrieved(videoElementRef: any) {
     console.log('mediaZone.tsx#videoRefRetrieved');
-    console.log(videoElementRef);
     tmpSetVideoElementRef(videoElementRef);
   }
 
@@ -81,11 +59,6 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
 
     const mediaContentItem: DmMediaContentItem = contentItem as DmMediaContentItem;
 
-    // const assetId: string = mediaContentItem.assetId;
-    // const assetItem : BsAssetItem = dmGetAssetItemById(this.props.bsdm, { id : assetId }) as BsAssetItem;
-
-    // TODO - near term (likely) fix
-    // const fileId : string = assetItem.name;
     const fileId: string = mediaState.name;
 
     const poolFilePath: string = getPoolFilePath(fileId);
@@ -109,7 +82,6 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
             width={this.props.width}
             height={this.props.height}
             src={src}
-            onVideoEnd={self.postMediaEndEvent}
             onVideoRefRetrieved={self.videoRefRetrieved}
           />
         );
@@ -164,14 +136,6 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
 // Container
 // -----------------------------------------------------------------------
 
-// const mapDispatchToProps = (dispatch: Dispatch<any>) => {
-//   return bindActionCreators({
-//     postBSPMessage: postMessage,
-//   }, dispatch);
-// };
-
-// const mapStateToProps = (state: any, ownProps: undefined): Partial<ImageProps> => {
-// const mapStateToProps = (state: any, ownProps: undefined): ImageProps => {
 const mapStateToProps = (state: any, ownProps: any): any => {
   return {
     key: state.key,
@@ -183,5 +147,4 @@ const mapStateToProps = (state: any, ownProps: any): any => {
   };
 };
 
-// export const MediaZone = connect(mapStateToProps, mapDispatchToProps)(MediaZoneComponent);
 export const MediaZone = connect(mapStateToProps, null)(MediaZoneComponent);
