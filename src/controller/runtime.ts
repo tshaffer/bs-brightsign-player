@@ -21,8 +21,24 @@ import {
 import { ZoneHSM } from './hsm/zoneHSM';
 import { MediaZoneHSM } from './hsm/mediaZoneHSM';
 
-const platform: string = 'Desktop';
+import {
+  initializeButtonPanels
+} from './device/bp';
+
+// const platform: string = 'Desktop';
 // const platform: string = 'BrightSign';
+let platform: string;
+
+try {
+  const gpio = new BSControlPort('BrightSign') as any;
+  console.log('create controlPort: ');
+  console.log(gpio);
+  platform = 'BrightSign';
+}
+catch (e) {
+  platform = 'Desktop';
+  console.log('failed to create controlPort: ');
+}
 
 let srcDirectory = '';
 if (platform === 'Desktop') {
@@ -40,155 +56,6 @@ registry.read('networking', 'ru')
   .then((keyValue) => {
   });
 
-declare class BSControlPort {
-  constructor(portName: string);
-}
-
-if (platform === 'BrightSign') {
-
-  // import { EventType } from '@brightsign/bscore';
-
-  const bp900Setup = new BSControlPort('TouchBoard-0-LED-SETUP') as any;
-  bp900Setup.SetPinValue(0, 11);
-
-  const bp900 = new BSControlPort('TouchBoard-0-LED') as any;
-  // bp900.SetPinValue(0, 0x07fe)
-  // bp900.SetPinValue(1, 0x07fd)
-  // bp900.SetPinValue(2, 0x07fb)
-  // bp900.SetPinValue(3, 0x07f7)
-  // bp900.SetPinValue(4, 0x07ef)
-  // bp900.SetPinValue(5, 0x07df)
-  // bp900.SetPinValue(6, 0x07bf)
-  // bp900.SetPinValue(7, 0x077f)
-  // bp900.SetPinValue(8, 0x06ff)
-  // bp900.SetPinValue(9, 0x05ff)
-  // bp900.SetPinValue(10, 0x03ff)
-
-  bp900.SetPinValue(0, 0x038e38c);
-  bp900.SetPinValue(1, 0x038e38c);
-  bp900.SetPinValue(2, 0x038e38c);
-  bp900.SetPinValue(3, 0x038e38c);
-  bp900.SetPinValue(4, 0x038e38c);
-  bp900.SetPinValue(5, 0x038e38c);
-  bp900.SetPinValue(6, 0x038e38c);
-  bp900.SetPinValue(7, 0x038e38c);
-  bp900.SetPinValue(8, 0x038e38c);
-  bp900.SetPinValue(9, 0x038e38c);
-  bp900.SetPinValue(10, 0x038e38c);
-
-  // function getControlPort(portName: string): any {
-  //   return new Promise((resolve: any) => {
-  //     let controlPort: any = null;
-  //     try {
-  //       controlPort = new BSControlPort(portName);
-  //     }
-  //     catch (e) {
-  //       console.log('failed to create controlPort: ');
-  //       console.log(portName);
-  //     }
-  //     resolve(controlPort);
-  //   });
-  // }
-
-  // // const getGpioControlPortPromise: Promise<any> = getControlPort('BrightSign');
-  // const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
-
-  // getBP900ControlPort0Promise
-  //   .then((controlPort) => {
-  //     console.log('bp900ControlPort created');
-
-  //     controlPort.oncontroldown = function (e: any) {
-  //       console.log('### oncontroldown ' + e.code);
-  //       const newtext = ' DOWN: ' + e.code + '\n';
-  //       console.log(newtext);
-
-  //       const event: ArEventType = {
-  //         EventType: EventType.Bp,
-  //         EventData: {
-  //           bpIndex: 'a',
-  //           bpType: 'bp900',
-  //           buttonNumber: Number(e.code),
-  //         }
-  //       };
-
-  //       console.log('********------- dispatch bp event');
-
-  //       const reduxStore: any = getReduxStore();
-  //       reduxStore.dispatch(dispatchHsmEvent(event));
-  //     };
-  //   })
-  //   .catch((err) => {
-  //     console.log(err);
-  //   });
-
-  // let bp900LEDControlPort: any;
-  // const getBP900LEDSetupPortPromise: Promise<any> = getControlPort('TouchBoard-0-LED-SETUP');
-  // const getBP900LEDControlPortPromise: Promise<any> = getControlPort('TouchBoard-0-LED');
-
-  // getBP900LEDSetupPortPromise
-  //   .then((ledSetupPort) => {
-  //     console.log('led setup port created');
-  //     ledSetupPort.SetOutputValue(0, 22);
-  //     ledSetupPort.SetOutputValue(1, 0);
-  //     ledSetupPort.SetOutputValue(2, 0);
-
-  //     getBP900LEDControlPortPromise
-  //       .then((ledControlPort) => {
-  //         bp900LEDControlPort = ledControlPort;
-
-  //         ledSetupPort.SetOutputValue(0, 0x000B00A0)
-  //         // m.bpOutput[buttonPanelIndex%].SetOutputValue(i%, &h038e38c)
-  //         bp900LEDControlPort.SetOutputValue(0, 0x038e38c)
-  //         bp900LEDControlPort.SetOutputValue(1, 0x038e38c)
-  //         bp900LEDControlPort.SetOutputValue(2, 0x038e38c)
-  //         bp900LEDControlPort.SetOutputValue(3, 0x038e38c)
-  //         bp900LEDControlPort.SetOutputValue(4, 0x038e38c)
-  //         bp900LEDControlPort.SetOutputValue(5, 0x038e38c)
-  //         bp900LEDControlPort.SetOutputValue(6, 0x038e38c)
-  //         bp900LEDControlPort.SetOutputValue(7, 0x038e38c)
-  //         bp900LEDControlPort.SetOutputValue(8, 0x038e38c)
-  //         bp900LEDControlPort.SetOutputValue(9, 0x038e38c)
-  //         bp900LEDControlPort.SetOutputValue(10, 0x038e38c)
-
-  //         // ledSetupPort.SetOutputValue(0, 0x000B00A0)
-  //         // bp900LEDControlPort.SetOutputValue(0, 0x07fe)
-  //         // bp900LEDControlPort.SetOutputValue(1, 0x07fd)
-  //         // bp900LEDControlPort.SetOutputValue(2, 0x07fb)
-  //         // bp900LEDControlPort.SetOutputValue(3, 0x07f7)
-  //         // bp900LEDControlPort.SetOutputValue(4, 0x07ef)
-  //         // bp900LEDControlPort.SetOutputValue(5, 0x07df)
-  //         // bp900LEDControlPort.SetOutputValue(6, 0x07bf)
-  //         // bp900LEDControlPort.SetOutputValue(7, 0x077f)
-  //         // bp900LEDControlPort.SetOutputValue(8, 0x06ff)
-  //         // bp900LEDControlPort.SetOutputValue(9, 0x05ff)
-  //         // bp900LEDControlPort.SetOutputValue(10, 0x03ff)
-
-  //         // console.log('led control port created');
-  //         // bp900LEDControlPort = ledControlPort;
-  //         // bp900LEDControlPort.SetOutputValue(0, 1)
-  //         // bp900LEDControlPort.SetOutputValue(1, 1)
-  //         // bp900LEDControlPort.SetOutputValue(2, 1)
-  //         // bp900LEDControlPort.SetOutputValue(3, 1)
-  //         // bp900LEDControlPort.SetOutputValue(4, 1)
-  //         // bp900LEDControlPort.SetOutputValue(5, 1)
-  //         // bp900LEDControlPort.SetOutputValue(6, 1)
-  //         // bp900LEDControlPort.SetOutputValue(7, 1)
-  //         // bp900LEDControlPort.SetOutputValue(8, 1)
-  //         // bp900LEDControlPort.SetOutputValue(9, 1)
-  //         // bp900LEDControlPort.SetOutputValue(10, 1)
-  //       })
-  //       .catch((err) => {
-  //         console.log(err);
-  //       });
-
-  //   })
-  //   .catch((err) => {
-  //     console.log(err);
-  //   });
-
-  // end of for BrightSign only
-}
-
 let _autotronStore: Store<BsBrightSignPlayerState>;
 let _syncSpec: ArSyncSpec;
 let _poolAssetFiles: ArFileLUT;
@@ -202,6 +69,9 @@ let _playerHSM: PlayerHSM;
 // -----------------------------------------------------------------------
 // Controller Methods
 // -----------------------------------------------------------------------
+
+initializeButtonPanels();
+
 export function initRuntime(store: Store<BsBrightSignPlayerState>) {
   return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
     _autotronStore = store;
