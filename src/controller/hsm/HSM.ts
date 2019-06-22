@@ -29,7 +29,6 @@ export class HSM {
     }
   }
 
-  // TEDTODO - remove casts
   initialize() {
 
     let action: any;
@@ -59,97 +58,72 @@ export class HSM {
         console.log(this.activeState);
       }
 
-      // thought this would avoid needing casts....
-      // if (!isNil(this.activeState)) {
-      //   let activeState: HState = this.activeState;
-
-      //   // start at the top state
-      //   if (isNil(this.topState)) {
-      //     // TODO
-      //     debugger;
-      //   }
-      //   let sourceState = this.topState;
-
-      //   while (true) {
-      //     const entryStates = [];
-      //     let entryStateIndex = 0;
-
-      //     // target of the initial transition
-      //     entryStates[0] = activeState;
-
-      //     // send an empty event to get the super state
-      //     let status: string = this.activeState.HStateEventHandler(emptyEvent, stateData);
-
-      //     activeState = stateData.nextState;
-      //     this.activeState = stateData.nextState;
-
-      //   }
-      // }
-
       // if there is no activeState, the playlist is empty
       if (isNil(this.activeState)) {
         dispatch(setActiveHState(this.hsmId, null));
         return;
       }
 
-      let activeState: HState = this.activeState;
+      if (!isNil(this.activeState)) {
+        let activeState: HState = this.activeState;
 
-      // start at the top state
-      if (isNil(this.topState)) {
-        // TODO
-        debugger;
-      }
-      let sourceState = this.topState;
+        // start at the top state
+        if (isNil(this.topState)) {
+          // TODO
+          debugger;
+        }
+        let sourceState = this.topState;
 
-      while (true) {
+        while (true) {
 
-        const entryStates = [];
-        let entryStateIndex = 0;
+          const entryStates = [];
+          let entryStateIndex = 0;
 
-        // target of the initial transition
-        entryStates[0] = activeState;
+          // target of the initial transition
+          entryStates[0] = activeState;
 
-        // send an empty event to get the super state
-        action = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData);
-        status = dispatch(action);
-
-        activeState = stateData.nextState as HState;
-        this.activeState = stateData.nextState;
-
-        // walk up the tree until the current source state is hit
-        while (activeState.id !== (sourceState as HState).id) {
-          entryStateIndex = entryStateIndex + 1;
-          entryStates[entryStateIndex] = activeState;
-          action = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData);
+          // send an empty event to get the super state
+          action = (this.activeState).HStateEventHandler(emptyEvent, stateData);
           status = dispatch(action);
+
           activeState = stateData.nextState as HState;
-          this.activeState = stateData.nextState;
-        }
+          this.activeState = activeState;
 
-        // restore the target of the initial transition
-        // activeState = entryStates[0];
+          // walk up the tree until the current source state is hit
+          while (activeState.id !== (sourceState).id) {
+            entryStateIndex = entryStateIndex + 1;
+            entryStates[entryStateIndex] = activeState;
+            action = this.activeState.HStateEventHandler(emptyEvent, stateData);
+            status = dispatch(action);
+            activeState = stateData.nextState as HState;
+            this.activeState = activeState;
+          }
 
-        // retrace the entry path in reverse (desired) order
-        while (entryStateIndex >= 0) {
-          const entryState = entryStates[entryStateIndex];
-          action = entryState.HStateEventHandler(entryEvent, stateData);
+          // restore the target of the initial transition
+          // activeState = entryStates[0];
+
+          // retrace the entry path in reverse (desired) order
+          while (entryStateIndex >= 0) {
+            const entryState = entryStates[entryStateIndex];
+            action = entryState.HStateEventHandler(entryEvent, stateData);
+            status = dispatch(action);
+            entryStateIndex = entryStateIndex - 1;
+          }
+
+          // new source state is the current state
+          sourceState = entryStates[0];
+
+          action = sourceState.HStateEventHandler(initEvent, stateData);
           status = dispatch(action);
-          entryStateIndex = entryStateIndex - 1;
+          if (status !== 'TRANSITION') {
+            this.activeState = sourceState;
+            dispatch(setActiveHState(this.hsmId, this.activeState));
+            return;
+          }
+
+          activeState = stateData.nextState as HState;
+          this.activeState = activeState;
         }
-
-        // new source state is the current state
-        sourceState = entryStates[0];
-
-        action = sourceState.HStateEventHandler(initEvent, stateData);
-        status = dispatch(action);
-        if (status !== 'TRANSITION') {
-          this.activeState = sourceState;
-          dispatch(setActiveHState(this.hsmId, this.activeState));
-          return;
-        }
-
-        activeState = stateData.nextState as HState;
-        this.activeState = stateData.nextState;
       }
     });
   }

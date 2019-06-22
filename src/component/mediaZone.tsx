@@ -55,6 +55,11 @@ export interface MediaZoneProps {
 // -----------------------------------------------------------------------
 export default class MediaZoneComponent extends React.Component<MediaZoneProps> {
 
+  constructor(props: any) {
+    super(props);
+    this.postMediaEndEvent = this.postMediaEndEvent.bind(this);
+  }
+
   postMediaEndEvent()  {
     console.log('postMediaEndEvent');
     const event : ArEventType = {
@@ -104,7 +109,7 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
             width={this.props.width}
             height={this.props.height}
             src={src}
-            onVideoEnd={self.postMediaEndEvent.bind(this)}
+            onVideoEnd={self.postMediaEndEvent}
             onVideoRefRetrieved={self.videoRefRetrieved}
           />
         );
