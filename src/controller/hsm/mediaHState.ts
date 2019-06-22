@@ -83,15 +83,14 @@ export class MediaHState extends HState {
         }
         case EventIntrinsicAction.StopPlayback: {
           console.log('remain on current state, stopPlayback');
-          /*
-				    videoPlayer.Stop()
-          */
+          tmpGetVideoElementRef().pause();
           return 'HANDLED';
         }
         case EventIntrinsicAction.StopPlaybackAndClearScreen: {
           console.log('remain on current state, stopPlaybackClearScreen');
           // videoPlayer.StopClear()
           // imagePlayer.StopDisplay()
+          tmpGetVideoElementRef().pause();
           return 'HANDLED';
         }
         default: {
