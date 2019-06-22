@@ -4,49 +4,39 @@ import { isObject } from 'lodash';
 import { ArEventType } from '../../type/runtime';
 import { getReduxStore, dispatchHsmEvent } from '../runtime';
 
-let bp900Setup: BSControlPort;
-let bp900: BSControlPort;
+let bp900Control: BSControlPort;
+let bp900Leds: BSControlPort;
+let bp900LedsSetup: BSControlPort;
 
 export function initializeButtonPanels() {
 
   try {
-    bp900Setup = new BSControlPort('TouchBoard-0-LED-SETUP') as any;
-    bp900Setup.SetPinValue(0, 11);
+    bp900Control = new BSControlPort('TouchBoard-0-GPIO') as any;
 
-    bp900 = new BSControlPort('TouchBoard-0-LED') as any;
+    bp900LedsSetup = new BSControlPort('TouchBoard-0-LED-SETUP') as any;
+    bp900LedsSetup.SetPinValue(0, 11);
 
-    console.log('setup oncontrol down handler');
+    bp900Leds = new BSControlPort('TouchBoard-0-LED') as any;
 
-    const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
+    bp900Control.oncontroldown = (e: any) => {
+      console.log('### oncontroldown ' + e.code);
+      const newtext = ' DOWN: ' + e.code + '\n';
+      console.log(newtext);
 
-    getBP900ControlPort0Promise
-      .then((controlPort) => {
-        console.log('bp900ControlPort created');
+      const event: ArEventType = {
+        EventType: EventType.Bp,
+        EventData: {
+          bpIndex: 'a',
+          bpType: 'bp900',
+          buttonNumber: Number(e.code),
+        }
+      };
+
+      console.log('********------- dispatch bp event');
   
-        controlPort.oncontroldown = (e: any) => {
-          console.log('### oncontroldown ' + e.code);
-          const newtext = ' DOWN: ' + e.code + '\n';
-          console.log(newtext);
-  
-          const event: ArEventType = {
-            EventType: EventType.Bp,
-            EventData: {
-              bpIndex: 'a',
-              bpType: 'bp900',
-              buttonNumber: Number(e.code),
-            }
-          };
-  
-          console.log('********------- dispatch bp event');
-  
-          const reduxStore: any = getReduxStore();
-          reduxStore.dispatch(dispatchHsmEvent(event));
-        };
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  
+      const reduxStore: any = getReduxStore();
+      reduxStore.dispatch(dispatchHsmEvent(event));
+    };  
   }
   catch (e) {
     console.log('failed to create controlPort: ');
@@ -72,7 +62,7 @@ function getPinValue(bpAction: BpAction): number {
 
 export function setBpOutput(bpCommandData: DmBpOutputCommandData) {
 
-  if (!isObject(bp900)) {
+  if (!isObject(bp900Leds)) {
     return;
   }
 
@@ -90,22 +80,7 @@ export function setBpOutput(bpCommandData: DmBpOutputCommandData) {
 
   if (buttonNumber === -1) {
     for (let index = 0; index < 11; index++) {
-      bp900.SetPinValue(index, pinValue);
+      bp900Leds.SetPinValue(index, pinValue);
     }
   }
 }
-
-function getControlPort(portName: string): any {
-  return new Promise((resolve: any) => {
-    let controlPort: any = null;
-    try {
-      controlPort = new BSControlPort(portName);
-    }
-    catch (e) {
-      console.log('failed to create controlPort: ');
-      console.log(portName);
-    }
-    resolve(controlPort);
-  });
-}
-
