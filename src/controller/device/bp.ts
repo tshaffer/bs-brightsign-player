@@ -1,17 +1,52 @@
 import { DmBpOutputCommandData } from '@brightsign/bsdatamodel';
-import { BpAction } from '@brightsign/bscore';
+import { BpAction, EventType } from '@brightsign/bscore';
 import { isObject } from 'lodash';
+import { ArEventType } from '../../type/runtime';
+import { getReduxStore, dispatchHsmEvent } from '../runtime';
 
 let bp900Setup: BSControlPort;
 let bp900: BSControlPort;
 
 export function initializeButtonPanels() {
-  
+
   try {
     bp900Setup = new BSControlPort('TouchBoard-0-LED-SETUP') as any;
     bp900Setup.SetPinValue(0, 11);
 
     bp900 = new BSControlPort('TouchBoard-0-LED') as any;
+
+    console.log('setup oncontrol down handler');
+
+    const getBP900ControlPort0Promise: Promise<any> = getControlPort('TouchBoard-0-GPIO');
+
+    getBP900ControlPort0Promise
+      .then((controlPort) => {
+        console.log('bp900ControlPort created');
+  
+        controlPort.oncontroldown = (e: any) => {
+          console.log('### oncontroldown ' + e.code);
+          const newtext = ' DOWN: ' + e.code + '\n';
+          console.log(newtext);
+  
+          const event: ArEventType = {
+            EventType: EventType.Bp,
+            EventData: {
+              bpIndex: 'a',
+              bpType: 'bp900',
+              buttonNumber: Number(e.code),
+            }
+          };
+  
+          console.log('********------- dispatch bp event');
+  
+          const reduxStore: any = getReduxStore();
+          reduxStore.dispatch(dispatchHsmEvent(event));
+        };
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  
   }
   catch (e) {
     console.log('failed to create controlPort: ');
@@ -60,4 +95,17 @@ export function setBpOutput(bpCommandData: DmBpOutputCommandData) {
   }
 }
 
+function getControlPort(portName: string): any {
+  return new Promise((resolve: any) => {
+    let controlPort: any = null;
+    try {
+      controlPort = new BSControlPort(portName);
+    }
+    catch (e) {
+      console.log('failed to create controlPort: ');
+      console.log(portName);
+    }
+    resolve(controlPort);
+  });
+}
 

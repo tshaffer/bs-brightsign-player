@@ -621,6 +621,7 @@ declare module '@brightsign' {
     export class BSControlPort {
       constructor(portName: string);
       SetPinValue(button: number, output: number): void;
+      oncontroldown(event: any): void;
     }
   }
 }
