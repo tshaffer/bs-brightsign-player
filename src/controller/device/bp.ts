@@ -5,8 +5,8 @@ import { isObject } from 'lodash';
 let bp900Setup: BSControlPort;
 let bp900: BSControlPort;
 
-export function initialize() {
-
+export function initializeButtonPanels() {
+  
   try {
     bp900Setup = new BSControlPort('TouchBoard-0-LED-SETUP') as any;
     bp900Setup.SetPinValue(0, 11);
@@ -40,7 +40,7 @@ export function setBpOutput(bpCommandData: DmBpOutputCommandData) {
   if (!isObject(bp900)) {
     return;
   }
-  
+
   // const bpType: BpType = bpCommandData.bpType;
   // const bpIndex: BpIndex = bpCommandData.bpIndex;
   const buttonNumber: number = bpCommandData.buttonNumber;
