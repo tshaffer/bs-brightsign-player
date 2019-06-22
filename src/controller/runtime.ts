@@ -42,7 +42,7 @@ catch (e) {
 
 let srcDirectory = '';
 if (platform === 'Desktop') {
-  srcDirectory = '/Users/tedshaffer/Desktop/ad';
+  srcDirectory = '/Users/tedshaffer/Desktop/autotron';
 }
 else {
   const process = require('process');
