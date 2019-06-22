@@ -610,3 +610,17 @@ declare module '@brightsign/videooutput' {
     forceHdcpOn(forceHdcpOn: boolean): Promise<void>; // if type === hdmi
   }
 }
+declare module '@brightsign' {
+  global {
+
+    export class BSMessagePort {
+      onbsmessage: (message: {data: any}) => void;
+      PostBSMessage(message: object): void;
+    }
+
+    export class BSControlPort {
+      constructor(portName: string);
+      SetPinValue(button: number, output: number): void;
+    }
+  }
+}
