@@ -1,8 +1,8 @@
 import { HState } from './HSM';
-import { EventType, CommandSequenceType, EventIntrinsicAction, CommandType, audioFileSuffixes } from '@brightsign/bscore';
+import { EventType, CommandSequenceType, EventIntrinsicAction, CommandType, audioFileSuffixes, ContentItemType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData, 
-  DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString, DmBpOutputCommandData, DmKeyboardEventData } from '@brightsign/bsdatamodel';
+  DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString, DmBpOutputCommandData, DmKeyboardEventData, DmSuperStateContentItem, dmGetMediaStateById } from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from './mediaZoneHSM';
 import { getReduxStore, tmpGetVideoElementRef, dispatchHsmEvent } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
@@ -110,8 +110,18 @@ export class MediaHState extends HState {
       const transition: DmcTransition = event.transitionList[0]; // AUTOTRONTODO - or event.defaultTransition?
       const targetMediaStateId: BsDmId = transition.targetMediaStateId;
       const zoneHSM: MediaZoneHSM = this.stateMachine as MediaZoneHSM;
-      const targetHSMState: HState = zoneHSM.mediaStateIdToHState[targetMediaStateId];
+      let targetHSMState: MediaHState = zoneHSM.mediaStateIdToHState[targetMediaStateId];
       if (!isNil(targetHSMState)) {
+
+        // check to see if target of transition is a superState
+        const targetMediaState: DmMediaState = targetHSMState.mediaState;
+        if (targetMediaState.contentItem.type === ContentItemType.SuperState) {
+          const superStateContentItem = targetMediaState.contentItem as DmSuperStateContentItem;
+          const initialMediaStateId = superStateContentItem.initialMediaStateId;
+          const mediaZoneHSM = this.stateMachine as MediaZoneHSM;
+          targetHSMState = mediaZoneHSM.mediaStateIdToHState[initialMediaStateId];
+        }
+
         stateData.nextState = targetHSMState;
         return 'TRANSITION';
       }
