@@ -4,16 +4,6 @@ import { Dispatch } from 'redux';
 import { bindActionCreators } from 'redux';
 import { postVideoEnd } from '../controller/device/player';
 
-// const getSourceContainerStyle = () => style({
-//   height: '150px',
-//   width: 'calc(100% - 24px)',
-//   margin: '12px 12px 12px 12px',
-//   position: 'relative',
-//   textAlign: 'center',
-//   backgroundColor: '#FFFFFF'
-// });
-
-
 // -----------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------

@@ -1,8 +1,8 @@
 import { HState } from './HSM';
-import { EventType, CommandSequenceType, EventIntrinsicAction, CommandType } from '@brightsign/bscore';
+import { EventType, CommandSequenceType, EventIntrinsicAction, CommandType, audioFileSuffixes } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData, 
-  DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString, DmBpOutputCommandData } from '@brightsign/bsdatamodel';
+  DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString, DmBpOutputCommandData, DmKeyboardEventData } from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from './mediaZoneHSM';
 import { getReduxStore, tmpGetVideoElementRef, dispatchHsmEvent } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
@@ -27,6 +27,13 @@ export class MediaHState extends HState {
           if ((bpEventData.bpIndex !== dispatchedEvent.EventData.bpIndex) ||
             (bpEventData.bpType !== dispatchedEvent.EventData.bpType) ||
             (bpEventData.buttonNumber !== dispatchedEvent.EventData.buttonNumber)) {
+            return false;
+          }
+          break;
+        }
+        case EventType.Keyboard: {
+          const keyboardEventData: DmKeyboardEventData = eventData as DmKeyboardEventData;
+          if (keyboardEventData.data !== dispatchedEvent.EventData.key) {
             return false;
           }
           break;

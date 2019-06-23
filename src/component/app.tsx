@@ -1,36 +1,69 @@
 import * as React from 'react';
 
 import { connect } from 'react-redux';
-// import { bindActionCreators, Dispatch } from 'redux';
-
-// import { postMessage } from '../store/stateMachine';
 
 import { Sign } from './sign';
-// import { ArState } from '../type/runtime';
+import { Dispatch, bindActionCreators } from 'redux';
+import { processKeyPress } from '../controller/device/player';
+import { DmState } from '@brightsign/bsdatamodel';
+
+// -----------------------------------------------------------------------
+// Types
+// -----------------------------------------------------------------------
+
+export interface AppProps {
+  bsdm: DmState;
+  activeHStates: any;
+  onKeyPress: (key: any) => void;
+}
+
+// -----------------------------------------------------------------------
+// Component
+// -----------------------------------------------------------------------
 
 // HACK
 export let myApp = {};
 
-class AppComponent extends React.Component<any, object> {
+class AppComponent extends React.Component<AppProps> {
 
   state: object;
 
-  constructor(props: object) {
+  constructor(props: AppProps) {
     super(props);
 
     myApp = this;
+
+    this.handleKeyPress = this.handleKeyPress.bind(this);
   }
 
   componentWillMount() {
-    document.addEventListener('keydown', this.onKeyPressed.bind(this));
+    document.addEventListener('keydown', this.handleKeyPress);
   }
 
   componentWillUnmount() {
-    document.removeEventListener('keydown', this.onKeyPressed.bind(this));
+    document.removeEventListener('keydown', this.handleKeyPress);
   }
 
-  onKeyPressed(e: any) {
+  handleKeyPress(e: any) {
+    console.log('keyCode');
     console.log(e.keyCode);
+
+    console.log('target tag name');
+    console.log(e.target.tagName);
+
+    console.log('key');
+    console.log(e.key);
+
+    console.log('metaKey');
+    console.log(e.metaKey);
+
+    console.log('shiftKey');
+    console.log(e.shiftKey);
+
+    console.log('ctrlKey');
+    console.log(e.ctrlKey);
+
+    this.props.onKeyPress(e.key);
   }
 
   render() {
@@ -54,6 +87,16 @@ class AppComponent extends React.Component<any, object> {
   }
 }
 
+// -----------------------------------------------------------------------
+// Container
+// -----------------------------------------------------------------------
+
+const mapDispatchToProps = (dispatch: Dispatch<any>) => {
+  return bindActionCreators({
+    onKeyPress: processKeyPress,
+  }, dispatch);
+};
+
 function mapStateToProps(state: any) {
   return {
     bsdm: state.bsdm,
@@ -61,4 +104,4 @@ function mapStateToProps(state: any) {
   };
 }
 
-export const App = connect(mapStateToProps, null)(AppComponent);
+export const App = connect(mapStateToProps, mapDispatchToProps)(AppComponent);
