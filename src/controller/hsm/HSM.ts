@@ -55,6 +55,7 @@ export class HSM {
       // execute initial transition
       if (!isNil(this.initialPseudoStateHandler)) {
         this.activeState = dispatch(this.initialPseudoStateHandler());
+        console.log('0'); // called
         console.log(this.activeState);
       }
 
@@ -83,8 +84,10 @@ export class HSM {
           entryStates[0] = activeState;
 
           // send an empty event to get the super state
-          action = (this.activeState).HStateEventHandler(emptyEvent, stateData);          
+          action = this.activeState.HStateEventHandler(emptyEvent, stateData);          
           status = dispatch(action);
+          console.log('1'); // called
+          console.log(stateData.nextState);
 
           activeState = stateData.nextState as HState;
           this.activeState = activeState;
@@ -95,6 +98,9 @@ export class HSM {
             entryStates[entryStateIndex] = activeState;
             action = this.activeState.HStateEventHandler(emptyEvent, stateData);
             status = dispatch(action);
+            console.log('2'); // called
+            console.log(stateData.nextState);
+
             activeState = stateData.nextState as HState;
             this.activeState = activeState;
           }
@@ -107,6 +113,9 @@ export class HSM {
             const entryState = entryStates[entryStateIndex];
             action = entryState.HStateEventHandler(entryEvent, stateData);
             status = dispatch(action);
+            console.log('3'); // called - was null on startup
+            console.log(stateData.nextState);
+
             entryStateIndex = entryStateIndex - 1;
           }
 
@@ -115,6 +124,9 @@ export class HSM {
 
           action = sourceState.HStateEventHandler(initEvent, stateData);
           status = dispatch(action);
+          console.log('4'); // called
+          console.log(stateData.nextState);
+
           if (status !== 'TRANSITION') {
             this.activeState = sourceState;
             dispatch(setActiveHState(this.hsmId, this.activeState));
@@ -164,6 +176,8 @@ export class HSM {
         s = this.activeState as HState;
         action = s.HStateEventHandler(event, stateData);
         status = dispatch(action);
+        console.log('5'); // called - was null
+        console.log(stateData.nextState);
         this.activeState = stateData.nextState;
       }
 
@@ -177,9 +191,13 @@ export class HSM {
         while (t.id !== s.id) {
           action = t.HStateEventHandler(exitEvent, stateData);
           status = dispatch(action);
+          console.log('6'); // called
+          console.log(stateData.nextState);
           if (status === 'HANDLED') {
             action = t.HStateEventHandler(emptyEvent, stateData);
             status = dispatch(action);
+            console.log('7');
+            console.log(stateData.nextState);
           }
           t = stateData.nextState as HState;
         }
@@ -192,21 +210,29 @@ export class HSM {
         if (s.id === t.id) {
           action = s.HStateEventHandler(exitEvent, stateData);                // exit the source
           status = dispatch(action);
+          console.log('8');
+          console.log(stateData.nextState);
           ip = 0;
         } else {
           action = t.HStateEventHandler(emptyEvent, stateData);               // superstate of target
           status = dispatch(action);
+          console.log('9'); // called
+          console.log(stateData.nextState);
           t = stateData.nextState as HState;
           if (s.id === t.id) {                                                 // check source == target->super
             ip = 0;                                                         // enter the target
           } else {
             action = s.HStateEventHandler(emptyEvent, stateData);           // superstate of source
             status = dispatch(action);
+            console.log('10'); // called
+            console.log(stateData.nextState);
 
             // check source->super == target->super
             if ((stateData.nextState as HState).id === t.id) {
               action = s.HStateEventHandler(exitEvent, stateData);        // exit the source
               status = dispatch(action);
+              console.log('11'); // called
+              console.log(stateData.nextState);
               ip = 0;                                                     // enter the target
             }
             else {
@@ -214,6 +240,8 @@ export class HSM {
                 // check source->super == target
                 action = s.HStateEventHandler(exitEvent, stateData);    // exit the source
                 status = dispatch(action);
+                console.log('12');
+                console.log(stateData.nextState);
               }
               // check rest of source == target->super->super and store the entry path along the way
               else {
@@ -224,6 +252,8 @@ export class HSM {
                 // get target->super->super
                 action = (path as HState[])[1].HStateEventHandler(emptyEvent, stateData);
                 status = dispatch(action);
+                console.log('13'); // called
+                console.log(stateData.nextState);
                 while (status === 'SUPER') {
                   ip = ip + 1;
                   path[ip] = stateData.nextState;                     // store the entry path
@@ -235,12 +265,16 @@ export class HSM {
                   else {                                              // it is not the source; keep going up
                     action = (stateData.nextState as HState).HStateEventHandler(emptyEvent, stateData);
                     status = dispatch(action);
+                    console.log('14'); // called was null
+                    console.log(stateData.nextState);
                   }
                 }
 
                 if (iq === 0) {                                           // LCA not found yet
                   action = s.HStateEventHandler(exitEvent, stateData); // exit the source
                   status = dispatch(action);
+                  console.log('15'); // called
+                  console.log(stateData.nextState);
 
                   // check the rest of source->super == target->super->super...
                   iq = ip;
@@ -263,9 +297,13 @@ export class HSM {
                     while (status !== 'HANDLED') {
                       action = t.HStateEventHandler(exitEvent, stateData);
                       status = dispatch(action);
+                      console.log('16'); // called
+                      console.log(stateData.nextState);
                       if (status === 'HANDLED') {
                         action = t.HStateEventHandler(emptyEvent, stateData);
                         status = dispatch(action);
+                        console.log('17');
+                        console.log(stateData.nextState);
                       }
                       t = stateData.nextState as HState;                    // set to super of t
                       iq = ip;
@@ -291,6 +329,8 @@ export class HSM {
         while (ip >= 0) {
           action = (path as HState[])[ip].HStateEventHandler(entryEvent, stateData);        // enter path[ip]
           status = dispatch(action);
+          console.log('18'); // called - was null
+          console.log(stateData.nextState);
           ip = ip - 1;
         }
 
@@ -301,6 +341,8 @@ export class HSM {
         // drill into the target hierarchy...
         action = t.HStateEventHandler(initEvent, stateData);
         status = dispatch(action);
+        console.log('19'); // called
+        console.log(stateData.nextState);
         this.activeState = stateData.nextState;
 
         while (status === 'TRANSITION') {
@@ -308,12 +350,16 @@ export class HSM {
           path[0] = this.activeState;
           action = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData); // find superstate
           status = dispatch(action);
+          console.log('20');
+          console.log(stateData.nextState);
           this.activeState = stateData.nextState;
           while ((this.activeState as HState).id !== t.id) {
             ip = ip + 1;
             path[ip] = this.activeState;
             action = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData); // find superstate
             status = dispatch(action);
+            console.log('21');
+            console.log(stateData.nextState);
             this.activeState = stateData.nextState;
           }
           this.activeState = path[0];
@@ -321,6 +367,8 @@ export class HSM {
           while (ip >= 0) {
             action = (path as HState[])[ip].HStateEventHandler(entryEvent, stateData);
             status = dispatch(action);
+            console.log('22');
+            console.log(stateData.nextState);
             ip = ip - 1;
           }
 
@@ -328,6 +376,8 @@ export class HSM {
 
           action = t.HStateEventHandler(initEvent, stateData);
           status = dispatch(action);
+          console.log('23');
+          console.log(stateData.nextState);
         }
       }
 
