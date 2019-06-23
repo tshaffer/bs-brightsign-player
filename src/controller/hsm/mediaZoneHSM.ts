@@ -1,5 +1,5 @@
 import { ZoneHSM } from './zoneHSM';
-import { DmState } from '@brightsign/bsdatamodel';
+import { DmState, dmGetContainedMediaStateIdsForMediaState, DmcMediaState } from '@brightsign/bsdatamodel';
 import { DmZone } from '@brightsign/bsdatamodel';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState } from '@brightsign/bsdatamodel';
@@ -16,6 +16,8 @@ import { LUT } from '../../type/runtime';
 import ImageState from './imageState';
 import VideoState from './videoState';
 import { isNil } from 'lodash';
+import { ContentItemType } from '@brightsign/bscore';
+import SuperState from './superState';
 
 export class MediaZoneHSM extends ZoneHSM {
 
@@ -47,24 +49,70 @@ export class MediaZoneHSM extends ZoneHSM {
 
     this.initialMediaStateId = this.bsdmZone.initialMediaStateId;
     this.mediaStateIds = dmGetMediaStateIdsForZone(bsdm, { id: zoneId });
+
     this.mediaHStates = [];
 
     // states
-    let newState: MediaHState;
-    this.mediaStateIds.forEach((mediaStateId: BsDmId, index: number) => {
+    let newState: MediaHState | null = null;
+    for (const mediaStateId of this.mediaStateIds) {
       const bsdmMediaState: DmMediaState = dmGetMediaStateById(bsdm, { id: mediaStateId }) as DmMediaState;
-      if (bsdmMediaState.contentItem.type === 'Image') {
-        newState = new ImageState(this, bsdmMediaState);
+      newState = this.getHStateFromMediaState(bsdm, bsdmMediaState);
+      if (!isNil(newState)) {
+        this.mediaHStates.push(newState);
+        this.mediaStateIdToHState[mediaStateId] = newState;
       }
-      else if (bsdmMediaState.contentItem.type === 'Video') {
-        newState = new VideoState(this, bsdmMediaState);
-      }
-      this.mediaHStates.push(newState);
+    }
 
-      this.mediaStateIdToHState[mediaStateId] = newState;
-    });
+    console.log('end of mediaZoneHSM constructor');
+    console.log(this.mediaHStates);
+    console.log(this.mediaStateIdToHState);
+    debugger;
   }
 
+  getHStateFromMediaState(bsdm: DmState, bsdmMediaState: DmMediaState): MediaHState | null {
+
+    let newState: MediaHState | null = null;
+
+    const contentItemType = bsdmMediaState.contentItem.type;
+    switch (contentItemType) {
+      case ContentItemType.Image:
+        newState = new ImageState(this, bsdmMediaState);
+        break;
+      case ContentItemType.Video:
+        newState = new VideoState(this, bsdmMediaState);
+        break;
+      case ContentItemType.SuperState:
+        newState = this.buildSuperState(bsdm, bsdmMediaState);
+        break;
+      default:
+        break;
+    }
+
+    return newState;
+  }
+
+  buildSuperState(bsdm: DmState, bsdmSuperState: DmMediaState): MediaHState {
+    const superState: MediaHState = new SuperState(this, bsdmSuperState);
+    this.getSuperStateContent(bsdm, bsdmSuperState);
+    return superState;
+  }
+
+  getSuperStateContent(bsdm: DmState, bsdmSuperState: DmMediaState) {
+    
+    const superStateId: BsDmId = bsdmSuperState.id; // id of superStateItem
+    const mediaStateIds: BsDmId[] = dmGetContainedMediaStateIdsForMediaState(bsdm, { id: superStateId });
+  
+    let newState: MediaHState | null = null;
+    for (const mediaStateId of mediaStateIds) {
+      const bsdmMediaState: DmMediaState = dmGetMediaStateById(bsdm, { id: mediaStateId }) as DmMediaState;
+      newState = this.getHStateFromMediaState(bsdm, bsdmMediaState);
+      if (!isNil(newState)) {
+        this.mediaHStates.push(newState);
+        this.mediaStateIdToHState[mediaStateId] = newState;
+      }
+    }
+  }
+  
   videoOrImagesZoneConstructor() {
 
     const initialMediaStateId: BsDmId | null = dmGetInitialMediaStateIdForZone(this.bsdm, { id: this.zoneId });
