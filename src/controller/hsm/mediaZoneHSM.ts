@@ -69,13 +69,9 @@ export class MediaZoneHSM extends ZoneHSM {
     console.log(this.mediaStateIdToHState);
   }
 
-  getHStateFromMediaState(bsdm: DmState, bsdmMediaState: DmMediaState, superState: HState | null): MediaHState | null {
+  getHStateFromMediaState(bsdm: DmState, bsdmMediaState: DmMediaState, superState: HState): MediaHState | null {
 
     let newState: MediaHState | null = null;
-
-    if (isNil(superState)) {
-      superState = this.stTop;
-    }
 
     const contentItemType = bsdmMediaState.contentItem.type;
     switch (contentItemType) {
@@ -95,29 +91,25 @@ export class MediaZoneHSM extends ZoneHSM {
     return newState;
   }
 
-  buildSuperState(bsdm: DmState, bsdmSuperState: DmMediaState, superState: HState | null): MediaHState {
-
-    if (isNil(superState)) {
-      superState = this.stTop;
-    }
+  buildSuperState(bsdm: DmState, bsdmSuperState: DmMediaState, superState: HState): MediaHState {
 
     const newSuperState: MediaHState = new SuperState(this, bsdmSuperState, superState);
     this.getSuperStateContent(bsdm, newSuperState, bsdmSuperState);
     return newSuperState;
   }
 
-  getSuperStateContent(bsdm: DmState, newSuperState: HState, bsdmSuperState: DmMediaState) {
+  getSuperStateContent(bsdm: DmState, superHState: HState, bsdmSuperState: DmMediaState) {
     
     const superStateId: BsDmId = bsdmSuperState.id; // id of superStateItem
     const mediaStateIds: BsDmId[] = dmGetContainedMediaStateIdsForMediaState(bsdm, { id: superStateId });
   
-    let newState: MediaHState | null = null;
+    let newHState: MediaHState | null = null;
     for (const mediaStateId of mediaStateIds) {
       const bsdmMediaState: DmMediaState = dmGetMediaStateById(bsdm, { id: mediaStateId }) as DmMediaState;
-      newState = this.getHStateFromMediaState(bsdm, bsdmMediaState, newSuperState);
-      if (!isNil(newState)) {
-        this.mediaHStates.push(newState);
-        this.mediaStateIdToHState[mediaStateId] = newState;
+      newHState = this.getHStateFromMediaState(bsdm, bsdmMediaState, superHState);
+      if (!isNil(newHState)) {
+        this.mediaHStates.push(newHState);
+        this.mediaStateIdToHState[mediaStateId] = newHState;
       }
     }
   }
@@ -131,13 +123,6 @@ export class MediaZoneHSM extends ZoneHSM {
     const superStateContentItem: DmSuperStateContentItem = mediaState.contentItem as DmSuperStateContentItem;
     const initialMediaState: DmMediaState | null = dmGetMediaStateById(bsdm, { id: superStateContentItem.initialMediaStateId } );
     if (!isNil(initialMediaState)) {
-      // const mediaStateIds: BsDmId[] = dmGetContainedMediaStateIdsForMediaState(bsdm, { id: mediaState.id });
-      // for (const mediaStateId of mediaStateIds) {
-      //   if (mediaStateId === initialMediaState.id) {
-      //     mediaState = dmGetMediaStateById(bsdm, { id: mediaStateId }) as DmMediaState;
-      //     return this.getInitialState(bsdm, mediaState);
-      //   }
-      // }
       return this.getInitialState(bsdm, initialMediaState);
     }
 

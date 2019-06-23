@@ -181,9 +181,9 @@ export class MediaHState extends HState {
     console.log('pause video');
     tmpGetVideoElementRef().pause();
 
-    const videoElementRef = tmpGetVideoElementRef();
-    // videoElementRef.setAttribute('src', null);
-    videoElementRef.removeAttribute('src');
+    // const videoElementRef = tmpGetVideoElementRef();
+    // // videoElementRef.setAttribute('src', null);
+    // videoElementRef.removeAttribute('src');
   }
 
   executeResumeVideoCommand() {
