@@ -45,23 +45,23 @@ class AppComponent extends React.Component<AppProps> {
   }
 
   handleKeyPress(e: any) {
-    console.log('keyCode');
-    console.log(e.keyCode);
+    // console.log('keyCode');
+    // console.log(e.keyCode);
 
-    console.log('target tag name');
-    console.log(e.target.tagName);
+    // console.log('target tag name');
+    // console.log(e.target.tagName);
 
-    console.log('key');
-    console.log(e.key);
+    // console.log('key');
+    // console.log(e.key);
 
-    console.log('metaKey');
-    console.log(e.metaKey);
+    // console.log('metaKey');
+    // console.log(e.metaKey);
 
-    console.log('shiftKey');
-    console.log(e.shiftKey);
+    // console.log('shiftKey');
+    // console.log(e.shiftKey);
 
-    console.log('ctrlKey');
-    console.log(e.ctrlKey);
+    // console.log('ctrlKey');
+    // console.log(e.ctrlKey);
 
     this.props.onKeyPress(e.key);
   }
