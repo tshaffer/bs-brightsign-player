@@ -83,7 +83,7 @@ export class HSM {
           entryStates[0] = activeState;
 
           // send an empty event to get the super state
-          action = (this.activeState).HStateEventHandler(emptyEvent, stateData);
+          action = (this.activeState).HStateEventHandler(emptyEvent, stateData);          
           status = dispatch(action);
 
           activeState = stateData.nextState as HState;

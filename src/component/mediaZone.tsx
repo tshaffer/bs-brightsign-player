@@ -23,7 +23,7 @@ import {
   dmGetEventById,
   DmcEvent,
 } from '@brightsign/bsdatamodel';
-import { getPoolFilePath, tmpSetVideoElementRef, tmpSetVideoElementSourceRef } from '../index';
+import { getPoolFilePath, tmpSetVideoElementRef } from '../index';
 import { connect } from 'react-redux';
 import { getActiveMediaStateId } from '../selector/hsm';
 import { isString } from 'lodash';
@@ -51,11 +51,6 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
   videoRefRetrieved(videoElementRef: any) {
     console.log('mediaZone.tsx#videoRefRetrieved');
     tmpSetVideoElementRef(videoElementRef);
-  }
-
-  videoElementSourceRetrieved(videoElementSourceRef: any) {
-    console.log('mediaZone.tsx#videoElementSourceRefRetrieved');
-    tmpSetVideoElementSourceRef(videoElementSourceRef);
   }
 
   renderMediaItem(mediaState: DmMediaState, contentItem: DmDerivedContentItem) {
@@ -88,7 +83,6 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
             height={this.props.height}
             src={src}
             onVideoRefRetrieved={self.videoRefRetrieved}
-            onVideoElementSourceRetrieved={self.videoElementSourceRetrieved}
           />
         );
       }

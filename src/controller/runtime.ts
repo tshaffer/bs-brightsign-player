@@ -94,14 +94,6 @@ export function tmpGetVideoElementRef(): any {
   return _videoElementRef;
 }
 
-let _videoElementSourceRef: any;
-export function tmpSetVideoElementSourceRef(videoElementSourceRef: any) {
-  _videoElementSourceRef = videoElementSourceRef;
-}
-export function tmpGetVideoElementSourceRef(): any {
-  return _videoElementSourceRef;
-}
-
 export function getRuntimeFiles(): Promise<void> {
   return getSyncSpec()
     .then((syncSpec: ArSyncSpec) => {
