@@ -4,6 +4,7 @@ import { ArEventType, HSMStateData } from '../../type/runtime';
 import { Action } from 'redux';
 import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
 import { isNil } from 'lodash';
+import { xmlStringToJson } from '../../utility/helpers';
 
 export class PlayerHSM extends HSM {
 
@@ -106,6 +107,9 @@ class STPlaying extends HState {
           responseType: 'text',
         }).then((response: any) => {
           console.log(response);
+          return xmlStringToJson(response.data);
+        }).then( (feedAsJson) => {
+          console.log(feedAsJson);
           return Promise.resolve();
         }).catch( (err) => {
           console.log(err);
@@ -131,7 +135,7 @@ class STPlaying extends HState {
   getDataFeeds(bsdm: DmState) {
     const dataFeedSourceIds: BsDmId[] = dmGetDataFeedSourceIdsForSign(bsdm);
     for (const dataFeedSourceId of dataFeedSourceIds) {
-      this.queueRetrieveLiveDataFeed(bsdm, dataFeedSourceId)
+      this.queueRetrieveLiveDataFeed(bsdm, dataFeedSourceId);
     }
   }
 
