@@ -1,6 +1,9 @@
+import axios from 'axios';
 import { HSM, HState, STTopEventHandler } from './HSM';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import { Action } from 'redux';
+import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
+import { isNil } from 'lodash';
 
 export class PlayerHSM extends HSM {
 
@@ -79,6 +82,8 @@ class STPlayer extends HState {
 
 class STPlaying extends HState {
 
+  dataFeedsToDownload: Map<string, any | null> = new Map();
+
   constructor(stateMachine: PlayerHSM, id: string, superState: HState) {
     super(stateMachine, id);
 
@@ -86,17 +91,62 @@ class STPlaying extends HState {
     this.superState = superState;
   }
 
+  retrieveLiveDataFeed(bsdm: DmState, dataFeedSourceId: BsDmId): Promise<void> {
+
+    // simplified version - URL only; simple string
+    const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, {id: dataFeedSourceId});
+    if (!isNil(dataFeedSource)) {
+      const remoteDataFeedSource: DmRemoteDataFeedSource = dataFeedSource as DmRemoteDataFeedSource;
+      const urlPS: DmParameterizedString = remoteDataFeedSource.url;
+      const url: string | null = dmGetSimpleStringFromParameterizedString(urlPS);
+      if (!isNil(url)) {
+        return axios({
+          method: 'get',
+          url,
+          responseType: 'text',
+        }).then((response: any) => {
+          console.log(response);
+          return Promise.resolve();
+        }).catch( (err) => {
+          console.log(err);
+          return Promise.reject(err);
+        });
+      }
+    }
+    return Promise.reject('dataFeedSource is null');
+  }
+
+  queueRetrieveLiveDataFeed(bsdm: DmState, dataFeedSourceId: BsDmId) {
+
+    // TODO - download feeds that are neither MRSS nor content immediately (simple RSS)
+    this.dataFeedsToDownload.set(dataFeedSourceId, null);
+    if (this.dataFeedsToDownload.size === 1) {
+      this.retrieveLiveDataFeed(bsdm, dataFeedSourceId)
+        .then( () => {
+          console.log('promise resolved from retrieveLiveDataFeed');
+        });
+    }
+  }
+
+  getDataFeeds(bsdm: DmState) {
+    const dataFeedSourceIds: BsDmId[] = dmGetDataFeedSourceIdsForSign(bsdm);
+    for (const dataFeedSourceId of dataFeedSourceIds) {
+      this.queueRetrieveLiveDataFeed(bsdm, dataFeedSourceId)
+    }
+  }
+
   STPlayingEventHandler(event: ArEventType, stateData: HSMStateData): any {
 
-    return (dispatch: any) => {
+    return (dispatch: any, getState: any) => {
       stateData.nextState = null;
 
       if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
 
         console.log(this.id + ': entry signal');
 
-        // const stateMachine = this.stateMachine as PlayerHSM;
-
+        // initiate data feed downloads
+        this.getDataFeeds(getState().bsdm);
+        
         // launch playback
         const action: any = (this.stateMachine as PlayerHSM).startPlayback();
         dispatch(action);

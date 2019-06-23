@@ -29,10 +29,11 @@
   "dependencies": {
     "@brightsign/bscore": "0.5.16",
     "@brightsign/bsdatamodel": "0.11.16",
-    "typestyle": "^1.5.1",
+    "axios": "^0.18.0",
     "csx": "^8.5.0",
     "csstips": "^0.2.2",
-    "fs-extra": "3.0.1"
+    "fs-extra": "3.0.1",
+    "typestyle": "^1.5.1"
   },
   "peerDependencies": {
     "react": "16.1.0",
