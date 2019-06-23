@@ -21,6 +21,18 @@ class AppComponent extends React.Component<any, object> {
     myApp = this;
   }
 
+  componentWillMount() {
+    document.addEventListener('keydown', this.onKeyPressed.bind(this));
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this.onKeyPressed.bind(this));
+  }
+
+  onKeyPressed(e: any) {
+    console.log(e.keyCode);
+  }
+
   render() {
 
     // not sure about this check
