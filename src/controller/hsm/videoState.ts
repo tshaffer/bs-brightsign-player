@@ -8,15 +8,16 @@ import { ZoneHSM } from './zoneHSM';
 import { MediaHState } from './mediaHState';
 import { HSMStateData, ArEventType } from '../../type/runtime';
 import { MediaZoneHSM } from './mediaZoneHSM';
+import { HState } from './HSM';
 
 export default class VideoState extends MediaHState {
 
-  constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState) {
+  constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState) {
 
     super(zoneHSM, mediaState.id);
     this.mediaState = mediaState;
 
-    this.superState = zoneHSM.stTop;
+    this.superState = superState;
 
     this.HStateEventHandler = this.STDisplayingVideoEventHandler;
   }

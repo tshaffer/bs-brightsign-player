@@ -4,17 +4,18 @@ import { DmMediaState } from '@brightsign/bsdatamodel';
 import { HSMStateData, ArEventType } from '../../type/runtime';
 import { CommandSequenceType } from '@brightsign/bscore';
 import { MediaZoneHSM } from './mediaZoneHSM';
+import { HState } from './HSM';
 
 export default class ImageState extends MediaHState {
 
   stateMachine: ZoneHSM;
 
-  constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState) {
+  constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState) {
     super(zoneHSM, mediaState.id);
 
     this.mediaState = mediaState;
 
-    this.superState = zoneHSM.stTop;
+    this.superState = superState;
 
     this.HStateEventHandler = this.STDisplayingImageEventHandler;
   }

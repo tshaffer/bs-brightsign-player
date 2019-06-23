@@ -18,6 +18,7 @@ import VideoState from './videoState';
 import { isNil } from 'lodash';
 import { ContentItemType } from '@brightsign/bscore';
 import SuperState from './superState';
+import { HState } from './HSM';
 
 export class MediaZoneHSM extends ZoneHSM {
 
@@ -56,7 +57,7 @@ export class MediaZoneHSM extends ZoneHSM {
     let newState: MediaHState | null = null;
     for (const mediaStateId of this.mediaStateIds) {
       const bsdmMediaState: DmMediaState = dmGetMediaStateById(bsdm, { id: mediaStateId }) as DmMediaState;
-      newState = this.getHStateFromMediaState(bsdm, bsdmMediaState);
+      newState = this.getHStateFromMediaState(bsdm, bsdmMediaState, this.stTop);
       if (!isNil(newState)) {
         this.mediaHStates.push(newState);
         this.mediaStateIdToHState[mediaStateId] = newState;
@@ -68,20 +69,24 @@ export class MediaZoneHSM extends ZoneHSM {
     console.log(this.mediaStateIdToHState);
   }
 
-  getHStateFromMediaState(bsdm: DmState, bsdmMediaState: DmMediaState): MediaHState | null {
+  getHStateFromMediaState(bsdm: DmState, bsdmMediaState: DmMediaState, superState: HState | null): MediaHState | null {
 
     let newState: MediaHState | null = null;
+
+    if (isNil(superState)) {
+      superState = this.stTop;
+    }
 
     const contentItemType = bsdmMediaState.contentItem.type;
     switch (contentItemType) {
       case ContentItemType.Image:
-        newState = new ImageState(this, bsdmMediaState);
+        newState = new ImageState(this, bsdmMediaState, superState);
         break;
       case ContentItemType.Video:
-        newState = new VideoState(this, bsdmMediaState);
+        newState = new VideoState(this, bsdmMediaState, superState);
         break;
       case ContentItemType.SuperState:
-        newState = this.buildSuperState(bsdm, bsdmMediaState);
+        newState = this.buildSuperState(bsdm, bsdmMediaState, superState);
         break;
       default:
         break;
@@ -90,13 +95,18 @@ export class MediaZoneHSM extends ZoneHSM {
     return newState;
   }
 
-  buildSuperState(bsdm: DmState, bsdmSuperState: DmMediaState): MediaHState {
-    const superState: MediaHState = new SuperState(this, bsdmSuperState);
-    this.getSuperStateContent(bsdm, bsdmSuperState);
-    return superState;
+  buildSuperState(bsdm: DmState, bsdmSuperState: DmMediaState, superState: HState | null): MediaHState {
+
+    if (isNil(superState)) {
+      superState = this.stTop;
+    }
+
+    const newSuperState: MediaHState = new SuperState(this, bsdmSuperState, superState);
+    this.getSuperStateContent(bsdm, newSuperState, bsdmSuperState);
+    return newSuperState;
   }
 
-  getSuperStateContent(bsdm: DmState, bsdmSuperState: DmMediaState) {
+  getSuperStateContent(bsdm: DmState, newSuperState: HState, bsdmSuperState: DmMediaState) {
     
     const superStateId: BsDmId = bsdmSuperState.id; // id of superStateItem
     const mediaStateIds: BsDmId[] = dmGetContainedMediaStateIdsForMediaState(bsdm, { id: superStateId });
@@ -104,7 +114,7 @@ export class MediaZoneHSM extends ZoneHSM {
     let newState: MediaHState | null = null;
     for (const mediaStateId of mediaStateIds) {
       const bsdmMediaState: DmMediaState = dmGetMediaStateById(bsdm, { id: mediaStateId }) as DmMediaState;
-      newState = this.getHStateFromMediaState(bsdm, bsdmMediaState);
+      newState = this.getHStateFromMediaState(bsdm, bsdmMediaState, newSuperState);
       if (!isNil(newState)) {
         this.mediaHStates.push(newState);
         this.mediaStateIdToHState[mediaStateId] = newState;
