@@ -1,5 +1,5 @@
 import { ZoneHSM } from './zoneHSM';
-import { DmState, dmGetContainedMediaStateIdsForMediaState, DmcMediaState } from '@brightsign/bsdatamodel';
+import { DmState, dmGetContainedMediaStateIdsForMediaState, DmSuperStateContentItem } from '@brightsign/bsdatamodel';
 import { DmZone } from '@brightsign/bsdatamodel';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState } from '@brightsign/bsdatamodel';
@@ -66,7 +66,6 @@ export class MediaZoneHSM extends ZoneHSM {
     console.log('end of mediaZoneHSM constructor');
     console.log(this.mediaHStates);
     console.log(this.mediaStateIdToHState);
-    debugger;
   }
 
   getHStateFromMediaState(bsdm: DmState, bsdmMediaState: DmMediaState): MediaHState | null {
@@ -113,11 +112,36 @@ export class MediaZoneHSM extends ZoneHSM {
     }
   }
   
+  getInitialState(bsdm: DmState, mediaState: DmMediaState): DmMediaState {
+
+    if (mediaState.contentItem.type !== ContentItemType.SuperState) {
+      return mediaState;
+    }
+
+    const superStateContentItem: DmSuperStateContentItem = mediaState.contentItem as DmSuperStateContentItem;
+    const initialMediaState: DmMediaState | null = dmGetMediaStateById(bsdm, { id: superStateContentItem.initialMediaStateId } );
+    if (!isNil(initialMediaState)) {
+      // const mediaStateIds: BsDmId[] = dmGetContainedMediaStateIdsForMediaState(bsdm, { id: mediaState.id });
+      // for (const mediaStateId of mediaStateIds) {
+      //   if (mediaStateId === initialMediaState.id) {
+      //     mediaState = dmGetMediaStateById(bsdm, { id: mediaStateId }) as DmMediaState;
+      //     return this.getInitialState(bsdm, mediaState);
+      //   }
+      // }
+      return this.getInitialState(bsdm, initialMediaState);
+    }
+
+    // TEDTODO throw error
+    return mediaState;
+  }
+
   videoOrImagesZoneConstructor() {
 
+    // get the initial media state for the zone
     const initialMediaStateId: BsDmId | null = dmGetInitialMediaStateIdForZone(this.bsdm, { id: this.zoneId });
     if (!isNil(initialMediaStateId)) {
-      const initialMediaState: DmMediaState = dmGetMediaStateById(this.bsdm, { id: initialMediaStateId }) as DmMediaState;
+      let initialMediaState: DmMediaState = dmGetMediaStateById(this.bsdm, { id: initialMediaStateId }) as DmMediaState;
+      initialMediaState = this.getInitialState(this.bsdm, initialMediaState);
       for (const mediaHState of this.mediaHStates) {
         if (mediaHState.mediaState.id === initialMediaState.id) {
           this.activeState = mediaHState;
