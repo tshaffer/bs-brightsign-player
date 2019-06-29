@@ -6,6 +6,12 @@ import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForF
 import { isNil } from 'lodash';
 import { xmlStringToJson } from '../../utility/helpers';
 
+import AssetPool from '@brightsign/assetpool';
+import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
+import AssetRealizer from '@brightsign/assetrealizer';
+const assetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
+const assetPoolFetcher = new AssetPoolFetcher(assetPool);
+
 export class PlayerHSM extends HSM {
 
   type: string;
@@ -92,10 +98,9 @@ class STPlaying extends HState {
     this.superState = superState;
   }
 
-  retrieveLiveDataFeed(bsdm: DmState, dataFeedSourceId: BsDmId): Promise<void> {
+  retrieveLiveDataFeed(bsdm: DmState, dataFeedSource: DmDataFeedSource): Promise<any> {
 
     // simplified version - URL only; simple string
-    const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, {id: dataFeedSourceId});
     if (!isNil(dataFeedSource)) {
       const remoteDataFeedSource: DmRemoteDataFeedSource = dataFeedSource as DmRemoteDataFeedSource;
       const urlPS: DmParameterizedString = remoteDataFeedSource.url;
@@ -110,7 +115,7 @@ class STPlaying extends HState {
           return xmlStringToJson(response.data);
         }).then( (feedAsJson) => {
           console.log(feedAsJson);
-          return Promise.resolve();
+          return Promise.resolve(feedAsJson);
         }).catch( (err) => {
           console.log(err);
           return Promise.reject(err);
@@ -125,11 +130,85 @@ class STPlaying extends HState {
     // TODO - download feeds that are neither MRSS nor content immediately (simple RSS)
     this.dataFeedsToDownload.set(dataFeedSourceId, null);
     if (this.dataFeedsToDownload.size === 1) {
-      this.retrieveLiveDataFeed(bsdm, dataFeedSourceId)
-        .then( () => {
+      const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, {id: dataFeedSourceId});
+      if (!isNil(dataFeedSource)) {
+        this.retrieveLiveDataFeed(bsdm, dataFeedSource)
+        .then( (feedAsJson) => {
           console.log('promise resolved from retrieveLiveDataFeed');
+          // simplified
+          // DownloadMRSSContent
+          this.downloadMRSSContent(feedAsJson, dataFeedSource);
         });
+      }
     }
+  }
+
+  getFeedItems(feed: any) {
+
+    const feedItems: any[] = [];
+
+    const items: any = feed.rss.channel.item;
+    for (const item of items) {
+      const feedItem: any = {};
+      feedItem.description = item.description;
+      feedItem.guid = item.guid;
+      feedItem.link = item.link;
+      feedItem.title = item.title;
+      feedItem.pubDate = item.pubDate;
+
+      const mediaContent: any = item['media:content'].$;
+      feedItem.duration = mediaContent.duration;
+      feedItem.fileSize = mediaContent.fileSize;
+      feedItem.medium = mediaContent.medium;
+      feedItem.type = mediaContent.type;
+      feedItem.url = mediaContent.url;
+
+      feedItems.push(feedItem);
+    }
+    return feedItems;
+  }
+
+  downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSource) {
+
+    /* feed level properties
+    if name = "ttl" then
+      m.SetTTLMinutes(elt.GetBody())
+    else if name = "frameuserinfo:playtime" then
+      m.playtime = Val(elt.GetBody())
+    else if lcase(name) = "title" then
+      m.title = elt.GetBody()
+    */
+    const feed: any = {};
+    feed.items = this.getFeedItems(rawFeed);
+
+    // m.assetCollection = CreateObject("roAssetCollection")
+    const assetList: any[] = [];
+    for (const feedItem of feed.items) {
+      const asset: any = {};
+      asset.link = feedItem.url;
+      asset.name = feedItem.url;
+      asset.changeHint = feedItem.guid;
+      assetList.push(asset);
+    }
+
+    // (assetPoolFetcher as any).addEventListener('fileevent', this.handleFileEvent);
+    assetPoolFetcher.fileevent = this.handleFileEvent;
+
+    assetPoolFetcher.start(assetList)
+      .then(() => {
+        debugger;
+      })
+      .catch( (err) => {
+        console.log(err);
+        debugger;
+      });
+
+    debugger;
+  }
+
+  handleFileEvent(fileEvent: any) {
+    console.log(fileEvent);
+    debugger;
   }
 
   getDataFeeds(bsdm: DmState) {
