@@ -3,7 +3,7 @@ import { HSM, HState, STTopEventHandler } from './HSM';
 import { ArEventType, HSMStateData, ArDataFeed, ArDataFeedItem } from '../../type/runtime';
 import { Action } from 'redux';
 import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
-import { isNil } from 'lodash';
+import { isNil, isString } from 'lodash';
 import { xmlStringToJson } from '../../utility/helpers';
 
 import AssetPool from '@brightsign/assetpool';
@@ -194,6 +194,7 @@ class STPlaying extends HState {
 
     // (assetPoolFetcher as any).addEventListener('fileevent', this.handleFileEvent);
     assetPoolFetcher.fileevent = this.handleFileEvent;
+    assetPoolFetcher.progressevent = this.handleProgressEvent;
 
     assetPoolFetcher.start(assetList)
       .then(() => {
@@ -208,8 +209,21 @@ class STPlaying extends HState {
   }
 
   handleFileEvent(fileEvent: any) {
+    console.log('handleFileEvent');
     console.log(fileEvent);
-    debugger;
+
+    // after all files complete
+    const event = {
+      EventType: 'MRSS_DATA_FEED_LOADED',
+      Name: 'TBD' // m.sourceId$ - HandleLiveDataFeedContentDownloadAssetFetcherEvent
+    };
+    // dispatch(this.postMessage(event));
+
+  }
+
+  handleProgressEvent(progressEvent: any) {
+    console.log('handleProgressEvent');
+    console.log(progressEvent);
   }
 
   getDataFeeds(bsdm: DmState) {
@@ -235,6 +249,12 @@ class STPlaying extends HState {
         const action: any = (this.stateMachine as PlayerHSM).startPlayback();
         dispatch(action);
 
+        return 'HANDLED';
+
+      // if event["EventType"] = "MRSS_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_UNCHANGED" then
+      } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
+        console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
+        // m.bsp.AdvanceToNextLiveDataFeedInQueue(m.liveDataFeeds)
         return 'HANDLED';
       }
 
