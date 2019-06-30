@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { HSM, HState, STTopEventHandler } from './HSM';
-import { ArEventType, HSMStateData } from '../../type/runtime';
+import { ArEventType, HSMStateData, ArDataFeed, ArDataFeedItem } from '../../type/runtime';
 import { Action } from 'redux';
 import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
 import { isNil } from 'lodash';
@@ -113,10 +113,10 @@ class STPlaying extends HState {
         }).then((response: any) => {
           console.log(response);
           return xmlStringToJson(response.data);
-        }).then( (feedAsJson) => {
+        }).then((feedAsJson) => {
           console.log(feedAsJson);
           return Promise.resolve(feedAsJson);
-        }).catch( (err) => {
+        }).catch((err) => {
           console.log(err);
           return Promise.reject(err);
         });
@@ -130,38 +130,39 @@ class STPlaying extends HState {
     // TODO - download feeds that are neither MRSS nor content immediately (simple RSS)
     this.dataFeedsToDownload.set(dataFeedSourceId, null);
     if (this.dataFeedsToDownload.size === 1) {
-      const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, {id: dataFeedSourceId});
+      const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, { id: dataFeedSourceId });
       if (!isNil(dataFeedSource)) {
         this.retrieveLiveDataFeed(bsdm, dataFeedSource)
-        .then( (feedAsJson) => {
-          console.log('promise resolved from retrieveLiveDataFeed');
-          // simplified
-          // DownloadMRSSContent
-          this.downloadMRSSContent(feedAsJson, dataFeedSource);
-        });
+          .then((feedAsJson) => {
+            console.log('promise resolved from retrieveLiveDataFeed');
+            // simplified
+            // DownloadMRSSContent
+            this.downloadMRSSContent(feedAsJson, dataFeedSource);
+          });
       }
     }
   }
 
-  getFeedItems(feed: any) {
+  getFeedItems(feed: any): ArDataFeedItem[] {
 
-    const feedItems: any[] = [];
+    const feedItems: ArDataFeedItem[] = [];
 
     const items: any = feed.rss.channel.item;
     for (const item of items) {
-      const feedItem: any = {};
-      feedItem.description = item.description;
-      feedItem.guid = item.guid;
-      feedItem.link = item.link;
-      feedItem.title = item.title;
-      feedItem.pubDate = item.pubDate;
-
       const mediaContent: any = item['media:content'].$;
-      feedItem.duration = mediaContent.duration;
-      feedItem.fileSize = mediaContent.fileSize;
-      feedItem.medium = mediaContent.medium;
-      feedItem.type = mediaContent.type;
-      feedItem.url = mediaContent.url;
+      const feedItem: ArDataFeedItem = {
+        description: item.description,
+        guid: item.guid,
+        link: item.link,
+        title: item.title,
+        pubDate: item.pubDate,
+
+        duration: mediaContent.duration,
+        fileSize: mediaContent.fileSize,
+        medium: mediaContent.medium,
+        type: mediaContent.type,
+        url: mediaContent.url,
+      };
 
       feedItems.push(feedItem);
     }
@@ -178,7 +179,7 @@ class STPlaying extends HState {
     else if lcase(name) = "title" then
       m.title = elt.GetBody()
     */
-    const feed: any = {};
+    const feed: ArDataFeed = {};
     feed.items = this.getFeedItems(rawFeed);
 
     // m.assetCollection = CreateObject("roAssetCollection")
@@ -198,7 +199,7 @@ class STPlaying extends HState {
       .then(() => {
         debugger;
       })
-      .catch( (err) => {
+      .catch((err) => {
         console.log(err);
         debugger;
       });
@@ -229,7 +230,7 @@ class STPlaying extends HState {
 
         // initiate data feed downloads
         this.getDataFeeds(getState().bsdm);
-        
+
         // launch playback
         const action: any = (this.stateMachine as PlayerHSM).startPlayback();
         dispatch(action);
