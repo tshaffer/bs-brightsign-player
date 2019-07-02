@@ -116,7 +116,7 @@ class STPlaying extends HState {
           url,
           responseType: 'text',
         }).then((response: any) => {
-          fs.writeFileSync('feed_cache/myFeed.xml', response.data);
+          fs.writeFileSync('feed_cache/' + dataFeedSource.id + '.xml', response.data);
           return xmlStringToJson(response.data);
         }).then((feedAsJson) => {
           console.log(feedAsJson);
@@ -186,7 +186,8 @@ class STPlaying extends HState {
 
     // write the mrss feed to the card
     const feedAsStr: string = JSON.stringify(rawFeed, null, 2);
-    this.fsSaveObjectAsLocalJsonFile(rawFeed, 'feed_cache/myFeed.json')
+    // this.fsSaveObjectAsLocalJsonFile(rawFeed, 'feed_cache/myFeed.json')
+    this.fsSaveObjectAsLocalJsonFile(rawFeed, 'feed_cache/' + dataFeedSource.id + '.json')
       .then(() => {
 
         /* feed level properties
