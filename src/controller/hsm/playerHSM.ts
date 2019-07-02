@@ -89,6 +89,7 @@ class STPlayer extends HState {
 
 class STPlaying extends HState {
 
+  // needs to be an array, not a map
   dataFeedsToDownload: Map<string, any | null> = new Map();
 
   constructor(stateMachine: PlayerHSM, id: string, superState: HState) {
@@ -135,6 +136,7 @@ class STPlaying extends HState {
         this.retrieveLiveDataFeed(bsdm, dataFeedSource)
           .then((feedAsJson) => {
             console.log('promise resolved from retrieveLiveDataFeed');
+            console.log(feedAsJson);
             // simplified
             // DownloadMRSSContent
             this.downloadMRSSContent(feedAsJson, dataFeedSource);
@@ -196,9 +198,10 @@ class STPlaying extends HState {
     assetPoolFetcher.fileevent = this.handleFileEvent;
     assetPoolFetcher.progressevent = this.handleProgressEvent;
 
+    console.log('assetPoolFetcher.start');
     assetPoolFetcher.start(assetList)
       .then(() => {
-        debugger;
+        console.log('assetPoolFetcher promise resolved');
       })
       .catch((err) => {
         console.log(err);
@@ -213,10 +216,10 @@ class STPlaying extends HState {
     console.log(fileEvent);
 
     // after all files complete
-    const event = {
-      EventType: 'MRSS_DATA_FEED_LOADED',
-      Name: 'TBD' // m.sourceId$ - HandleLiveDataFeedContentDownloadAssetFetcherEvent
-    };
+    // const event = {
+    //   EventType: 'MRSS_DATA_FEED_LOADED',
+    //   Name: 'TBD' // m.sourceId$ - HandleLiveDataFeedContentDownloadAssetFetcherEvent
+    // };
     // dispatch(this.postMessage(event));
 
   }
