@@ -1,3 +1,6 @@
+import * as fs from 'fs-extra';
+import isomorphicPath from 'isomorphic-path';
+
 import axios from 'axios';
 import { HSM, HState, STTopEventHandler } from './HSM';
 import { ArEventType, HSMStateData, ArDataFeed, ArDataFeedItem } from '../../type/runtime';
@@ -8,8 +11,9 @@ import { xmlStringToJson } from '../../utility/helpers';
 
 import AssetPool from '@brightsign/assetpool';
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
-import AssetRealizer from '@brightsign/assetrealizer';
-const assetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
+// import AssetRealizer from '@brightsign/assetrealizer';
+// const assetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
+const assetPool: AssetPool = new AssetPool('SD:/feedPool');
 const assetPoolFetcher = new AssetPoolFetcher(assetPool);
 
 export class PlayerHSM extends HSM {
@@ -112,7 +116,7 @@ class STPlaying extends HState {
           url,
           responseType: 'text',
         }).then((response: any) => {
-          console.log(response);
+          fs.writeFileSync('feed_cache/myFeed.xml', response.data);
           return xmlStringToJson(response.data);
         }).then((feedAsJson) => {
           console.log(feedAsJson);
@@ -171,44 +175,55 @@ class STPlaying extends HState {
     return feedItems;
   }
 
+  fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<void> {
+    const jsonString = JSON.stringify(data, null, 2);
+    console.log('invoke fs.writeFile');
+    console.log(fullPath);
+    return fs.writeFile(fullPath, jsonString);
+  }
+
   downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSource) {
 
-    /* feed level properties
-    if name = "ttl" then
-      m.SetTTLMinutes(elt.GetBody())
-    else if name = "frameuserinfo:playtime" then
-      m.playtime = Val(elt.GetBody())
-    else if lcase(name) = "title" then
-      m.title = elt.GetBody()
-    */
-    const feed: ArDataFeed = {};
-    feed.items = this.getFeedItems(rawFeed);
-
-    // m.assetCollection = CreateObject("roAssetCollection")
-    const assetList: any[] = [];
-    for (const feedItem of feed.items) {
-      const asset: any = {};
-      asset.link = feedItem.url;
-      asset.name = feedItem.url;
-      asset.changeHint = feedItem.guid;
-      assetList.push(asset);
-    }
-
-    // (assetPoolFetcher as any).addEventListener('fileevent', this.handleFileEvent);
-    assetPoolFetcher.fileevent = this.handleFileEvent;
-    assetPoolFetcher.progressevent = this.handleProgressEvent;
-
-    console.log('assetPoolFetcher.start');
-    assetPoolFetcher.start(assetList)
+    // write the mrss feed to the card
+    const feedAsStr: string = JSON.stringify(rawFeed, null, 2);
+    this.fsSaveObjectAsLocalJsonFile(rawFeed, 'feed_cache/myFeed.json')
       .then(() => {
-        console.log('assetPoolFetcher promise resolved');
-      })
-      .catch((err) => {
-        console.log(err);
-        debugger;
-      });
 
-    debugger;
+        /* feed level properties
+        if name = "ttl" then
+          m.SetTTLMinutes(elt.GetBody())
+        else if name = "frameuserinfo:playtime" then
+          m.playtime = Val(elt.GetBody())
+        else if lcase(name) = "title" then
+          m.title = elt.GetBody()
+        */
+        const feed: ArDataFeed = {};
+        feed.items = this.getFeedItems(rawFeed);
+
+        // m.assetCollection = CreateObject("roAssetCollection")
+        const assetList: any[] = [];
+        for (const feedItem of feed.items) {
+          const asset: any = {};
+          asset.link = feedItem.url;
+          asset.name = feedItem.url;
+          asset.changeHint = feedItem.guid;
+          assetList.push(asset);
+        }
+
+        // (assetPoolFetcher as any).addEventListener('fileevent', this.handleFileEvent);
+        assetPoolFetcher.fileevent = this.handleFileEvent;
+        assetPoolFetcher.progressevent = this.handleProgressEvent;
+
+        console.log('assetPoolFetcher.start');
+        assetPoolFetcher.start(assetList)
+          .then(() => {
+            console.log('assetPoolFetcher promise resolved');
+          })
+          .catch((err) => {
+            console.log(err);
+            debugger;
+          });
+      });
   }
 
   handleFileEvent(fileEvent: any) {
@@ -254,7 +269,7 @@ class STPlaying extends HState {
 
         return 'HANDLED';
 
-      // if event["EventType"] = "MRSS_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_UNCHANGED" then
+        // if event["EventType"] = "MRSS_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_UNCHANGED" then
       } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
         // m.bsp.AdvanceToNextLiveDataFeedInQueue(m.liveDataFeeds)
