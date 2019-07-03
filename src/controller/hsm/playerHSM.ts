@@ -3,7 +3,7 @@ import isomorphicPath from 'isomorphic-path';
 
 import axios from 'axios';
 import { HSM, HState, STTopEventHandler } from './HSM';
-import { ArEventType, HSMStateData, ArDataFeed, ArDataFeedItem } from '../../type/runtime';
+import { ArEventType, HSMStateData } from '../../type/runtime';
 import { Action } from 'redux';
 import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
 import { isNil, isString } from 'lodash';
@@ -11,10 +11,11 @@ import { xmlStringToJson } from '../../utility/helpers';
 
 import AssetPool from '@brightsign/assetpool';
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
+import { DataFeedItem, DataFeed } from '../../type/dataFeed';
 // import AssetRealizer from '@brightsign/assetrealizer';
 // const assetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-const assetPool: AssetPool = new AssetPool('SD:/feedPool');
-const assetPoolFetcher = new AssetPoolFetcher(assetPool);
+const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
+const assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
 
 export class PlayerHSM extends HSM {
 
@@ -149,14 +150,14 @@ class STPlaying extends HState {
     }
   }
 
-  getFeedItems(feed: any): ArDataFeedItem[] {
+  getFeedItems(feed: any): DataFeedItem[] {
 
-    const feedItems: ArDataFeedItem[] = [];
+    const feedItems: DataFeedItem[] = [];
 
     const items: any = feed.rss.channel.item;
     for (const item of items) {
       const mediaContent: any = item['media:content'].$;
-      const feedItem: ArDataFeedItem = {
+      const feedItem: DataFeedItem = {
         description: item.description,
         guid: item.guid,
         link: item.link,
@@ -185,7 +186,6 @@ class STPlaying extends HState {
   downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSource) {
 
     // write the mrss feed to the card
-    const feedAsStr: string = JSON.stringify(rawFeed, null, 2);
     // this.fsSaveObjectAsLocalJsonFile(rawFeed, 'feed_cache/myFeed.json')
     this.fsSaveObjectAsLocalJsonFile(rawFeed, 'feed_cache/' + dataFeedSource.id + '.json')
       .then(() => {
@@ -198,7 +198,7 @@ class STPlaying extends HState {
         else if lcase(name) = "title" then
           m.title = elt.GetBody()
         */
-        const feed: ArDataFeed = {};
+        const feed: DataFeed = {};
         feed.items = this.getFeedItems(rawFeed);
 
         // m.assetCollection = CreateObject("roAssetCollection")

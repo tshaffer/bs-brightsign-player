@@ -6,6 +6,6 @@ import { UserVariable } from '../type/userVariable';
 // ------------------------------------
 // TEDTODO - create selector?
 export function getUserVariableById(state: BsBrightSignPlayerState, userVariableId: string): UserVariable | null {
-  const userVariblesById = state.bsPlayer.userVariables;
-  return userVariblesById[userVariableId];
+  const userVariablesById = state.bsPlayer.userVariables;
+  return userVariablesById[userVariableId];
 }

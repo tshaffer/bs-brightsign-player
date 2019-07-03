@@ -48,24 +48,3 @@ export interface ArState {
   // dataFeeds : DataFeedShape;
   // mrssDataFeedItems : MrssDataFeedItemShape;
 }
-
-export interface ArDataFeed {
-  title?: string;
-  playtime?: string;
-  ttl?: string;
-  items?: any[];
-}
-
-export interface ArDataFeedItem {
-  description: string;
-  guid: string;
-  link: string;
-  title: string;
-  pubDate: string;
-  duration: string;
-  fileSize: string;
-  medium: string;
-  type: string;
-  url: string;
-}
-

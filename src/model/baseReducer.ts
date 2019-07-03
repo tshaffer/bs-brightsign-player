@@ -10,6 +10,7 @@ import { BsBrightSignPlayerModelBaseAction, BsBrightSignPlayerModelBatchAction, 
 import { hsmReducer, isValidHSMs } from './hsm';
 import { isObject } from 'lodash';
 import { userVariableReducer, isValidUserVariableState } from './userVariable';
+import { dataFeedReducer, isValidDataFeedState } from './dataFeed';
 
 // -----------------------------------------------------------------------
 // Defaults
@@ -41,6 +42,7 @@ export const bsBrightSignPlayerReducer: BsBrightSignPlayerReducer = enableBatchi
   activeHStates: activeHStateReducer,
   hsms: hsmReducer,
   userVariables: userVariableReducer,
+  dataFeeds: dataFeedReducer,
 }));
 
 // -----------------------------------------------------------------------
@@ -50,6 +52,7 @@ export const bsBrightSignPlayerReducer: BsBrightSignPlayerReducer = enableBatchi
 export const isValidBsBrightSignPlayerModelState = (state: any): boolean => {
   return isObject(state)
     && state.hasOwnProperty('activeHStates') && isValidActiveHStates(state.activeHStates)
+    && state.hasOwnProperty('dataFeeds') && isValidDataFeedState(state.dataFeeds)
     && state.hasOwnProperty('hsms') && isValidHSMs(state.hsms)
     && state.hasOwnProperty('userVariables') && isValidUserVariableState(state.userVariables);
 };
@@ -57,6 +60,7 @@ export const isValidBsBrightSignPlayerModelState = (state: any): boolean => {
 export const isValidBsBrightSignPlayerModelStateShallow = (state: any): boolean => {
   return isObject(state)
   && state.hasOwnProperty('activeHStates') 
+  && state.hasOwnProperty('dataFeeds') 
   && state.hasOwnProperty('hsms')
   && state.hasOwnProperty('userVariables');
 };

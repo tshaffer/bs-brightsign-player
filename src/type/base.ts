@@ -4,6 +4,7 @@ import { DmState } from '@brightsign/bsdatamodel';
 import { HStateMap } from './activeHState';
 import { HSM } from '../controller/hsm/HSM';
 import { UserVariableMap } from './userVariable';
+import { DataFeedMap } from './dataFeed';
 
 /** @internal */
 /** @private */
@@ -22,4 +23,5 @@ export interface BsBrightSignPlayerModelState {
   hsms: HSM[];
   activeHStates: HStateMap;
   userVariables: UserVariableMap;
+  dataFeeds: DataFeedMap;
 }
