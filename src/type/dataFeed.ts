@@ -1,8 +1,12 @@
+import { Asset } from '@brightsign/assetpool';
+
 export interface DataFeed {
+  id: string;
   title?: string;
   playtime?: string;
   ttl?: string;
-  items?: DataFeedItem[];
+  items: DataFeedItem[];
+  assetList: Asset[];
 }
 
 export interface DataFeedItem {

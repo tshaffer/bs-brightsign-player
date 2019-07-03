@@ -45,6 +45,4 @@ export type StateMachineShape = { };
 export interface ArState {
   bsdm : DmState;
   stateMachine : StateMachineShape;
-  // dataFeeds : DataFeedShape;
-  // mrssDataFeedItems : MrssDataFeedItemShape;
 }

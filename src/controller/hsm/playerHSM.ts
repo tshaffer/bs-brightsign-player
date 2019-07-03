@@ -1,5 +1,4 @@
 import * as fs from 'fs-extra';
-import isomorphicPath from 'isomorphic-path';
 
 import axios from 'axios';
 import { HSM, HState, STTopEventHandler } from './HSM';
@@ -9,9 +8,10 @@ import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForF
 import { isNil, isString } from 'lodash';
 import { xmlStringToJson } from '../../utility/helpers';
 
-import AssetPool from '@brightsign/assetpool';
+import AssetPool, { Asset } from '@brightsign/assetpool';
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
 import { DataFeedItem, DataFeed } from '../../type/dataFeed';
+import { addDataFeed } from '../../model/dataFeed';
 // import AssetRealizer from '@brightsign/assetrealizer';
 // const assetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
 const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
@@ -131,23 +131,25 @@ class STPlaying extends HState {
     return Promise.reject('dataFeedSource is null');
   }
 
-  queueRetrieveLiveDataFeed(bsdm: DmState, dataFeedSourceId: BsDmId) {
+  queueRetrieveLiveDataFeed(bsdm: DmState, dataFeedSourceId: BsDmId): Function {
 
-    // TODO - download feeds that are neither MRSS nor content immediately (simple RSS)
-    this.dataFeedsToDownload.set(dataFeedSourceId, null);
-    if (this.dataFeedsToDownload.size === 1) {
-      const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, { id: dataFeedSourceId });
-      if (!isNil(dataFeedSource)) {
-        this.retrieveLiveDataFeed(bsdm, dataFeedSource)
-          .then((feedAsJson) => {
-            console.log('promise resolved from retrieveLiveDataFeed');
-            console.log(feedAsJson);
-            // simplified
-            // DownloadMRSSContent
-            this.downloadMRSSContent(feedAsJson, dataFeedSource);
-          });
+    return (dispatch: any, getState: any) => {
+      // TODO - download feeds that are neither MRSS nor content immediately (simple RSS)
+      this.dataFeedsToDownload.set(dataFeedSourceId, null);
+      if (this.dataFeedsToDownload.size === 1) {
+        const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, { id: dataFeedSourceId });
+        if (!isNil(dataFeedSource)) {
+          this.retrieveLiveDataFeed(bsdm, dataFeedSource)
+            .then((feedAsJson) => {
+              console.log('promise resolved from retrieveLiveDataFeed');
+              console.log(feedAsJson);
+              // simplified
+              // DownloadMRSSContent
+              dispatch(this.downloadMRSSContent(feedAsJson, dataFeedSource));
+            });
+        }
       }
-    }
+    };
   }
 
   getFeedItems(feed: any): DataFeedItem[] {
@@ -185,46 +187,54 @@ class STPlaying extends HState {
 
   downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSource) {
 
-    // write the mrss feed to the card
-    // this.fsSaveObjectAsLocalJsonFile(rawFeed, 'feed_cache/myFeed.json')
-    this.fsSaveObjectAsLocalJsonFile(rawFeed, 'feed_cache/' + dataFeedSource.id + '.json')
-      .then(() => {
+    return (dispatch: any, getState: any) => {
 
-        /* feed level properties
-        if name = "ttl" then
-          m.SetTTLMinutes(elt.GetBody())
-        else if name = "frameuserinfo:playtime" then
-          m.playtime = Val(elt.GetBody())
-        else if lcase(name) = "title" then
-          m.title = elt.GetBody()
-        */
-        const feed: DataFeed = {};
-        feed.items = this.getFeedItems(rawFeed);
+      // write the mrss feed to the card
+      this.fsSaveObjectAsLocalJsonFile(rawFeed, 'feed_cache/' + dataFeedSource.id + '.json')
+        .then(() => {
 
-        // m.assetCollection = CreateObject("roAssetCollection")
-        const assetList: any[] = [];
-        for (const feedItem of feed.items) {
-          const asset: any = {};
-          asset.link = feedItem.url;
-          asset.name = feedItem.url;
-          asset.changeHint = feedItem.guid;
-          assetList.push(asset);
-        }
+          /* feed level properties
+          if name = "ttl" then
+            m.SetTTLMinutes(elt.GetBody())
+          else if name = "frameuserinfo:playtime" then
+            m.playtime = Val(elt.GetBody())
+          else if lcase(name) = "title" then
+            m.title = elt.GetBody()
+          */
+          const items: DataFeedItem[] = this.getFeedItems(rawFeed);
+          
+          // m.assetCollection = CreateObject("roAssetCollection")
+          const assetList: Asset[] = [];
+          for (const feedItem of items) {
+            const asset: Asset = {
+              link: feedItem.url,
+              name: feedItem.url,
+              changeHint: feedItem.guid,
+              };
+            assetList.push(asset);
+          }
 
-        // (assetPoolFetcher as any).addEventListener('fileevent', this.handleFileEvent);
-        assetPoolFetcher.fileevent = this.handleFileEvent;
-        assetPoolFetcher.progressevent = this.handleProgressEvent;
+          const dataFeed: DataFeed = {
+            id: dataFeedSource.id,
+            assetList,
+            items,
+          };
+          dispatch(addDataFeed(dataFeedSource.id, dataFeed));
 
-        console.log('assetPoolFetcher.start');
-        assetPoolFetcher.start(assetList)
-          .then(() => {
-            console.log('assetPoolFetcher promise resolved');
-          })
-          .catch((err) => {
-            console.log(err);
-            debugger;
-          });
-      });
+          assetPoolFetcher.fileevent = this.handleFileEvent;
+          assetPoolFetcher.progressevent = this.handleProgressEvent;
+
+          console.log('assetPoolFetcher.start');
+          assetPoolFetcher.start(assetList)
+            .then(() => {
+              console.log('assetPoolFetcher promise resolved');
+            })
+            .catch((err) => {
+              console.log(err);
+              debugger;
+            });
+        });
+    };
   }
 
   handleFileEvent(fileEvent: any) {
@@ -245,11 +255,13 @@ class STPlaying extends HState {
     console.log(progressEvent);
   }
 
-  getDataFeeds(bsdm: DmState) {
-    const dataFeedSourceIds: BsDmId[] = dmGetDataFeedSourceIdsForSign(bsdm);
-    for (const dataFeedSourceId of dataFeedSourceIds) {
-      this.queueRetrieveLiveDataFeed(bsdm, dataFeedSourceId);
-    }
+  addDataFeeds(bsdm: DmState): Function {
+    return (dispatch: any, getState: any) => {
+      const dataFeedSourceIds: BsDmId[] = dmGetDataFeedSourceIdsForSign(bsdm);
+      for (const dataFeedSourceId of dataFeedSourceIds) {
+        dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedSourceId));
+      }
+    };
   }
 
   STPlayingEventHandler(event: ArEventType, stateData: HSMStateData): any {
@@ -262,7 +274,7 @@ class STPlaying extends HState {
         console.log(this.id + ': entry signal');
 
         // initiate data feed downloads
-        this.getDataFeeds(getState().bsdm);
+        dispatch(this.addDataFeeds(getState().bsdm));
 
         // launch playback
         const action: any = (this.stateMachine as PlayerHSM).startPlayback();

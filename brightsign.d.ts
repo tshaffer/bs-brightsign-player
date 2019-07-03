@@ -18,12 +18,12 @@ declare module '@brightsign/assetpool' {
   export interface Asset {
     name: string;
     link: string;
-    size: number;
-    hash: Hash;
+    size?: number;
+    hash?: Hash;
     changeHint: string;
     auth?: Authentication;
     headers?: Header[];
-    probe: string;
+    probe?: string;
   }
   
   export interface ValidationOptions {
