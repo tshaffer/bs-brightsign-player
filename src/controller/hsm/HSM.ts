@@ -54,7 +54,8 @@ export class HSM {
 
       // execute initial transition
       if (!isNil(this.initialPseudoStateHandler)) {
-        this.activeState = dispatch(this.initialPseudoStateHandler());
+        action = (this.initialPseudoStateHandler() as any).bind(this);
+        this.activeState = dispatch(action);
         console.log(this.activeState);
       }
 
@@ -83,7 +84,7 @@ export class HSM {
           entryStates[0] = activeState;
 
           // send an empty event to get the super state
-          action = (this.activeState).HStateEventHandler(emptyEvent, stateData);          
+          action = (this.activeState).HStateEventHandler(emptyEvent, stateData).bind(this.activeState);          
           status = dispatch(action);
 
           activeState = stateData.nextState as HState;
@@ -93,7 +94,7 @@ export class HSM {
           while (activeState.id !== (sourceState).id) {
             entryStateIndex = entryStateIndex + 1;
             entryStates[entryStateIndex] = activeState;
-            action = this.activeState.HStateEventHandler(emptyEvent, stateData);
+            action = this.activeState.HStateEventHandler(emptyEvent, stateData).bind(this.activeState);
             status = dispatch(action);
             activeState = stateData.nextState as HState;
             this.activeState = activeState;
@@ -105,7 +106,7 @@ export class HSM {
           // retrace the entry path in reverse (desired) order
           while (entryStateIndex >= 0) {
             const entryState = entryStates[entryStateIndex];
-            action = entryState.HStateEventHandler(entryEvent, stateData);
+            action = entryState.HStateEventHandler(entryEvent, stateData).bind(entryState).bind(entryState);
             status = dispatch(action);
             entryStateIndex = entryStateIndex - 1;
           }
@@ -113,7 +114,10 @@ export class HSM {
           // new source state is the current state
           sourceState = entryStates[0];
 
-          action = sourceState.HStateEventHandler(initEvent, stateData);
+          console.log('HSM.ts#initialize: invoke handler with initEvent');
+          console.log(sourceState.id);
+
+          action = sourceState.HStateEventHandler(initEvent, stateData).bind(sourceState);
           status = dispatch(action);
           if (status !== 'TRANSITION') {
             this.activeState = sourceState;
@@ -135,6 +139,9 @@ export class HSM {
     let status: string;
 
     return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
+
+      console.log('HSM.ts#Dispatch');
+      console.log(event.EventType);
 
       // if there is no activeState, the playlist is empty
       if (this.activeState == null) {
@@ -162,7 +169,7 @@ export class HSM {
       let s: HState = this.activeState as HState; // TODO - initialized to reduce ts errors. TEDTODO - legit?
       while (status === 'SUPER') {                                                 // process the event hierarchically
         s = this.activeState as HState;
-        action = s.HStateEventHandler(event, stateData);
+        action = s.HStateEventHandler(event, stateData).bind(s);
         status = dispatch(action);
         this.activeState = stateData.nextState;
       }
@@ -175,10 +182,10 @@ export class HSM {
 
         // exit from the current state to the transition s
         while (t.id !== s.id) {
-          action = t.HStateEventHandler(exitEvent, stateData);
+          action = t.HStateEventHandler(exitEvent, stateData).bind(t);
           status = dispatch(action);
           if (status === 'HANDLED') {
-            action = t.HStateEventHandler(emptyEvent, stateData);
+            action = t.HStateEventHandler(emptyEvent, stateData).bind(t);
             status = dispatch(action);
           }
           t = stateData.nextState as HState;
@@ -190,29 +197,29 @@ export class HSM {
         let ip: number = -1; // TEDTODO - initialization legit?
         // check source == target (transition to self)
         if (s.id === t.id) {
-          action = s.HStateEventHandler(exitEvent, stateData);                // exit the source
+          action = s.HStateEventHandler(exitEvent, stateData).bind(s);                // exit the source
           status = dispatch(action);
           ip = 0;
         } else {
-          action = t.HStateEventHandler(emptyEvent, stateData);               // superstate of target
+          action = t.HStateEventHandler(emptyEvent, stateData).bind(t);               // superstate of target
           status = dispatch(action);
           t = stateData.nextState as HState;
           if (s.id === t.id) {                                                 // check source == target->super
             ip = 0;                                                         // enter the target
           } else {
-            action = s.HStateEventHandler(emptyEvent, stateData);           // superstate of source
+            action = s.HStateEventHandler(emptyEvent, stateData).bind(s);           // superstate of source
             status = dispatch(action);
 
             // check source->super == target->super
             if ((stateData.nextState as HState).id === t.id) {
-              action = s.HStateEventHandler(exitEvent, stateData);        // exit the source
+              action = s.HStateEventHandler(exitEvent, stateData).bind(s);        // exit the source
               status = dispatch(action);
               ip = 0;                                                     // enter the target
             }
             else {
               if ((stateData.nextState as HState).id === (path as HState[])[0].id) {
                 // check source->super == target
-                action = s.HStateEventHandler(exitEvent, stateData);    // exit the source
+                action = s.HStateEventHandler(exitEvent, stateData).bind(s);    // exit the source
                 status = dispatch(action);
               }
               // check rest of source == target->super->super and store the entry path along the way
@@ -222,7 +229,8 @@ export class HSM {
                 path[1] = t;                                            // save the superstate of the target
                 t = stateData.nextState as HState;                                // save source->super
                 // get target->super->super
-                action = (path as HState[])[1].HStateEventHandler(emptyEvent, stateData);
+                const aState: any = (path as HState[])[1];
+                action = aState.HStateEventHandler(emptyEvent, stateData).bind(aState);
                 status = dispatch(action);
                 while (status === 'SUPER') {
                   ip = ip + 1;
@@ -233,13 +241,14 @@ export class HSM {
                     status = 'HANDLED';                             // terminate the loop
                   }
                   else {                                              // it is not the source; keep going up
-                    action = (stateData.nextState as HState).HStateEventHandler(emptyEvent, stateData);
+                    const bState: any = (stateData.nextState as HState);
+                    action = bState.HStateEventHandler(emptyEvent, stateData).bind(bState);
                     status = dispatch(action);
                   }
                 }
 
                 if (iq === 0) {                                           // LCA not found yet
-                  action = s.HStateEventHandler(exitEvent, stateData); // exit the source
+                  action = s.HStateEventHandler(exitEvent, stateData).bind(s); // exit the source
                   status = dispatch(action);
 
                   // check the rest of source->super == target->super->super...
@@ -261,10 +270,10 @@ export class HSM {
                     // check each source->super->... for each target->super...
                     status = 'IGNORED';                             // keep looping
                     while (status !== 'HANDLED') {
-                      action = t.HStateEventHandler(exitEvent, stateData);
+                      action = t.HStateEventHandler(exitEvent, stateData).bind(t);
                       status = dispatch(action);
                       if (status === 'HANDLED') {
-                        action = t.HStateEventHandler(emptyEvent, stateData);
+                        action = t.HStateEventHandler(emptyEvent, stateData).bind(t);
                         status = dispatch(action);
                       }
                       t = stateData.nextState as HState;                    // set to super of t
@@ -289,7 +298,8 @@ export class HSM {
 
         // retrace the entry path in reverse (desired) order...
         while (ip >= 0) {
-          action = (path as HState[])[ip].HStateEventHandler(entryEvent, stateData);        // enter path[ip]
+          const cState: any = (path as HState[])[ip];
+          action = cState.HStateEventHandler(entryEvent, stateData).bind(cState);        // enter path[ip]
           status = dispatch(action);
           ip = ip - 1;
         }
@@ -298,35 +308,38 @@ export class HSM {
         t = (path as HState[])[0];
         this.activeState = t;                                                   // update the current state */
 
+        console.log('HSM.ts#Dispatch: invoke handler with initEvent');
+        
         // drill into the target hierarchy...
-        action = t.HStateEventHandler(initEvent, stateData);
+        action = t.HStateEventHandler(initEvent, stateData).bind(t);
         status = dispatch(action);
         this.activeState = stateData.nextState;
 
         while (status === 'TRANSITION') {
           ip = 0;
           path[0] = this.activeState;
-          action = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData); // find superstate
+          action = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData).bind(this.activeState); // find superstate
           status = dispatch(action);
           this.activeState = stateData.nextState;
           while ((this.activeState as HState).id !== t.id) {
             ip = ip + 1;
             path[ip] = this.activeState;
-            action = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData); // find superstate
+            action = (this.activeState as HState).HStateEventHandler(emptyEvent, stateData).bind(this.activeState); // find superstate
             status = dispatch(action);
             this.activeState = stateData.nextState;
           }
           this.activeState = path[0];
 
           while (ip >= 0) {
-            action = (path as HState[])[ip].HStateEventHandler(entryEvent, stateData);
+            const dState: any = (path as HState[])[ip];
+            action = dState.HStateEventHandler(entryEvent, stateData).bind(dState);
             status = dispatch(action);
             ip = ip - 1;
           }
 
           t = (path as HState[])[0];
 
-          action = t.HStateEventHandler(initEvent, stateData);
+          action = t.HStateEventHandler(initEvent, stateData).bind(t);
           status = dispatch(action);
         }
       }

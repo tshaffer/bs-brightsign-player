@@ -111,7 +111,8 @@ export function getRuntimeFiles(): Promise<void> {
 function launchHSM() {
   return ((dispatch: any) => {
     _playerHSM = new PlayerHSM('playerHSM', startPlayback, restartPlayback, postMessage, dispatchHsmEvent);
-    dispatch(_playerHSM.initialize());
+    const action: any = _playerHSM.initialize().bind(_playerHSM);
+    dispatch(action);
   });
 }
 
@@ -299,10 +300,17 @@ export function dispatchHsmEvent(
 ): BsBrightSignPlayerModelThunkAction<undefined | void> {
 
   return ((dispatch: any) => {
-    dispatch(_playerHSM.Dispatch(event));
+
+    console.log('dispatchHsmEvent:');
+    console.log(event.EventType);
+
+    // const action = _playerHSM.Dispatch(event);
+    let action = _playerHSM.Dispatch(event).bind(_playerHSM);
+    dispatch(action);
 
     _hsmList.forEach((hsm) => {
-      dispatch(hsm.Dispatch(event));
+      action = hsm.Dispatch(event).bind(hsm);
+      dispatch(action);
     });
   });
 }
@@ -333,7 +341,9 @@ function startPlayback() {
 
     zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
       zoneHSM.constructorFunction();
-      dispatch(zoneHSM.initialize());
+      console.log('runtime.ts#startPlayback - invoke zoneHSM.initialize()');
+      const action = zoneHSM.initialize().bind(zoneHSM);
+      dispatch(action);
     });
   };
 }

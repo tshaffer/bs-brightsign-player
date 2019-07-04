@@ -12,9 +12,15 @@ import AssetPool, { Asset } from '@brightsign/assetpool';
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
 import { DataFeedItem, DataFeed } from '../../type/dataFeed';
 import { addDataFeed } from '../../model/dataFeed';
-// import AssetRealizer from '@brightsign/assetrealizer';
-// const assetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
+
+// on device
+// const feedCacheRoot: string = 'feed_cache/';
+// const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
+
+// on desktop
+const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
+const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/'
+
 const assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
 
 export class PlayerHSM extends HSM {
@@ -117,7 +123,7 @@ class STPlaying extends HState {
           url,
           responseType: 'text',
         }).then((response: any) => {
-          fs.writeFileSync('feed_cache/' + dataFeedSource.id + '.xml', response.data);
+          fs.writeFileSync(feedCacheRoot + dataFeedSource.id + '.xml', response.data);
           return xmlStringToJson(response.data);
         }).then((feedAsJson) => {
           console.log(feedAsJson);
@@ -190,7 +196,7 @@ class STPlaying extends HState {
     return (dispatch: any, getState: any) => {
 
       // write the mrss feed to the card
-      this.fsSaveObjectAsLocalJsonFile(rawFeed, 'feed_cache/' + dataFeedSource.id + '.json')
+      this.fsSaveObjectAsLocalJsonFile(rawFeed, feedCacheRoot + dataFeedSource.id + '.json')
         .then(() => {
 
           /* feed level properties
@@ -202,7 +208,7 @@ class STPlaying extends HState {
             m.title = elt.GetBody()
           */
           const items: DataFeedItem[] = this.getFeedItems(rawFeed);
-          
+
           // m.assetCollection = CreateObject("roAssetCollection")
           const assetList: Asset[] = [];
           for (const feedItem of items) {
@@ -210,7 +216,7 @@ class STPlaying extends HState {
               link: feedItem.url,
               name: feedItem.url,
               changeHint: feedItem.guid,
-              };
+            };
             assetList.push(asset);
           }
 
@@ -228,6 +234,14 @@ class STPlaying extends HState {
           assetPoolFetcher.start(assetList)
             .then(() => {
               console.log('assetPoolFetcher promise resolved');
+
+              // after all files complete
+              const event: ArEventType = {
+                EventType: 'MRSS_DATA_FEED_LOADED',
+                EventData: dataFeedSource.id,
+              };
+              const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
+              dispatch(action);
             })
             .catch((err) => {
               console.log(err);
