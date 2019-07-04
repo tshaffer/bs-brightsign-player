@@ -14,7 +14,7 @@ import { allDataFeedContentExists } from '../dataFeed';
 import { postMessage } from '../runtime';
 
 export default class MrssState extends MediaHState {
-  
+
   dataFeedId: BsDmId;
 
   liveDataFeed: any;
@@ -88,12 +88,14 @@ export default class MrssState extends MediaHState {
 
           console.log('STDisplayingMrssStateEventHandler: dataFeed nil');
 
+          setTimeout(this.postMessageTimeoutHandler, 1000, dispatch);
+
           // this situation will occur when the feed itself has not downloaded yet - send a message to self to trigger exit from state (like video playback failure)
-          const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
-            EventType: 'MRSSNotFullyLoadedPlaybackEvent',
-            EventData: this.dataFeedId,
-          };
-          dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
+          // const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
+          //   EventType: 'MRSSNotFullyLoadedPlaybackEvent',
+          //   EventData: this.dataFeedId,
+          // };
+          // dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
           return 'HANDLED';
         }
         dispatch(this.launchTimer());
@@ -117,7 +119,7 @@ export default class MrssState extends MediaHState {
             m.LaunchWaitForContentTimer()
           end if
           */
-         dispatch(this.launchWaitForContentTimer());
+          dispatch(this.launchWaitForContentTimer());
         }
       } else if (event.EventType === 'MRSS_SPEC_UPDATED') {
         console.log('mrssSpecUpdated');
@@ -134,6 +136,14 @@ export default class MrssState extends MediaHState {
     console.log('************ AdvanceToNextMRSSItem');
   }
 
+  postMessageTimeoutHandler(dispatch: any): any {
+    const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
+      EventType: 'MRSSNotFullyLoadedPlaybackEvent',
+      EventData: this.dataFeedId,
+    };
+    dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
+  }
+
   launchWaitForContentTimer(): any {
     return (dispatch: any, getState: any) => {
       if (isNumber(this.waitForContentTimer)) {
@@ -148,25 +158,25 @@ export default class MrssState extends MediaHState {
   }
 
   waitForContentTimeoutHandler(mediaHState: MediaHState) {
-/*
-      if type(m.currentFeed) <> "roAssociativeArray" or not m.currentFeed.AllContentExists(m.assetPoolFiles) then
-        if type(m.currentFeed) = "roAssociativeArray" and m.currentFeed.ContentExists(m.assetPoolFiles) then
-          if m.displayIndex = invalid then
+    /*
+          if type(m.currentFeed) <> "roAssociativeArray" or not m.currentFeed.AllContentExists(m.assetPoolFiles) then
+            if type(m.currentFeed) = "roAssociativeArray" and m.currentFeed.ContentExists(m.assetPoolFiles) then
+              if m.displayIndex = invalid then
+                m.displayIndex = 0
+              end if
+              m.AdvanceToNextMRSSItem()
+            else
+              m.LaunchWaitForContentTimer()
+            end if
+          else if type(m.currentFeed) = "roAssociativeArray" and type(m.currentFeed.items) = "roArray" and m.currentFeed.items.Count() = 0 then
+            m.LaunchWaitForContentTimer()
+          else
             m.displayIndex = 0
+            m.AdvanceToNextMRSSItem()
           end if
-          m.AdvanceToNextMRSSItem()
-        else
-          m.LaunchWaitForContentTimer()
-        end if
-      else if type(m.currentFeed) = "roAssociativeArray" and type(m.currentFeed.items) = "roArray" and m.currentFeed.items.Count() = 0 then
-        m.LaunchWaitForContentTimer()
-      else
-        m.displayIndex = 0
-        m.AdvanceToNextMRSSItem()
-      end if
-      
-      return "HANDLED"
-*/    
+          
+          return "HANDLED"
+    */
     console.log('************ waitForContentTimeoutHandler');
 
   }

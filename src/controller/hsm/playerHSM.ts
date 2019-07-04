@@ -287,12 +287,15 @@ class STPlaying extends HState {
 
         console.log(this.id + ': entry signal');
 
-        // initiate data feed downloads
-        dispatch(this.addDataFeeds(getState().bsdm));
+        // // initiate data feed downloads
+        // dispatch(this.addDataFeeds(getState().bsdm));
 
         // launch playback
         const action: any = (this.stateMachine as PlayerHSM).startPlayback();
         dispatch(action);
+
+        // initiate data feed downloads
+        dispatch(this.addDataFeeds(getState().bsdm));
 
         return 'HANDLED';
 
