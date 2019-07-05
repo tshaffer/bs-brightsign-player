@@ -270,11 +270,20 @@ class STPlaying extends HState {
     console.log(progressEvent);
   }
 
-  addDataFeeds(bsdm: DmState): Function {
+  readDataFeeds(bsdm: DmState): Function {
     return (dispatch: any, getState: any) => {
       const dataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
       for (const dataFeedId of dataFeedIds) {
         dispatch(this.readFeedContent(bsdm, dataFeedId));
+      }
+    };
+  }
+
+  fetchDataFeeds(bsdm: DmState): Function {
+    return (dispatch: any, getState: any) => {
+      const dataFeedSourceIds: BsDmId[] = dmGetDataFeedSourceIdsForSign(bsdm);
+      for (const dataFeedSourceId of dataFeedSourceIds) {
+        dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedSourceId));
       }
     };
   }
@@ -386,8 +395,11 @@ class STPlaying extends HState {
         const action: any = (this.stateMachine as PlayerHSM).startPlayback();
         dispatch(action);
 
+        // read existing data feeds
+        dispatch(this.readDataFeeds(getState().bsdm));
+
         // initiate data feed downloads
-        dispatch(this.addDataFeeds(getState().bsdm));
+        dispatch(this.fetchDataFeeds(getState().bsdm));
 
         return 'HANDLED';
 
