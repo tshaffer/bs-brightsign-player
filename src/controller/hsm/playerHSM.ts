@@ -4,7 +4,7 @@ import axios from 'axios';
 import { HSM, HState, STTopEventHandler } from './HSM';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import { Action } from 'redux';
-import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
+import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById } from '@brightsign/bsdatamodel';
 import { isNil, isString } from 'lodash';
 import { xmlStringToJson } from '../../utility/helpers';
 
@@ -12,6 +12,7 @@ import AssetPool, { Asset } from '@brightsign/assetpool';
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
 import { DataFeedItem, DataFeed } from '../../type/dataFeed';
 import { addDataFeed } from '../../model/dataFeed';
+import { DataFeedUsageType } from '@brightsign/bscore';
 
 // on device
 // const feedCacheRoot: string = 'feed_cache/';
@@ -19,7 +20,7 @@ import { addDataFeed } from '../../model/dataFeed';
 
 // on desktop
 const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/'
+const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
 
 const assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
 
@@ -271,9 +272,100 @@ class STPlaying extends HState {
 
   addDataFeeds(bsdm: DmState): Function {
     return (dispatch: any, getState: any) => {
-      const dataFeedSourceIds: BsDmId[] = dmGetDataFeedSourceIdsForSign(bsdm);
-      for (const dataFeedSourceId of dataFeedSourceIds) {
-        dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedSourceId));
+      const dataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
+      for (const dataFeedId of dataFeedIds) {
+        dispatch(this.readFeedContent(bsdm, dataFeedId));
+      }
+    };
+  }
+
+  feedIsMRSS(feedFileName: string): boolean {
+
+    let fileContents: string;
+
+    try {
+      fileContents = fs.readFileSync(feedFileName, 'utf8');
+    } catch (err) {
+      return false;
+    }
+
+    return true;
+
+    // feedXML = CreateObject("roXMLElement")
+    // if not feedXML.Parse(xml) then
+    //   return false
+    //   end if
+
+    // if feedXML.HasAttribute("xmlns:media") then
+    //   attrs = feedXML.GetAttributes()
+    //   if attrs["xmlns:media"] = "http://search.yahoo.com/mrss/" then
+    //   return true
+    //   end if
+    // end if
+
+    // return false
+  }
+
+  readFeedContent(bsdm: DmState, dataFeedId: BsDmId) {
+    return (dispatch: any, getState: any) => {
+
+      const dataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId });
+
+      if (!isNil(dataFeed)) {
+        if (dataFeed.usage === DataFeedUsageType.Mrss) {
+          dispatch(this.readMrssContent(dataFeed));
+        }
+        else {
+          // ReadLiveFeedContent()
+        }
+      }
+
+      // dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedSourceId));
+    };
+  }
+
+  readMrssContent(bsdmDataFeed: DmcDataFeed) {
+
+    return (dispatch: any, getState: any) => {
+
+      const feedFileName: string = feedCacheRoot + bsdmDataFeed.feedSourceId + '.xml';
+      const isMrssFeed: boolean = this.feedIsMRSS(feedFileName);
+      //   if not m.isMRSSFeed and m.parser$ = "" then
+      if (!isMrssFeed) {
+        return;
+      }
+
+      console.log('Read existing content for feed ' + bsdmDataFeed.feedSourceId);
+
+      let xmlFileContents: string;
+
+      try {
+        xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+        xmlStringToJson(xmlFileContents)
+          .then((rawFeed) => {
+            const items: DataFeedItem[] = this.getFeedItems(rawFeed);
+            console.log(items);
+
+            const assetList: Asset[] = [];
+            for (const feedItem of items) {
+              const asset: Asset = {
+                link: feedItem.url,
+                name: feedItem.url,
+                changeHint: feedItem.guid,
+              };
+              assetList.push(asset);
+            }
+
+            const dataFeed: DataFeed = {
+              id: bsdmDataFeed.feedSourceId,
+              assetList,
+              items,
+            };
+            dispatch(addDataFeed(bsdmDataFeed.feedSourceId, dataFeed));
+          });
+
+      } catch (err) {
+        return;
       }
     };
   }

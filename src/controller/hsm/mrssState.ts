@@ -9,7 +9,7 @@ import { HState } from './HSM';
 import { BsBrightSignPlayerState, BsBrightSignPlayerModelState } from '../../type/base';
 import { DataFeed } from '../../type/dataFeed';
 import { getDataFeedById } from '../../selector/dataFeed';
-import { allDataFeedContentExists } from '../dataFeed';
+import { allDataFeedContentExists, contentExists } from '../dataFeed';
 
 import { postMessage } from '../runtime';
 
@@ -46,9 +46,6 @@ export default class MrssState extends MediaHState {
 
       console.log('STDisplayingMrssStateEventHandler event received');
       console.log(event.EventType);
-      if (event.EventType === 'INIT_SIGNAL') {
-        debugger;
-      }
 
       if (event.EventType === 'ENTRY_SIGNAL') {
         console.log('mrssState ' + this.id + ': entry signal');
@@ -88,7 +85,7 @@ export default class MrssState extends MediaHState {
 
           console.log('STDisplayingMrssStateEventHandler: dataFeed nil');
 
-          setTimeout(this.postMessageTimeoutHandler, 1000, dispatch);
+          setTimeout(this.postMessageTimeoutHandler, 1000, this, dispatch);
 
           // this situation will occur when the feed itself has not downloaded yet - send a message to self to trigger exit from state (like video playback failure)
           // const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
@@ -136,10 +133,10 @@ export default class MrssState extends MediaHState {
     console.log('************ AdvanceToNextMRSSItem');
   }
 
-  postMessageTimeoutHandler(dispatch: any): any {
+  postMessageTimeoutHandler(self: MrssState, dispatch: any): any {
     const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
       EventType: 'MRSSNotFullyLoadedPlaybackEvent',
-      EventData: this.dataFeedId,
+      EventData: self.dataFeedId,
     };
     dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
   }
@@ -153,33 +150,31 @@ export default class MrssState extends MediaHState {
       console.log('************ launchWaitForContentTimer');
 
       const timeoutDuration: number = 1;
-      this.waitForContentTimer = setTimeout(this.waitForContentTimeoutHandler, timeoutDuration * 1000, this);
+      this.waitForContentTimer = setTimeout(this.waitForContentTimeoutHandler, timeoutDuration * 1000, dispatch, this);
     };
   }
 
-  waitForContentTimeoutHandler(mediaHState: MediaHState) {
-    /*
-          if type(m.currentFeed) <> "roAssociativeArray" or not m.currentFeed.AllContentExists(m.assetPoolFiles) then
-            if type(m.currentFeed) = "roAssociativeArray" and m.currentFeed.ContentExists(m.assetPoolFiles) then
-              if m.displayIndex = invalid then
-                m.displayIndex = 0
-              end if
-              m.AdvanceToNextMRSSItem()
-            else
-              m.LaunchWaitForContentTimer()
-            end if
-          else if type(m.currentFeed) = "roAssociativeArray" and type(m.currentFeed.items) = "roArray" and m.currentFeed.items.Count() = 0 then
-            m.LaunchWaitForContentTimer()
-          else
-            m.displayIndex = 0
-            m.AdvanceToNextMRSSItem()
-          end if
-          
-          return "HANDLED"
-    */
+  waitForContentTimeoutHandler(dispatch: any, mrssState: MrssState) {
     console.log('************ waitForContentTimeoutHandler');
+    if (!isNil(mrssState.currentFeed) && (mrssState.currentFeed.items.length === 0 || (!allDataFeedContentExists(mrssState.currentFeed)))) {
+      if (contentExists(mrssState.currentFeed)) {
+        if (isNil(mrssState.displayIndex)) {
+          mrssState.displayIndex = 0;
+        }
+        mrssState.advanceToNextMRSSItem();
+      }
+      else {
+        mrssState.launchWaitForContentTimer();
+      }
+    }
+    else if (!isNil(mrssState.currentFeed) && !isNil(mrssState.currentFeed.items) && mrssState.currentFeed.items.length === 0) {
+      mrssState.launchTimer();
+    }
+    else {
+      mrssState.displayIndex = 0;
+      mrssState.advanceToNextMRSSItem();
+    }
 
+    // return HANDLED
   }
-
-
 }

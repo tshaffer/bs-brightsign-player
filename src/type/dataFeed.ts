@@ -7,6 +7,7 @@ export interface DataFeed {
   ttl?: string;
   items: DataFeedItem[];
   assetList: Asset[];
+  isMrss?: boolean;
 }
 
 export interface DataFeedItem {
