@@ -62,7 +62,8 @@ export default class MrssState extends MediaHState {
 
         // see if the designated feed has already been downloaded (doesn't imply content exists)
         const bsBrightSignPlayerState: BsBrightSignPlayerState = getState();
-        const dataFeed: DataFeed | null = getDataFeedById(bsBrightSignPlayerState, this.dataFeedId);
+        // const dataFeed: DataFeed | null = getDataFeedById(bsBrightSignPlayerState, this.dataFeedId);
+        const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedId);
         if (!isNil(dataFeed)) {
 
           console.log('STDisplayingMrssStateEventHandler: dataFeed not nil');

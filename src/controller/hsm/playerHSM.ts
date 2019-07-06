@@ -391,15 +391,15 @@ class STPlaying extends HState {
         // // initiate data feed downloads
         // dispatch(this.addDataFeeds(getState().bsdm));
 
-        // launch playback
-        const action: any = (this.stateMachine as PlayerHSM).startPlayback();
-        dispatch(action);
-
         // read existing data feeds
         dispatch(this.readDataFeeds(getState().bsdm));
 
         // initiate data feed downloads
         dispatch(this.fetchDataFeeds(getState().bsdm));
+
+        // launch playback
+        const action: any = (this.stateMachine as PlayerHSM).startPlayback();
+        dispatch(action);
 
         return 'HANDLED';
 
