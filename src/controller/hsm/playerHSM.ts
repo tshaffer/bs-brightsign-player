@@ -1,14 +1,10 @@
-import * as fs from 'fs-extra';
-
-import axios from 'axios';
 import { HSM, HState, STTopEventHandler } from './HSM';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import { Action } from 'redux';
 import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById, dmResetDefaultPropertyValues } from '@brightsign/bsdatamodel';
 import { isNil, isString } from 'lodash';
-import { xmlStringToJson } from '../../utility/helpers';
 
-import { readFeedContent, downloadMRSSContent } from '../dataFeed';
+import { readFeedContent, downloadMRSSContent, retrieveLiveDataFeed } from '../dataFeed';
 
 // on device
 // const feedCacheRoot: string = 'feed_cache/';
@@ -16,7 +12,7 @@ import { readFeedContent, downloadMRSSContent } from '../dataFeed';
 
 // on desktop
 // const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
+// const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
 
 export class PlayerHSM extends HSM {
 
@@ -105,33 +101,6 @@ class STPlaying extends HState {
     this.superState = superState;
   }
 
-  retrieveLiveDataFeed(bsdm: DmState, dataFeedSource: DmDataFeedSource): Promise<any> {
-
-    // simplified version - URL only; simple string
-    if (!isNil(dataFeedSource)) {
-      const remoteDataFeedSource: DmRemoteDataFeedSource = dataFeedSource as DmRemoteDataFeedSource;
-      const urlPS: DmParameterizedString = remoteDataFeedSource.url;
-      const url: string | null = dmGetSimpleStringFromParameterizedString(urlPS);
-      if (!isNil(url)) {
-        return axios({
-          method: 'get',
-          url,
-          responseType: 'text',
-        }).then((response: any) => {
-          fs.writeFileSync(feedCacheRoot + dataFeedSource.id + '.xml', response.data);
-          return xmlStringToJson(response.data);
-        }).then((feedAsJson) => {
-          console.log(feedAsJson);
-          return Promise.resolve(feedAsJson);
-        }).catch((err) => {
-          console.log(err);
-          return Promise.reject(err);
-        });
-      }
-    }
-    return Promise.reject('dataFeedSource is null');
-  }
-
   queueRetrieveLiveDataFeed(bsdm: DmState, dataFeedSourceId: BsDmId): Function {
 
     return (dispatch: any, getState: any) => {
@@ -140,7 +109,7 @@ class STPlaying extends HState {
       if (this.dataFeedsToDownload.size === 1) {
         const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, { id: dataFeedSourceId });
         if (!isNil(dataFeedSource)) {
-          this.retrieveLiveDataFeed(bsdm, dataFeedSource)
+          retrieveLiveDataFeed(bsdm, dataFeedSource)
             .then((feedAsJson) => {
               console.log('promise resolved from retrieveLiveDataFeed');
               console.log(feedAsJson);

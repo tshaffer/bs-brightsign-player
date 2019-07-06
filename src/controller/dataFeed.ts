@@ -1,7 +1,8 @@
 import * as fs from 'fs-extra';
+import axios from 'axios';
 
 import { DataFeed, DataFeedItem } from '../type/dataFeed';
-import { DmState, BsDmId, DmcDataFeed, dmGetDataFeedById, DmDataFeedSource } from '@brightsign/bsdatamodel';
+import { DmState, BsDmId, DmcDataFeed, dmGetDataFeedById, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
 import { isNil } from 'lodash';
 import { DataFeedUsageType } from '@brightsign/bscore';
 import AssetPool, { Asset } from '@brightsign/assetpool';
@@ -102,6 +103,34 @@ function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<vo
   console.log('invoke fs.writeFile');
   console.log(fullPath);
   return fs.writeFile(fullPath, jsonString);
+}
+
+
+export function retrieveLiveDataFeed(bsdm: DmState, dataFeedSource: DmDataFeedSource): Promise<any> {
+
+  // simplified version - URL only; simple string
+  if (!isNil(dataFeedSource)) {
+    const remoteDataFeedSource: DmRemoteDataFeedSource = dataFeedSource as DmRemoteDataFeedSource;
+    const urlPS: DmParameterizedString = remoteDataFeedSource.url;
+    const url: string | null = dmGetSimpleStringFromParameterizedString(urlPS);
+    if (!isNil(url)) {
+      return axios({
+        method: 'get',
+        url,
+        responseType: 'text',
+      }).then((response: any) => {
+        fs.writeFileSync(feedCacheRoot + dataFeedSource.id + '.xml', response.data);
+        return xmlStringToJson(response.data);
+      }).then((feedAsJson) => {
+        console.log(feedAsJson);
+        return Promise.resolve(feedAsJson);
+      }).catch((err) => {
+        console.log(err);
+        return Promise.reject(err);
+      });
+    }
+  }
+  return Promise.reject('dataFeedSource is null');
 }
 
 
