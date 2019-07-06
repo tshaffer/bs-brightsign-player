@@ -8,8 +8,7 @@ import { CommandSequenceType } from '@brightsign/bscore';
 import { HState } from './HSM';
 import { BsBrightSignPlayerState, BsBrightSignPlayerModelState } from '../../type/base';
 import { DataFeed } from '../../type/dataFeed';
-import { getDataFeedById } from '../../selector/dataFeed';
-import { allDataFeedContentExists, contentExists } from '../dataFeed';
+import { getDataFeedById, allDataFeedContentExists, contentExists } from '../../selector/dataFeed';
 
 import { postMessage } from '../runtime';
 
