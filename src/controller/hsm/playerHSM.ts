@@ -8,11 +8,6 @@ import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForF
 import { isNil, isString } from 'lodash';
 import { xmlStringToJson } from '../../utility/helpers';
 
-// import AssetPool, { Asset } from '@brightsign/assetpool';
-// import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
-import { DataFeedItem, DataFeed } from '../../type/dataFeed';
-import { addDataFeed } from '../../model/dataFeed';
-import { DataFeedUsageType } from '@brightsign/bscore';
 import { readFeedContent, downloadMRSSContent } from '../dataFeed';
 
 // on device
@@ -22,8 +17,6 @@ import { readFeedContent, downloadMRSSContent } from '../dataFeed';
 // on desktop
 // const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
 const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
-
-// const assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
 
 export class PlayerHSM extends HSM {
 
@@ -160,112 +153,6 @@ class STPlaying extends HState {
     };
   }
 
-  // getFeedItems(feed: any): DataFeedItem[] {
-
-  //   const feedItems: DataFeedItem[] = [];
-
-  //   const items: any = feed.rss.channel.item;
-  //   for (const item of items) {
-  //     const mediaContent: any = item['media:content'].$;
-  //     const feedItem: DataFeedItem = {
-  //       description: item.description,
-  //       guid: item.guid,
-  //       link: item.link,
-  //       title: item.title,
-  //       pubDate: item.pubDate,
-
-  //       duration: mediaContent.duration,
-  //       fileSize: mediaContent.fileSize,
-  //       medium: mediaContent.medium,
-  //       type: mediaContent.type,
-  //       url: mediaContent.url,
-  //     };
-
-  //     feedItems.push(feedItem);
-  //   }
-  //   return feedItems;
-  // }
-
-  // downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSource) {
-
-  //   return (dispatch: any, getState: any) => {
-
-  //     // write the mrss feed to the card
-  //     this.fsSaveObjectAsLocalJsonFile(rawFeed, feedCacheRoot + dataFeedSource.id + '.json')
-  //       .then(() => {
-
-  //         /* feed level properties
-  //         if name = "ttl" then
-  //           m.SetTTLMinutes(elt.GetBody())
-  //         else if name = "frameuserinfo:playtime" then
-  //           m.playtime = Val(elt.GetBody())
-  //         else if lcase(name) = "title" then
-  //           m.title = elt.GetBody()
-  //         */
-  //         const items: DataFeedItem[] = this.getFeedItems(rawFeed);
-
-  //         // m.assetCollection = CreateObject("roAssetCollection")
-  //         const assetList: Asset[] = [];
-  //         for (const feedItem of items) {
-  //           const asset: Asset = {
-  //             link: feedItem.url,
-  //             name: feedItem.url,
-  //             changeHint: feedItem.guid,
-  //           };
-  //           assetList.push(asset);
-  //         }
-
-  //         const dataFeed: DataFeed = {
-  //           id: dataFeedSource.id,
-  //           assetList,
-  //           items,
-  //         };
-  //         dispatch(addDataFeed(dataFeedSource.id, dataFeed));
-
-  //         assetPoolFetcher.fileevent = this.handleFileEvent;
-  //         assetPoolFetcher.progressevent = this.handleProgressEvent;
-
-  //         console.log('assetPoolFetcher.start');
-  //         assetPoolFetcher.start(assetList)
-  //           .then(() => {
-  //             console.log('assetPoolFetcher promise resolved');
-
-  //             feedAssetPool.queryFiles(assetList)
-  //               .then((resultAssetListRaw: any) => {
-  //                 console.log('resultAssetList');
-  //                 // const resultAssetList: any[] = (resultAssetListRaw as unknown) as any;
-  //                 const resultAssetList: any[] = resultAssetListRaw as any[];
-  //                 console.log(resultAssetList.length);
-  //                 for (const resultAsset of resultAssetList) {
-  //                   const keys: string[] = Object.keys(resultAsset);
-  //                   for (const key of keys) {
-  //                     console.log('key');
-  //                     console.log(key);
-  //                     if (resultAsset.hasOwnProperty(key)) {
-  //                       const resultAssetMember: any = resultAsset[key];
-  //                       console.log('value');
-  //                       console.log(resultAssetMember);
-  //                     }
-  //                   }
-  //                 }
-  //               });
-
-  //             // after all files complete
-  //             const event: ArEventType = {
-  //               EventType: 'MRSS_DATA_FEED_LOADED',
-  //               EventData: dataFeedSource.id,
-  //             };
-  //             const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
-  //             dispatch(action);
-  //           })
-  //           .catch((err) => {
-  //             console.log(err);
-  //             debugger;
-  //           });
-  //       });
-  //   };
-  // }
-
   // ONLY SUPPORTS ONE FEED
   readDataFeeds(bsdm: DmState): Function {
     return (dispatch: any, getState: any) => {
@@ -288,106 +175,6 @@ class STPlaying extends HState {
       }
     };
   }
-
-  // feedIsMRSS(feedFileName: string): boolean {
-
-  //   let fileContents: string;
-
-  //   try {
-  //     fileContents = fs.readFileSync(feedFileName, 'utf8');
-  //   } catch (err) {
-  //     return false;
-  //   }
-
-  //   return true;
-
-  //   // feedXML = CreateObject("roXMLElement")
-  //   // if not feedXML.Parse(xml) then
-  //   //   return false
-  //   //   end if
-
-  //   // if feedXML.HasAttribute("xmlns:media") then
-  //   //   attrs = feedXML.GetAttributes()
-  //   //   if attrs["xmlns:media"] = "http://search.yahoo.com/mrss/" then
-  //   //   return true
-  //   //   end if
-  //   // end if
-
-  //   // return false
-  // }
-
-  // readFeedContent(bsdm: DmState, dataFeedId: BsDmId) {
-
-  //   return (dispatch: any, getState: any) => {
-
-  //     const dataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId });
-
-  //     if (!isNil(dataFeed)) {
-  //       if (dataFeed.usage === DataFeedUsageType.Mrss) {
-  //         const readMrssContent: any = this.readMrssContent(dataFeed);
-  //         const promise: any = dispatch(readMrssContent);
-  //         return promise;
-  //         // dispatch(this.readMrssContent(dataFeed));
-  //       }
-  //       else {
-  //         // ReadLiveFeedContent()
-  //       }
-  //     }
-
-  //     // dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedSourceId));
-  //   };
-  // }
-
-  // readMrssContent(bsdmDataFeed: DmcDataFeed) {
-
-  //   return (dispatch: any, getState: any) => {
-
-  //     return new Promise((resolve, reject) => {
-
-  //       const feedFileName: string = feedCacheRoot + bsdmDataFeed.feedSourceId + '.xml';
-  //       const isMrssFeed: boolean = this.feedIsMRSS(feedFileName);
-  //       //   if not m.isMRSSFeed and m.parser$ = "" then
-  //       if (!isMrssFeed) {
-  //         return resolve();
-  //       }
-
-  //       console.log('Read existing content for feed ' + bsdmDataFeed.feedSourceId);
-
-  //       let xmlFileContents: string;
-
-  //       try {
-  //         xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-  //         xmlStringToJson(xmlFileContents)
-  //           .then((rawFeed) => {
-  //             const items: DataFeedItem[] = this.getFeedItems(rawFeed);
-  //             console.log(items);
-
-  //             const assetList: Asset[] = [];
-  //             for (const feedItem of items) {
-  //               const asset: Asset = {
-  //                 link: feedItem.url,
-  //                 name: feedItem.url,
-  //                 changeHint: feedItem.guid,
-  //               };
-  //               assetList.push(asset);
-  //             }
-
-  //             const dataFeed: DataFeed = {
-  //               id: bsdmDataFeed.feedSourceId,
-  //               assetList,
-  //               items,
-  //             };
-  //             const addDataFeedAction: any = addDataFeed(bsdmDataFeed.feedSourceId, dataFeed);
-  //             dispatch(addDataFeedAction);
-  //             return resolve();
-  //           });
-
-  //       } catch (err) {
-  //         return reject(err);
-  //       }
-  //     });
-  //   };
-  // }
 
   STPlayingEventHandler(event: ArEventType, stateData: HSMStateData): any {
 
