@@ -4,7 +4,7 @@ import axios from 'axios';
 import { HSM, HState, STTopEventHandler } from './HSM';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import { Action } from 'redux';
-import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById } from '@brightsign/bsdatamodel';
+import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById, dmResetDefaultPropertyValues } from '@brightsign/bsdatamodel';
 import { isNil, isString } from 'lodash';
 import { xmlStringToJson } from '../../utility/helpers';
 
@@ -15,12 +15,12 @@ import { addDataFeed } from '../../model/dataFeed';
 import { DataFeedUsageType } from '@brightsign/bscore';
 
 // on device
-// const feedCacheRoot: string = 'feed_cache/';
-// const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
+const feedCacheRoot: string = 'feed_cache/';
+const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
 
 // on desktop
-const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
+// const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
+// const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
 
 const assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
 
@@ -236,6 +236,26 @@ class STPlaying extends HState {
             .then(() => {
               console.log('assetPoolFetcher promise resolved');
 
+              feedAssetPool.queryFiles(assetList)
+                .then((resultAssetListRaw: any) => {
+                  console.log('resultAssetList');
+                  // const resultAssetList: any[] = (resultAssetListRaw as unknown) as any;
+                  const resultAssetList: any[] = resultAssetListRaw as any[];
+                  console.log(resultAssetList.length);
+                  for (const resultAsset of resultAssetList) {
+                    const keys: string[] = Object.keys(resultAsset);
+                    for (const key of keys) {
+                      console.log('key');
+                      console.log(key);
+                      if (resultAsset.hasOwnProperty(key)) {
+                        const resultAssetMember: any = resultAsset[key];
+                        console.log('value');
+                        console.log(resultAssetMember);
+                      }
+                    }
+                  }
+                });
+
               // after all files complete
               const event: ArEventType = {
                 EventType: 'MRSS_DATA_FEED_LOADED',
@@ -270,12 +290,17 @@ class STPlaying extends HState {
     console.log(progressEvent);
   }
 
+  // ONLY SUPPORTS ONE FEED
   readDataFeeds(bsdm: DmState): Function {
     return (dispatch: any, getState: any) => {
       const dataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
-      for (const dataFeedId of dataFeedIds) {
-        dispatch(this.readFeedContent(bsdm, dataFeedId));
-      }
+      const dataFeedId = dataFeedIds[0];
+      const readFeedContentAction: any = this.readFeedContent(bsdm, dataFeedId);
+      return dispatch(readFeedContentAction);
+      // for (const dataFeedId of dataFeedIds) {
+      //   const readFeedContentAction: any = this.readFeedContent(bsdm, dataFeedId);
+      //   dispatch(this.readFeedContent(bsdm, dataFeedId));
+      // }
     };
   }
 
@@ -316,13 +341,17 @@ class STPlaying extends HState {
   }
 
   readFeedContent(bsdm: DmState, dataFeedId: BsDmId) {
+
     return (dispatch: any, getState: any) => {
 
       const dataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId });
 
       if (!isNil(dataFeed)) {
         if (dataFeed.usage === DataFeedUsageType.Mrss) {
-          dispatch(this.readMrssContent(dataFeed));
+          const readMrssContent: any = this.readMrssContent(dataFeed);
+          const promise: any = dispatch(readMrssContent);
+          return promise;
+          // dispatch(this.readMrssContent(dataFeed));
         }
         else {
           // ReadLiveFeedContent()
@@ -337,45 +366,50 @@ class STPlaying extends HState {
 
     return (dispatch: any, getState: any) => {
 
-      const feedFileName: string = feedCacheRoot + bsdmDataFeed.feedSourceId + '.xml';
-      const isMrssFeed: boolean = this.feedIsMRSS(feedFileName);
-      //   if not m.isMRSSFeed and m.parser$ = "" then
-      if (!isMrssFeed) {
-        return;
-      }
+      return new Promise((resolve, reject) => {
 
-      console.log('Read existing content for feed ' + bsdmDataFeed.feedSourceId);
+        const feedFileName: string = feedCacheRoot + bsdmDataFeed.feedSourceId + '.xml';
+        const isMrssFeed: boolean = this.feedIsMRSS(feedFileName);
+        //   if not m.isMRSSFeed and m.parser$ = "" then
+        if (!isMrssFeed) {
+          return resolve();
+        }
 
-      let xmlFileContents: string;
+        console.log('Read existing content for feed ' + bsdmDataFeed.feedSourceId);
 
-      try {
-        xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-        xmlStringToJson(xmlFileContents)
-          .then((rawFeed) => {
-            const items: DataFeedItem[] = this.getFeedItems(rawFeed);
-            console.log(items);
+        let xmlFileContents: string;
 
-            const assetList: Asset[] = [];
-            for (const feedItem of items) {
-              const asset: Asset = {
-                link: feedItem.url,
-                name: feedItem.url,
-                changeHint: feedItem.guid,
+        try {
+          xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+          xmlStringToJson(xmlFileContents)
+            .then((rawFeed) => {
+              const items: DataFeedItem[] = this.getFeedItems(rawFeed);
+              console.log(items);
+
+              const assetList: Asset[] = [];
+              for (const feedItem of items) {
+                const asset: Asset = {
+                  link: feedItem.url,
+                  name: feedItem.url,
+                  changeHint: feedItem.guid,
+                };
+                assetList.push(asset);
+              }
+
+              const dataFeed: DataFeed = {
+                id: bsdmDataFeed.feedSourceId,
+                assetList,
+                items,
               };
-              assetList.push(asset);
-            }
+              const addDataFeedAction: any = addDataFeed(bsdmDataFeed.feedSourceId, dataFeed);
+              dispatch(addDataFeedAction);
+              return resolve();
+            });
 
-            const dataFeed: DataFeed = {
-              id: bsdmDataFeed.feedSourceId,
-              assetList,
-              items,
-            };
-            dispatch(addDataFeed(bsdmDataFeed.feedSourceId, dataFeed));
-          });
-
-      } catch (err) {
-        return;
-      }
+        } catch (err) {
+          return reject(err);
+        }
+      });
     };
   }
 
@@ -392,18 +426,19 @@ class STPlaying extends HState {
         // dispatch(this.addDataFeeds(getState().bsdm));
 
         // read existing data feeds
-        dispatch(this.readDataFeeds(getState().bsdm));
+        const readDataFeedsAction: any = this.readDataFeeds(getState().bsdm);
+        dispatch(readDataFeedsAction)
+          .then(() => {
+            // initiate data feed downloads
+            dispatch(this.fetchDataFeeds(getState().bsdm));
 
-        // initiate data feed downloads
-        dispatch(this.fetchDataFeeds(getState().bsdm));
+            // launch playback
+            const action: any = (this.stateMachine as PlayerHSM).startPlayback();
+            dispatch(action);
 
-        // launch playback
-        const action: any = (this.stateMachine as PlayerHSM).startPlayback();
-        dispatch(action);
-
-        return 'HANDLED';
-
-        // if event["EventType"] = "MRSS_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_UNCHANGED" then
+            return 'HANDLED';
+          });
+      // if event["EventType"] = "MRSS_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_LOADED"     or event["EventType"] = "CONTENT_DATA_FEED_UNCHANGED" then
       } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
         // m.bsp.AdvanceToNextLiveDataFeedInQueue(m.liveDataFeeds)

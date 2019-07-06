@@ -1,5 +1,5 @@
 import { ZoneHSM } from './zoneHSM';
-import { DmState, dmGetContainedMediaStateIdsForMediaState, DmSuperStateContentItem, DmDataFeedContentItem } from '@brightsign/bsdatamodel';
+import { DmState, dmGetContainedMediaStateIdsForMediaState, DmSuperStateContentItem, DmDataFeedContentItem, DmcDataFeed, dmGetDataFeedById } from '@brightsign/bsdatamodel';
 import { DmZone } from '@brightsign/bsdatamodel';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState } from '@brightsign/bsdatamodel';
@@ -88,7 +88,10 @@ export class MediaZoneHSM extends ZoneHSM {
       case ContentItemType.MrssFeed:
         const dataFeedContentItem: DmDataFeedContentItem = bsdmMediaState.contentItem as DmDataFeedContentItem;
         const dataFeedId: BsDmId = dataFeedContentItem.dataFeedId;
-        newState = new MrssState(this, bsdmMediaState, superState, dataFeedId);
+        const dataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId });
+        if (!isNil(dataFeed)) {
+          newState = new MrssState(this, bsdmMediaState, superState, dataFeedId, dataFeed.feedSourceId);
+        }
         break;
       default:
         break;

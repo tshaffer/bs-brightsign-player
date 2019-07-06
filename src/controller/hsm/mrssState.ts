@@ -16,6 +16,7 @@ import { postMessage } from '../runtime';
 export default class MrssState extends MediaHState {
 
   dataFeedId: BsDmId;
+  dataFeedSourceId: BsDmId;
 
   liveDataFeed: any;
   currentFeed: any;
@@ -27,12 +28,13 @@ export default class MrssState extends MediaHState {
 
   waitForContentTimer: any;
 
-  constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState, dataFeedId: BsDmId) {
+  constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState, dataFeedId: BsDmId, dataFeedSourceId: BsDmId) {
 
     super(zoneHSM, mediaState.id);
     this.mediaState = mediaState;
     this.superState = superState;
     this.dataFeedId = dataFeedId;
+    this.dataFeedSourceId = dataFeedSourceId;
 
     this.HStateEventHandler = this.STDisplayingMrssStateEventHandler;
 
@@ -63,7 +65,7 @@ export default class MrssState extends MediaHState {
         // see if the designated feed has already been downloaded (doesn't imply content exists)
         const bsBrightSignPlayerState: BsBrightSignPlayerState = getState();
         // const dataFeed: DataFeed | null = getDataFeedById(bsBrightSignPlayerState, this.dataFeedId);
-        const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedId);
+        const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedSourceId);
         if (!isNil(dataFeed)) {
 
           console.log('STDisplayingMrssStateEventHandler: dataFeed not nil');

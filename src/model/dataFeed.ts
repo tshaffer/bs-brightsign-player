@@ -33,8 +33,8 @@ export const dataFeedReducer = (
   switch (action.type) {
     case ADD_DATA_FEED: {
       const newState: DataFeedMap = Object.assign({}, state);
-      const { dataFeedId, currentValue } = action.payload;
-      newState[dataFeedId] = currentValue;
+      const { dataFeedId, dataFeed } = action.payload;
+      newState[dataFeedId] = dataFeed;
       return newState;
     }
     default:
