@@ -45,11 +45,11 @@ export default class MrssState extends MediaHState {
 
     return (dispatch: any, getState: any) => {
 
-      console.log('STDisplayingMrssStateEventHandler event received');
-      console.log(event.EventType);
+      // console.log('STDisplayingMrssStateEventHandler event received');
+      // console.log(event.EventType);
 
       if (event.EventType === 'ENTRY_SIGNAL') {
-        console.log('mrssState ' + this.id + ': entry signal');
+        // console.log('mrssState ' + this.id + ': entry signal');
         dispatch(this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry));
 
         this.waitForContentTimer = null;
@@ -67,7 +67,7 @@ export default class MrssState extends MediaHState {
         const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedSourceId);
         if (!isNil(dataFeed)) {
 
-          console.log('STDisplayingMrssStateEventHandler: dataFeed not nil');
+          // console.log('STDisplayingMrssStateEventHandler: dataFeed not nil');
 
           this.displayIndex = 0;
           // distinguish between a feed that has no content and a feed in which no content has been downloaded
@@ -85,7 +85,7 @@ export default class MrssState extends MediaHState {
         }
         else {
 
-          console.log('STDisplayingMrssStateEventHandler: dataFeed nil');
+          // console.log('STDisplayingMrssStateEventHandler: dataFeed nil');
 
           setTimeout(this.postMessageTimeoutHandler, 1000, this, dispatch);
 
@@ -103,7 +103,7 @@ export default class MrssState extends MediaHState {
         dispatch(this.mediaHStateExitHandler());
 
       } else if (event.EventType === 'MRSSNotFullyLoadedPlaybackEvent') {
-        console.log('MRSSNotFullyLoadedPlaybackEvent received');
+        // console.log('MRSSNotFullyLoadedPlaybackEvent received');
         const dataFeedId: string = event.EventData;
         if (dataFeedId === this.dataFeedId) {
           /*

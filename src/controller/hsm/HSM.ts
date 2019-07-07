@@ -56,7 +56,7 @@ export class HSM {
       if (!isNil(this.initialPseudoStateHandler)) {
         action = (this.initialPseudoStateHandler() as any).bind(this);
         this.activeState = dispatch(action);
-        console.log(this.activeState);
+        // console.log(this.activeState);
       }
 
       // if there is no activeState, the playlist is empty
@@ -114,8 +114,8 @@ export class HSM {
           // new source state is the current state
           sourceState = entryStates[0];
 
-          console.log('HSM.ts#initialize: invoke handler with initEvent');
-          console.log(sourceState.id);
+          // console.log('HSM.ts#initialize: invoke handler with initEvent');
+          // console.log(sourceState.id);
 
           action = sourceState.HStateEventHandler(initEvent, stateData).bind(sourceState);
           status = dispatch(action);
@@ -140,8 +140,8 @@ export class HSM {
 
     return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
 
-      console.log('HSM.ts#Dispatch');
-      console.log(event.EventType);
+      // console.log('HSM.ts#Dispatch');
+      // console.log(event.EventType);
 
       // if there is no activeState, the playlist is empty
       if (this.activeState == null) {
@@ -308,7 +308,7 @@ export class HSM {
         t = (path as HState[])[0];
         this.activeState = t;                                                   // update the current state */
 
-        console.log('HSM.ts#Dispatch: invoke handler with initEvent');
+        // console.log('HSM.ts#Dispatch: invoke handler with initEvent');
         
         // drill into the target hierarchy...
         action = t.HStateEventHandler(initEvent, stateData).bind(t);

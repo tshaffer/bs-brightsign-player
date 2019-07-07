@@ -15,12 +15,12 @@ import { ArEventType } from '../..';
 import { postMessage } from './runtime';
 
 // on device
-// const feedCacheRoot: string = 'feed_cache/';
-// const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
+const feedCacheRoot: string = 'feed_cache/';
+const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
 
 // on desktop
-const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
+// const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
+// const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
 
 const assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
 
@@ -72,10 +72,18 @@ function readMrssContent(bsdmDataFeed: DmcDataFeed) {
 
             const assetList: Asset[] = [];
             for (const feedItem of items) {
+
+              // console.log('hash hex:');
+              // console.log(feedItem.guid);
+
               const asset: Asset = {
                 link: feedItem.url,
                 name: feedItem.url,
                 changeHint: feedItem.guid,
+                hash: {
+                  method: 'SHA1',
+                  hex: feedItem.guid,
+                }
               };
               assetList.push(asset);
             }
@@ -155,10 +163,18 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
         // m.assetCollection = CreateObject("roAssetCollection")
         const assetList: Asset[] = [];
         for (const feedItem of items) {
+          
+          console.log('hash hex:');
+          console.log(feedItem.guid);
+
           const asset: Asset = {
             link: feedItem.url,
             name: feedItem.url,
             changeHint: feedItem.guid,
+            hash: {
+              method: 'SHA1',
+              hex: feedItem.guid,
+            }
           };
           assetList.push(asset);
         }
@@ -179,25 +195,25 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
           .then(() => {
             console.log('assetPoolFetcher promise resolved');
 
-            feedAssetPool.queryFiles(assetList)
-              .then((resultAssetListRaw: any) => {
-                console.log('resultAssetList');
-                // const resultAssetList: any[] = (resultAssetListRaw as unknown) as any;
-                const resultAssetList: any[] = resultAssetListRaw as any[];
-                console.log(resultAssetList.length);
-                for (const resultAsset of resultAssetList) {
-                  const keys: string[] = Object.keys(resultAsset);
-                  for (const key of keys) {
-                    console.log('key');
-                    console.log(key);
-                    if (resultAsset.hasOwnProperty(key)) {
-                      const resultAssetMember: any = resultAsset[key];
-                      console.log('value');
-                      console.log(resultAssetMember);
-                    }
-                  }
-                }
-              });
+            // feedAssetPool.queryFiles(assetList)
+            //   .then((resultAssetListRaw: any) => {
+            //     console.log('resultAssetList');
+            //     // const resultAssetList: any[] = (resultAssetListRaw as unknown) as any;
+            //     const resultAssetList: any[] = resultAssetListRaw as any[];
+            //     console.log(resultAssetList.length);
+            //     for (const resultAsset of resultAssetList) {
+            //       const keys: string[] = Object.keys(resultAsset);
+            //       for (const key of keys) {
+            //         console.log('key');
+            //         console.log(key);
+            //         if (resultAsset.hasOwnProperty(key)) {
+            //           const resultAssetMember: any = resultAsset[key];
+            //           console.log('value');
+            //           console.log(resultAssetMember);
+            //         }
+            //       }
+            //     }
+            //   });
 
             // after all files complete
             const event: ArEventType = {
