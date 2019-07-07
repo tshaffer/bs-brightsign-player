@@ -2,7 +2,7 @@ import { DmBpOutputCommandData } from '@brightsign/bsdatamodel';
 import { BpAction, EventType } from '@brightsign/bscore';
 import { isObject } from 'lodash';
 import { ArEventType } from '../../type/runtime';
-import { getReduxStore, dispatchHsmEvent } from '../runtime';
+import { getReduxStore, queueHsmEvent } from '../runtime';
 
 let bp900Control: BSControlPort;
 let bp900Leds: BSControlPort;
@@ -35,7 +35,7 @@ export function initializeButtonPanels() {
       console.log('********------- dispatch bp event');
   
       const reduxStore: any = getReduxStore();
-      reduxStore.dispatch(dispatchHsmEvent(event));
+      reduxStore.dispatch(queueHsmEvent(event));
     };  
   }
   catch (e) {

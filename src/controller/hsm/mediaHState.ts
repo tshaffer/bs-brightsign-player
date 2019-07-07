@@ -4,7 +4,7 @@ import { ArEventType, HSMStateData } from '../../type/runtime';
 import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData, 
   DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString, DmBpOutputCommandData, DmKeyboardEventData, DmSuperStateContentItem, dmGetMediaStateById } from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from './mediaZoneHSM';
-import { getReduxStore, tmpGetVideoElementRef, dispatchHsmEvent } from '../../index';
+import { getReduxStore, tmpGetVideoElementRef, queueHsmEvent } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition, DmCommandOperation } from '@brightsign/bsdatamodel';
 import { isNil } from 'lodash';
@@ -220,7 +220,7 @@ export class MediaHState extends HState {
         }
       };
 
-      const action: any = dispatchHsmEvent(event);
+      const action: any = queueHsmEvent(event);
       dispatch(action);
     };
   }

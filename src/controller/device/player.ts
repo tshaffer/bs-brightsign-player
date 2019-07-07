@@ -1,6 +1,6 @@
 import { ArEventType } from '../../type/runtime';
 import { EventType } from '@brightsign/bscore';
-import { dispatchHsmEvent } from '../runtime';
+import { queueHsmEvent } from '../runtime';
 
 // -----------------------------------------------------------------------
 // Controller Methods
@@ -14,7 +14,7 @@ export const postVideoEnd = (): any => {
     const event: ArEventType = {
       EventType: EventType.MediaEnd,
     };
-    dispatch(dispatchHsmEvent(event));
+    dispatch(queueHsmEvent(event));
   };
 };
 
@@ -29,7 +29,7 @@ export const processKeyPress = (key: any): any => {
         key
       },
     };
-    const action: any = dispatchHsmEvent(event);
+    const action: any = queueHsmEvent(event);
     dispatch(action);
   };
 };

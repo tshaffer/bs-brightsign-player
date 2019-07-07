@@ -87,8 +87,13 @@ export default class MrssState extends MediaHState {
 
           // console.log('STDisplayingMrssStateEventHandler: dataFeed nil');
 
-          setTimeout(this.postMessageTimeoutHandler, 1000, this, dispatch);
-
+          // setTimeout(this.postMessageTimeoutHandler, 1000, this, dispatch);
+          const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
+            EventType: 'MRSSNotFullyLoadedPlaybackEvent',
+            EventData: this.dataFeedId,
+          };
+          dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
+      
           // this situation will occur when the feed itself has not downloaded yet - send a message to self to trigger exit from state (like video playback failure)
           // const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
           //   EventType: 'MRSSNotFullyLoadedPlaybackEvent',

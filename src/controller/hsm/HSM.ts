@@ -16,6 +16,7 @@ export class HSM {
   constructorHandler: (() => void) | null;
   initialPseudoStateHandler: () => (HState | null);
 
+
   constructor(hsmId: string, dispatchEvent: ((event: ArEventType) => void)) {
     this.hsmId = hsmId;
     this.dispatchEvent = dispatchEvent;
@@ -29,7 +30,8 @@ export class HSM {
     }
   }
 
-  initialize() {
+
+  hsmInitialize() {
 
     let action: any;
     let status: string;
@@ -133,7 +135,7 @@ export class HSM {
   }
 
   // TEDTODO - remove casts
-  Dispatch(event: ArEventType) {
+  hsmDispatch(event: ArEventType) {
 
     let action: any;
     let status: string;

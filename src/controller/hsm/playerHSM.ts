@@ -6,14 +6,6 @@ import { isNil, isString } from 'lodash';
 
 import { readFeedContent, downloadMRSSContent, retrieveLiveDataFeed } from '../dataFeed';
 
-// on device
-// const feedCacheRoot: string = 'feed_cache/';
-// const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
-
-// on desktop
-// const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-// const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
-
 export class PlayerHSM extends HSM {
 
   type: string;

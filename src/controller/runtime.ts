@@ -61,6 +61,7 @@ let _syncSpec: ArSyncSpec;
 let _poolAssetFiles: ArFileLUT;
 let _autoSchedule: any;
 
+let _queuedEvents: ArEventType[] = [];
 let _hsmList: HSM[] = [];
 let _playerHSM: PlayerHSM;
 
@@ -110,8 +111,8 @@ export function getRuntimeFiles(): Promise<void> {
 
 function launchHSM() {
   return ((dispatch: any) => {
-    _playerHSM = new PlayerHSM('playerHSM', startPlayback, restartPlayback, postMessage, dispatchHsmEvent);
-    const action: any = _playerHSM.initialize().bind(_playerHSM);
+    _playerHSM = new PlayerHSM('playerHSM', startPlayback, restartPlayback, postMessage, queueHsmEvent);
+    const action: any = _playerHSM.hsmInitialize().bind(_playerHSM);
     dispatch(action);
   });
 }
@@ -290,62 +291,73 @@ function restartPlayback(presentationName: string): Promise<void> {
 
 export function postMessage(event: ArEventType) {
   return ((dispatch: any) => {
-    dispatch(dispatchHsmEvent(event));
+    dispatch(queueHsmEvent(event));
   });
 }
 
+export function queueHsmEvent(
+  event: ArEventType
+) {
+  return ((dispatch: any) => {
+    _queuedEvents.push(event);
+    while (_queuedEvents.length === 1) {
+      dispatch(dispatchHsmEvent(event));
+      _queuedEvents.shift();
+    }
+  });
+}
 
 export function dispatchHsmEvent(
-  event: ArEventType
-): BsBrightSignPlayerModelThunkAction<undefined | void> {
+    event: ArEventType
+  ): BsBrightSignPlayerModelThunkAction<undefined | void> {
 
-  return ((dispatch: any) => {
+    return ((dispatch: any) => {
 
-    console.log('dispatchHsmEvent:');
-    console.log(event.EventType);
+      console.log('dispatchHsmEvent:');
+      console.log(event.EventType);
 
-    // const action = _playerHSM.Dispatch(event);
-    let action = _playerHSM.Dispatch(event).bind(_playerHSM);
-    dispatch(action);
-
-    _hsmList.forEach((hsm) => {
-      action = hsm.Dispatch(event).bind(hsm);
+      // const action = _playerHSM.Dispatch(event);
+      let action = _playerHSM.hsmDispatch(event).bind(_playerHSM);
       dispatch(action);
+
+      _hsmList.forEach((hsm) => {
+        action = hsm.hsmDispatch(event).bind(hsm);
+        dispatch(action);
+      });
     });
-  });
-}
+  }
 
 
-function startPlayback() {
+  function startPlayback() {
 
-  return (dispatch: any, getState: any) => {
+    return (dispatch: any, getState: any) => {
 
-    const bsdm: DmState = getState().bsdm;
+      const bsdm: DmState = getState().bsdm;
 
-    const zoneHSMs: ZoneHSM[] = [];
-    const zoneIds: BsDmId[] = dmGetZonesForSign(bsdm);
-    zoneIds.forEach((zoneId: BsDmId) => {
-      const bsdmZone: DmZone = dmGetZoneById(bsdm, { id: zoneId }) as DmZone;
+      const zoneHSMs: ZoneHSM[] = [];
+      const zoneIds: BsDmId[] = dmGetZonesForSign(bsdm);
+      zoneIds.forEach((zoneId: BsDmId) => {
+        const bsdmZone: DmZone = dmGetZoneById(bsdm, { id: zoneId }) as DmZone;
 
-      let zoneHSM: ZoneHSM;
+        let zoneHSM: ZoneHSM;
 
-      switch (bsdmZone.type) {
-        default: {
-          zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, zoneId, dispatchHsmEvent, bsdm);
-          break;
+        switch (bsdmZone.type) {
+          default: {
+            zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, zoneId, queueHsmEvent, bsdm);
+            break;
+          }
         }
-      }
-      zoneHSMs.push(zoneHSM);
-      _hsmList.push(zoneHSM);
-    });
+        zoneHSMs.push(zoneHSM);
+        _hsmList.push(zoneHSM);
+      });
 
-    zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
-      zoneHSM.constructorFunction();
-      console.log('runtime.ts#startPlayback - invoke zoneHSM.initialize()');
-      const action = zoneHSM.initialize().bind(zoneHSM);
-      dispatch(action);
-    });
-  };
-}
+      zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
+        zoneHSM.constructorFunction();
+        console.log('runtime.ts#startPlayback - invoke zoneHSM.initialize()');
+        const action = zoneHSM.hsmInitialize().bind(zoneHSM);
+        dispatch(action);
+      });
+    };
+  }
 
 
