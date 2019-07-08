@@ -15,12 +15,12 @@ import { ArEventType } from '../..';
 import { postMessage } from './runtime';
 
 // on device
-// const feedCacheRoot: string = 'feed_cache/';
-// const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
+const feedCacheRoot: string = 'feed_cache/';
+const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
 
 // on desktop
-const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
+// const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
+// const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
 
 const assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
 
