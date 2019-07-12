@@ -12,7 +12,7 @@ import { getFeedItems } from '../selector/dataFeed';
 
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
 import { ArEventType } from '../..';
-import { postMessage } from './runtime';
+import { postMessage, getPlatform } from './runtime';
 
 // on device
 const feedCacheRoot: string = 'feed_cache/';
@@ -22,7 +22,27 @@ const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
 // const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
 // const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
 
-const assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
+let assetPoolFetcher: AssetPoolFetcher | null = null;
+
+function getFeedCacheRoot(): string {
+  switch (getPlatform()) {
+    case 'Desktop':
+      default:
+      return '/Users/tedshaffer/Desktop/autotron/feed_cache/';
+    case 'Brightsign':
+      return 'feed_cache/';
+  }
+}
+
+function getFeedAssetPool(): AssetPool {
+  switch (getPlatform()) {
+    case 'Desktop':
+    default:
+      return new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
+    case 'Brightsign':
+      return new AssetPool('SD:/feedPool');
+  }
+}
 
 export function readFeedContent(bsdm: DmState, dataFeedId: BsDmId) {
 
@@ -52,7 +72,7 @@ function readMrssContent(bsdmDataFeed: DmcDataFeed) {
 
     return new Promise((resolve, reject) => {
 
-      const feedFileName: string = feedCacheRoot + bsdmDataFeed.feedSourceId + '.xml';
+      const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.feedSourceId + '.xml';
       const isMrssFeed: boolean = feedIsMRSS(feedFileName);
       //   if not m.isMRSSFeed and m.parser$ = "" then
       if (!isMrssFeed) {
@@ -163,7 +183,7 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
         // m.assetCollection = CreateObject("roAssetCollection")
         const assetList: Asset[] = [];
         for (const feedItem of items) {
-          
+
           console.log('hash hex:');
           console.log(feedItem.guid);
 
@@ -186,6 +206,10 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
           items,
         };
         dispatch(addDataFeed(dataFeedSource.id, dataFeed));
+
+        if (isNil(assetPoolFetcher)) {
+          assetPoolFetcher = new AssetPoolFetcher(getFeedAssetPool());
+        }
 
         assetPoolFetcher.fileevent = handleFileEvent;
         assetPoolFetcher.progressevent = handleProgressEvent;

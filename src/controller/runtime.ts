@@ -73,6 +73,10 @@ let _playerHSM: PlayerHSM;
 
 initializeButtonPanels();
 
+export function getPlatform() : string {
+  return platform;
+}
+
 export function initRuntime(store: Store<BsBrightSignPlayerState>) {
   return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
     _autotronStore = store;
