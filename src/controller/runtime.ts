@@ -40,7 +40,7 @@ catch (e) {
   console.log('failed to create controlPort: ');
 }
 // TEDTODO - failing to create control port - overwrite
-platform = 'BrightSign';
+// platform = 'BrightSign';
 
 let srcDirectory = '';
 if (platform === 'Desktop') {
@@ -257,6 +257,10 @@ export function getPoolFilePath(fileName: string): string {
 // function getPoolDirectory(): string {
 //   return isomorphicPath.join(getRootDirectory(), 'pool');
 // }
+
+export function getFeedDirectory(): string {
+  return isomorphicPath.join(getRootDirectory(), 'feedPool');
+}
 
 function getRootDirectory(): string {
   return srcDirectory;

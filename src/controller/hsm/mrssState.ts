@@ -67,8 +67,6 @@ export default class MrssState extends MediaHState {
         const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedSourceId);
         if (!isNil(dataFeed)) {
 
-          // console.log('STDisplayingMrssStateEventHandler: dataFeed not nil');
-
           this.displayIndex = 0;
           // distinguish between a feed that has no content and a feed in which no content has been downloaded
           if (dataFeed.items.length === 0 || (!allDataFeedContentExists(dataFeed))) {
@@ -85,9 +83,6 @@ export default class MrssState extends MediaHState {
         }
         else {
 
-          // console.log('STDisplayingMrssStateEventHandler: dataFeed nil');
-
-          // setTimeout(this.postMessageTimeoutHandler, 1000, this, dispatch);
           const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
             EventType: 'MRSSNotFullyLoadedPlaybackEvent',
             EventData: this.dataFeedId,
@@ -137,15 +132,8 @@ export default class MrssState extends MediaHState {
   }
 
   advanceToNextMRSSItem() {
+    debugger;
     console.log('************ AdvanceToNextMRSSItem');
-  }
-
-  postMessageTimeoutHandler(self: MrssState, dispatch: any): any {
-    const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
-      EventType: 'MRSSNotFullyLoadedPlaybackEvent',
-      EventData: self.dataFeedId,
-    };
-    dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
   }
 
   launchWaitForContentTimer(): any {

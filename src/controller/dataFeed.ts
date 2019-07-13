@@ -14,19 +14,9 @@ import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
 import { ArEventType } from '../..';
 import { postMessage, getPlatform } from './runtime';
 
-// on device
-// const feedCacheRoot: string = 'feed_cache/';
-// const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
-
-// on desktop
-// const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-// const feedCacheRoot: string = '/Users/tedshaffer/Desktop/autotron/feed_cache/';
-
 let assetPoolFetcher: AssetPoolFetcher | null = null;
 
 function getFeedCacheRoot(): string {
-  console.log('getFeedCacheRoot');
-  console.log(getPlatform());
   switch (getPlatform()) {
     case 'Desktop':
       default:
@@ -37,8 +27,6 @@ function getFeedCacheRoot(): string {
 }
 
 function getFeedAssetPool(): AssetPool {
-  console.log('getFeedAssetPool');
-  console.log(getPlatform());
   switch (getPlatform()) {
     case 'Desktop':
     default:
@@ -232,26 +220,6 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
         assetPoolFetcher.start(assetList)
           .then(() => {
             console.log('assetPoolFetcher promise resolved');
-
-            // feedAssetPool.queryFiles(assetList)
-            //   .then((resultAssetListRaw: any) => {
-            //     console.log('resultAssetList');
-            //     // const resultAssetList: any[] = (resultAssetListRaw as unknown) as any;
-            //     const resultAssetList: any[] = resultAssetListRaw as any[];
-            //     console.log(resultAssetList.length);
-            //     for (const resultAsset of resultAssetList) {
-            //       const keys: string[] = Object.keys(resultAsset);
-            //       for (const key of keys) {
-            //         console.log('key');
-            //         console.log(key);
-            //         if (resultAsset.hasOwnProperty(key)) {
-            //           const resultAssetMember: any = resultAsset[key];
-            //           console.log('value');
-            //           console.log(resultAssetMember);
-            //         }
-            //       }
-            //     }
-            //   });
 
             // after all files complete
             const event: ArEventType = {

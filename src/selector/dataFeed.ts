@@ -1,5 +1,9 @@
+import * as fs from 'fs-extra';
+import isomorphicPath from 'isomorphic-path';
 import { BsBrightSignPlayerState } from '../type';
 import { DataFeed, DataFeedItem } from '../type/dataFeed';
+import { Hash, Asset } from '@brightsign/assetpool';
+import { getFeedDirectory as getFeedPoolDirectory } from '../controller';
 
 // ------------------------------------
 // Selectors
@@ -37,11 +41,37 @@ export function getFeedItems(feed: any): DataFeedItem[] {
 }
 
 export function allDataFeedContentExists(dataFeed: DataFeed): boolean {
-  debugger;
-  return false;
+  for (const asset of dataFeed.assetList) {
+    const filePath = getFeedPoolFilePath(asset);
+    if (filePath === '' || !fs.existsSync(filePath)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function contentExists(dataFeed: DataFeed): boolean {
-  debugger;
+  for (const asset of dataFeed.assetList) {
+    const filePath = getFeedPoolFilePath(asset);
+    if (filePath !== '' && fs.existsSync(filePath)) {
+      return true;
+    }
+  }
   return false;
+}
+
+function getFeedPoolFilePath(asset: Asset): string {
+
+  const hash = asset.hash as Hash;
+  if (hash.method !== 'SHA1') {
+    return '';
+  }
+
+  const feedFileName = 'sha1-' + hash.hex;
+  const feedPoolDirectory = getFeedPoolDirectory();
+  const hashValue = hash.hex;
+  const hashValueLength = hashValue.length;
+  const dir1 = hashValue.substring(hashValueLength - 2, hashValueLength - 1);
+  const dir2 = hashValue.substring(hashValueLength -1, hashValueLength);
+  return isomorphicPath.join(feedPoolDirectory, dir1, dir2, feedFileName);
 }
