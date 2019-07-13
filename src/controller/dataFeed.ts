@@ -15,8 +15,8 @@ import { ArEventType } from '../..';
 import { postMessage, getPlatform } from './runtime';
 
 // on device
-const feedCacheRoot: string = 'feed_cache/';
-const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
+// const feedCacheRoot: string = 'feed_cache/';
+// const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
 
 // on desktop
 // const feedAssetPool: AssetPool = new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
@@ -25,21 +25,25 @@ const feedAssetPool: AssetPool = new AssetPool('SD:/feedPool');
 let assetPoolFetcher: AssetPoolFetcher | null = null;
 
 function getFeedCacheRoot(): string {
+  console.log('getFeedCacheRoot');
+  console.log(getPlatform());
   switch (getPlatform()) {
     case 'Desktop':
       default:
       return '/Users/tedshaffer/Desktop/autotron/feed_cache/';
-    case 'Brightsign':
+    case 'BrightSign':
       return 'feed_cache/';
   }
 }
 
 function getFeedAssetPool(): AssetPool {
+  console.log('getFeedAssetPool');
+  console.log(getPlatform());
   switch (getPlatform()) {
     case 'Desktop':
     default:
       return new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-    case 'Brightsign':
+    case 'BrightSign':
       return new AssetPool('SD:/feedPool');
   }
 }
@@ -147,7 +151,7 @@ export function retrieveLiveDataFeed(bsdm: DmState, dataFeedSource: DmDataFeedSo
         url,
         responseType: 'text',
       }).then((response: any) => {
-        fs.writeFileSync(feedCacheRoot + dataFeedSource.id + '.xml', response.data);
+        fs.writeFileSync(getFeedCacheRoot() + dataFeedSource.id + '.xml', response.data);
         return xmlStringToJson(response.data);
       }).then((feedAsJson) => {
         console.log(feedAsJson);
@@ -167,7 +171,7 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
   return (dispatch: any, getState: any) => {
 
     // write the mrss feed to the card
-    fsSaveObjectAsLocalJsonFile(rawFeed, feedCacheRoot + dataFeedSource.id + '.json')
+    fsSaveObjectAsLocalJsonFile(rawFeed, getFeedCacheRoot() + dataFeedSource.id + '.json')
       .then(() => {
 
         /* feed level properties
@@ -199,6 +203,8 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
           assetList.push(asset);
         }
 
+        console.log('assetList created');
+
         const dataFeed: DataFeed = {
           id: dataFeedSource.id,
           sourceId: dataFeedSource.id,
@@ -207,8 +213,16 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
         };
         dispatch(addDataFeed(dataFeedSource.id, dataFeed));
 
+        console.log('check for existence of assetPoolFetcher');
+
         if (isNil(assetPoolFetcher)) {
-          assetPoolFetcher = new AssetPoolFetcher(getFeedAssetPool());
+          console.log('assetPoolFetcher does not exist, create it');
+          const feedAssetPool: AssetPool = getFeedAssetPool();
+          console.log('created and retrieved feedAssetPool');
+          console.log(feedAssetPool);
+          assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
+          console.log('assetPoolFetcher created');
+          console.log(assetPoolFetcher);
         }
 
         assetPoolFetcher.fileevent = handleFileEvent;

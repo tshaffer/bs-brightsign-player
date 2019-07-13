@@ -39,6 +39,8 @@ catch (e) {
   platform = 'Desktop';
   console.log('failed to create controlPort: ');
 }
+// TEDTODO - failing to create control port - overwrite
+platform = 'BrightSign';
 
 let srcDirectory = '';
 if (platform === 'Desktop') {
