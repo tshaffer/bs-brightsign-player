@@ -8,15 +8,16 @@ import { CommandSequenceType } from '@brightsign/bscore';
 import { HState } from './HSM';
 import { BsBrightSignPlayerState, BsBrightSignPlayerModelState } from '../../type/base';
 import { DataFeed, DataFeedItem } from '../../type/dataFeed';
-import { 
-  getDataFeedById, 
-  allDataFeedContentExists, 
-  dataFeedContentExists, 
+import {
+  getDataFeedById,
+  allDataFeedContentExists,
+  dataFeedContentExists,
   getFeedPoolFilePathFromAsset,
   getFeedPoolFilePath,
- } from '../../selector/dataFeed';
+} from '../../selector/dataFeed';
 
 import { postMessage } from '../runtime';
+import { isString } from 'util';
 
 export default class MrssState extends MediaHState {
 
@@ -137,7 +138,7 @@ export default class MrssState extends MediaHState {
 
     console.log('************ AdvanceToNextMRSSItem');
 
-    const displayedItem = false;
+    let displayedItem = false;
 
     while (!displayedItem) {
       if (!isNil(this.currentFeed)) {
@@ -169,6 +170,18 @@ export default class MrssState extends MediaHState {
         const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
         console.log(filePath);
 
+        if (isString(filePath) && filePath.length > 0) {
+          /*
+            m.ProtectMRSSItem(displayItem) ' with the current code, this may be unnecessary since the entire feed is protected.
+            m.DisplayMRSSItem(displayItem, filePath$)
+          */
+          console.log('******** DisplayMRSSItem:');
+          console.log(filePath);
+          
+          displayedItem = true;
+        }
+
+        this.displayIndex = this.displayIndex++;
       }
     }
   }
