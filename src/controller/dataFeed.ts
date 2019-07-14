@@ -172,7 +172,6 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
         */
         const items: DataFeedItem[] = getFeedItems(rawFeed);
 
-        // m.assetCollection = CreateObject("roAssetCollection")
         const assetList: Asset[] = [];
         for (const feedItem of items) {
 

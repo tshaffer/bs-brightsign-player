@@ -7,8 +7,14 @@ import { MediaZoneHSM } from './mediaZoneHSM';
 import { CommandSequenceType } from '@brightsign/bscore';
 import { HState } from './HSM';
 import { BsBrightSignPlayerState, BsBrightSignPlayerModelState } from '../../type/base';
-import { DataFeed } from '../../type/dataFeed';
-import { getDataFeedById, allDataFeedContentExists, contentExists } from '../../selector/dataFeed';
+import { DataFeed, DataFeedItem } from '../../type/dataFeed';
+import { 
+  getDataFeedById, 
+  allDataFeedContentExists, 
+  dataFeedContentExists, 
+  getFeedPoolFilePathFromAsset,
+  getFeedPoolFilePath,
+ } from '../../selector/dataFeed';
 
 import { postMessage } from '../runtime';
 
@@ -17,11 +23,11 @@ export default class MrssState extends MediaHState {
   dataFeedId: BsDmId;
   dataFeedSourceId: BsDmId;
 
-  liveDataFeed: any;
-  currentFeed: any;
-  pendingFeed: any;
-  assetCollection: any;
-  assetPoolFiles: any;
+  liveDataFeed: DataFeed;
+  currentFeed: DataFeed | null;
+  pendingFeed: DataFeed | null;
+  // assetCollection: any;
+  // assetPoolFiles: any;
   displayIndex: number;
   firstItemDisplayed: boolean;
 
@@ -67,6 +73,9 @@ export default class MrssState extends MediaHState {
         const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedSourceId);
         if (!isNil(dataFeed)) {
 
+          this.currentFeed = dataFeed;
+          // protect the feed that is getting displayed
+
           this.displayIndex = 0;
           // distinguish between a feed that has no content and a feed in which no content has been downloaded
           if (dataFeed.items.length === 0 || (!allDataFeedContentExists(dataFeed))) {
@@ -88,13 +97,6 @@ export default class MrssState extends MediaHState {
             EventData: this.dataFeedId,
           };
           dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
-      
-          // this situation will occur when the feed itself has not downloaded yet - send a message to self to trigger exit from state (like video playback failure)
-          // const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
-          //   EventType: 'MRSSNotFullyLoadedPlaybackEvent',
-          //   EventData: this.dataFeedId,
-          // };
-          // dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
           return 'HANDLED';
         }
         dispatch(this.launchTimer());
@@ -132,8 +134,43 @@ export default class MrssState extends MediaHState {
   }
 
   advanceToNextMRSSItem() {
-    debugger;
+
     console.log('************ AdvanceToNextMRSSItem');
+
+    const displayedItem = false;
+
+    while (!displayedItem) {
+      if (!isNil(this.currentFeed)) {
+
+        if (this.displayIndex >= this.currentFeed.items.length) {
+          this.displayIndex = 0;
+          if (!isNil(this.pendingFeed)) {
+            this.currentFeed = this.pendingFeed;
+            this.pendingFeed = null;
+            // protect the feed that we're switching to (see autorun.brs)
+            if (this.currentFeed.items.length === 0 || (!allDataFeedContentExists(this.currentFeed))) {
+              if (dataFeedContentExists(this.currentFeed)) {
+                if (isNil(this.displayIndex)) {
+                  this.displayIndex = 0;
+                }
+                this.advanceToNextMRSSItem();
+              }
+              else {
+                this.launchWaitForContentTimer();
+              }
+            }
+          }
+        }
+
+        //     if isHtml(displayItem) then
+        // else ...
+
+        const displayItem: DataFeedItem = this.currentFeed.items[this.displayIndex];
+        const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
+        console.log(filePath);
+
+      }
+    }
   }
 
   launchWaitForContentTimer(): any {
@@ -152,7 +189,7 @@ export default class MrssState extends MediaHState {
   waitForContentTimeoutHandler(dispatch: any, mrssState: MrssState) {
     console.log('************ waitForContentTimeoutHandler');
     if (!isNil(mrssState.currentFeed) && (mrssState.currentFeed.items.length === 0 || (!allDataFeedContentExists(mrssState.currentFeed)))) {
-      if (contentExists(mrssState.currentFeed)) {
+      if (dataFeedContentExists(mrssState.currentFeed)) {
         if (isNil(mrssState.displayIndex)) {
           mrssState.displayIndex = 0;
         }

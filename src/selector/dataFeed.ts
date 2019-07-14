@@ -42,7 +42,7 @@ export function getFeedItems(feed: any): DataFeedItem[] {
 
 export function allDataFeedContentExists(dataFeed: DataFeed): boolean {
   for (const asset of dataFeed.assetList) {
-    const filePath = getFeedPoolFilePath(asset);
+    const filePath = getFeedPoolFilePathFromAsset(asset);
     if (filePath === '' || !fs.existsSync(filePath)) {
       return false;
     }
@@ -50,9 +50,9 @@ export function allDataFeedContentExists(dataFeed: DataFeed): boolean {
   return true;
 }
 
-export function contentExists(dataFeed: DataFeed): boolean {
+export function dataFeedContentExists(dataFeed: DataFeed): boolean {
   for (const asset of dataFeed.assetList) {
-    const filePath = getFeedPoolFilePath(asset);
+    const filePath = getFeedPoolFilePathFromAsset(asset);
     if (filePath !== '' && fs.existsSync(filePath)) {
       return true;
     }
@@ -60,18 +60,20 @@ export function contentExists(dataFeed: DataFeed): boolean {
   return false;
 }
 
-function getFeedPoolFilePath(asset: Asset): string {
+export function getFeedPoolFilePathFromAsset(asset: Asset): string {
 
   const hash = asset.hash as Hash;
   if (hash.method !== 'SHA1') {
     return '';
   }
+  return getFeedPoolFilePath(hash.hex);
+}
 
-  const feedFileName = 'sha1-' + hash.hex;
+export function getFeedPoolFilePath(hashValue: string): string {
   const feedPoolDirectory = getFeedPoolDirectory();
-  const hashValue = hash.hex;
   const hashValueLength = hashValue.length;
   const dir1 = hashValue.substring(hashValueLength - 2, hashValueLength - 1);
   const dir2 = hashValue.substring(hashValueLength -1, hashValueLength);
+  const feedFileName = 'sha1-' + hashValue;
   return isomorphicPath.join(feedPoolDirectory, dir1, dir2, feedFileName);
 }
