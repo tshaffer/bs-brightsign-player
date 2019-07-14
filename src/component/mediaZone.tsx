@@ -28,6 +28,7 @@ import { connect } from 'react-redux';
 import { getActiveMediaStateId } from '../selector/hsm';
 import { isString } from 'lodash';
 import { getActiveMrssDisplayItem } from '../selector/activeMrssDisplayItem';
+import { DataFeedItem } from '../type/dataFeed';
 
 // -----------------------------------------------------------------------
 // Types
@@ -41,7 +42,7 @@ export interface MediaZoneProps {
   width: number;
   height: number;
   activeMediaStateId: string;
-  activeMrssDisplayItemId: string;
+  activeMrssDisplayItem: DataFeedItem;
   postBSPMessage: any;
 }
 
@@ -97,9 +98,7 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
   }
 
   renderMrssDisplayItem() {
-
-    console.log(this.props);
-
+    console.log(this.props.activeMrssDisplayItem);
     return null;
   }
 
@@ -124,9 +123,6 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
     }
     const mediaState: DmMediaState = dmGetMediaStateById(this.props.bsdm, { id: mediaStateId }) as DmMediaState;
     const contentItem: DmDerivedContentItem = mediaState.contentItem;
-
-    console.log('---- mediaZone.ts#render:');
-    console.log(contentItem.type);
 
     switch (contentItem.type) {
       case ContentItemType.Image:
@@ -159,7 +155,7 @@ const mapStateToProps = (state: any, ownProps: any): any => {
     width: ownProps.width,
     height: ownProps.height,
     activeMediaStateId: getActiveMediaStateId(state, ownProps.zone.id),
-    activeMrssDisplayItemId: getActiveMrssDisplayItem(state, ownProps.zone.id),
+    activeMrssDisplayItem: getActiveMrssDisplayItem(state, ownProps.zone.id),
   };
 };
 

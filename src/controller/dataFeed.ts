@@ -84,10 +84,6 @@ function readMrssContent(bsdmDataFeed: DmcDataFeed) {
 
             const assetList: Asset[] = [];
             for (const feedItem of items) {
-
-              // console.log('hash hex:');
-              // console.log(feedItem.guid);
-
               const asset: Asset = {
                 link: feedItem.url,
                 name: feedItem.url,
@@ -174,9 +170,6 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
 
         const assetList: Asset[] = [];
         for (const feedItem of items) {
-
-          console.log('hash hex:');
-          console.log(feedItem.guid);
 
           const asset: Asset = {
             link: feedItem.url,

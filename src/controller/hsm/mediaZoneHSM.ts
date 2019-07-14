@@ -64,10 +64,6 @@ export class MediaZoneHSM extends ZoneHSM {
         this.mediaStateIdToHState[mediaStateId] = newState;
       }
     }
-
-    console.log('end of mediaZoneHSM constructor');
-    console.log(this.mediaHStates);
-    console.log(this.mediaStateIdToHState);
   }
 
   getHStateFromMediaState(bsdm: DmState, bsdmMediaState: DmMediaState, superState: HState): MediaHState | null {

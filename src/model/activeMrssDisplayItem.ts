@@ -11,11 +11,11 @@ export const SET_ACTIVE_MRSS_DISPLAY_ITEM = 'SET_ACTIVE_MRSS_DISPLAY_ITEM';
 // ------------------------------------
 // Actions
 // ------------------------------------
-export function setActiveMrssDisplayItem(hsmId: string, activeMrssDisplayItem: DataFeedItem): ActionWithPayload {
+export function setActiveMrssDisplayItem(zoneId: string, activeMrssDisplayItem: DataFeedItem): ActionWithPayload {
   return {
     type: SET_ACTIVE_MRSS_DISPLAY_ITEM,
     payload: {
-      hsmId,
+      zoneId,
       activeMrssDisplayItem,
     },
   };
@@ -34,8 +34,8 @@ export const activeMrssDisplayItemReducer = (
 
     case SET_ACTIVE_MRSS_DISPLAY_ITEM: {
       const newState: MrssDisplayItemMap = Object.assign({}, state);
-      const { hsmId, activeMrssDisplayItem } = action.payload;
-      newState[hsmId] = activeMrssDisplayItem;
+      const { zoneId, activeMrssDisplayItem } = action.payload;
+      newState[zoneId] = activeMrssDisplayItem;
       return newState;
     }
     default:

@@ -179,7 +179,8 @@ export default class MrssState extends MediaHState {
       console.log('******** DisplayMRSSItem:');
       console.log(displayItem);
 
-      dispatch(setActiveMrssDisplayItem(this.stateMachine.hsmId, displayItem));
+      const mediaZoneHSM: MediaZoneHSM = this.stateMachine as MediaZoneHSM;
+      dispatch(setActiveMrssDisplayItem(mediaZoneHSM.zoneId, displayItem));
     };
   }
 
