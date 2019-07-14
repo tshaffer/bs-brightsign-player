@@ -27,6 +27,7 @@ import { getPoolFilePath, tmpSetVideoElementRef } from '../index';
 import { connect } from 'react-redux';
 import { getActiveMediaStateId } from '../selector/hsm';
 import { isString } from 'lodash';
+import { getActiveMrssDisplayItem } from '../selector/activeMrssDisplayItem';
 
 // -----------------------------------------------------------------------
 // Types
@@ -40,6 +41,7 @@ export interface MediaZoneProps {
   width: number;
   height: number;
   activeMediaStateId: string;
+  activeMrssDisplayItemId: string;
   postBSPMessage: any;
 }
 
@@ -94,6 +96,13 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
     return null;
   }
 
+  renderMrssDisplayItem() {
+
+    console.log(this.props);
+
+    return null;
+  }
+
   getEvents(bsdm: DmState, mediaStateId: string): DmEvent[] {
 
     let events: DmEvent[] = [];
@@ -116,12 +125,18 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
     const mediaState: DmMediaState = dmGetMediaStateById(this.props.bsdm, { id: mediaStateId }) as DmMediaState;
     const contentItem: DmDerivedContentItem = mediaState.contentItem;
 
+    console.log('---- mediaZone.ts#render:');
+    console.log(contentItem.type);
+
     switch (contentItem.type) {
-      case 'Image': {
+      case ContentItemType.Image:
+      case ContentItemType.Video: {
+      // case 'Image': {
+      // case 'Video': {
         return this.renderMediaItem(mediaState, contentItem as DmMediaContentItem);
       }
-      case 'Video': {
-        return this.renderMediaItem(mediaState, contentItem as DmMediaContentItem);
+      case ContentItemType.MrssFeed: {
+        return this.renderMrssDisplayItem();
       }
       default: {
         break;
@@ -144,6 +159,7 @@ const mapStateToProps = (state: any, ownProps: any): any => {
     width: ownProps.width,
     height: ownProps.height,
     activeMediaStateId: getActiveMediaStateId(state, ownProps.zone.id),
+    activeMrssDisplayItemId: getActiveMrssDisplayItem(state, ownProps.zone.id),
   };
 };
 

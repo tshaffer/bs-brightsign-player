@@ -5,6 +5,7 @@ import { HStateMap } from './activeHState';
 import { HSM } from '../controller/hsm/HSM';
 import { UserVariableMap } from './userVariable';
 import { DataFeedMap } from './dataFeed';
+import { MrssDisplayItemMap } from './activeMrssDisplayItem';
 
 /** @internal */
 /** @private */
@@ -22,6 +23,7 @@ export interface BsBrightSignPlayerState {
 export interface BsBrightSignPlayerModelState {
   hsms: HSM[];
   activeHStates: HStateMap;
+  activeMrssDisplayItems: MrssDisplayItemMap;
   userVariables: UserVariableMap;
   dataFeeds: DataFeedMap;
 }

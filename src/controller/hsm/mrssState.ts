@@ -12,12 +12,12 @@ import {
   getDataFeedById,
   allDataFeedContentExists,
   dataFeedContentExists,
-  getFeedPoolFilePathFromAsset,
   getFeedPoolFilePath,
 } from '../../selector/dataFeed';
 
 import { postMessage } from '../runtime';
 import { isString } from 'util';
+import { setActiveMrssDisplayItem } from '../../model/activeMrssDisplayItem';
 
 export default class MrssState extends MediaHState {
 
@@ -27,8 +27,6 @@ export default class MrssState extends MediaHState {
   liveDataFeed: DataFeed;
   currentFeed: DataFeed | null;
   pendingFeed: DataFeed | null;
-  // assetCollection: any;
-  // assetPoolFiles: any;
   displayIndex: number;
   firstItemDisplayed: boolean;
 
@@ -88,7 +86,7 @@ export default class MrssState extends MediaHState {
             dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
           }
           else {
-            this.advanceToNextMRSSItem();
+            dispatch(this.advanceToNextMRSSItem());
           }
         }
         else {
@@ -104,23 +102,9 @@ export default class MrssState extends MediaHState {
         return 'HANDLED';
       } else if (event.EventType === 'EXIT_SIGNAL') {
         dispatch(this.mediaHStateExitHandler());
-
       } else if (event.EventType === 'MRSSNotFullyLoadedPlaybackEvent') {
-        // console.log('MRSSNotFullyLoadedPlaybackEvent received');
         const dataFeedId: string = event.EventData;
         if (dataFeedId === this.dataFeedId) {
-          /*
-          if type(m.signChannelEndEvent) = "roAssociativeArray" then
-            return m.ExecuteTransition(m.signChannelEndEvent, stateData, "")
-          else if type(m.currentFeed) = "roAssociativeArray" and m.currentFeed.ContentExists(m.assetPoolFiles) then
-            m.AdvanceToNextMRSSItem()
-            '' redundant check
-            ''					else if type(m.currentFeed) = "roAssociativeArray" and type(m.currentFeed.items) = "roArray" and m.currentFeed.items.Count() = 0 then
-            ''						m.LaunchWaitForContentTimer()
-          else
-            m.LaunchWaitForContentTimer()
-          end if
-          */
           dispatch(this.launchWaitForContentTimer());
         }
       } else if (event.EventType === 'MRSS_SPEC_UPDATED') {
@@ -136,54 +120,67 @@ export default class MrssState extends MediaHState {
 
   advanceToNextMRSSItem() {
 
-    console.log('************ AdvanceToNextMRSSItem');
+    return (dispatch: any, getState: any) => {
 
-    let displayedItem = false;
+      console.log('************ AdvanceToNextMRSSItem');
 
-    while (!displayedItem) {
-      if (!isNil(this.currentFeed)) {
+      let displayedItem = false;
 
-        if (this.displayIndex >= this.currentFeed.items.length) {
-          this.displayIndex = 0;
-          if (!isNil(this.pendingFeed)) {
-            this.currentFeed = this.pendingFeed;
-            this.pendingFeed = null;
-            // protect the feed that we're switching to (see autorun.brs)
-            if (this.currentFeed.items.length === 0 || (!allDataFeedContentExists(this.currentFeed))) {
-              if (dataFeedContentExists(this.currentFeed)) {
-                if (isNil(this.displayIndex)) {
-                  this.displayIndex = 0;
+      while (!displayedItem) {
+        if (!isNil(this.currentFeed)) {
+
+          if (this.displayIndex >= this.currentFeed.items.length) {
+            this.displayIndex = 0;
+            if (!isNil(this.pendingFeed)) {
+              this.currentFeed = this.pendingFeed;
+              this.pendingFeed = null;
+              // protect the feed that we're switching to (see autorun.brs)
+              if (this.currentFeed.items.length === 0 || (!allDataFeedContentExists(this.currentFeed))) {
+                if (dataFeedContentExists(this.currentFeed)) {
+                  if (isNil(this.displayIndex)) {
+                    this.displayIndex = 0;
+                  }
+                  this.advanceToNextMRSSItem();
                 }
-                this.advanceToNextMRSSItem();
-              }
-              else {
-                this.launchWaitForContentTimer();
+                else {
+                  this.launchWaitForContentTimer();
+                }
               }
             }
           }
-        }
 
-        //     if isHtml(displayItem) then
-        // else ...
+          //     if isHtml(displayItem) then
+          // else ...
 
-        const displayItem: DataFeedItem = this.currentFeed.items[this.displayIndex];
-        const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
-        console.log(filePath);
-
-        if (isString(filePath) && filePath.length > 0) {
-          /*
-            m.ProtectMRSSItem(displayItem) ' with the current code, this may be unnecessary since the entire feed is protected.
-            m.DisplayMRSSItem(displayItem, filePath$)
-          */
-          console.log('******** DisplayMRSSItem:');
+          const displayItem: DataFeedItem = this.currentFeed.items[this.displayIndex];
+          const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
           console.log(filePath);
-          
-          displayedItem = true;
-        }
 
-        this.displayIndex = this.displayIndex++;
+          if (isString(filePath) && filePath.length > 0) {
+            /*
+              m.ProtectMRSSItem(displayItem) ' with the current code, this may be unnecessary since the entire feed is protected.
+            */
+            displayItem.filePath = filePath;
+            dispatch(this.displayMRSSSItem(displayItem));
+            displayedItem = true;
+          }
+
+          this.displayIndex = this.displayIndex++;
+        }
       }
-    }
+    };
+  }
+
+  displayMRSSSItem(displayItem: DataFeedItem) {
+
+    return (dispatch: any, getState: any) => {
+      const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
+
+      console.log('******** DisplayMRSSItem:');
+      console.log(displayItem);
+
+      dispatch(setActiveMrssDisplayItem(this.stateMachine.hsmId, displayItem));
+    };
   }
 
   launchWaitForContentTimer(): any {

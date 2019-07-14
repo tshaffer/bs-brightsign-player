@@ -22,6 +22,7 @@ export interface DataFeedItem {
   medium: string;
   type: string;
   url: string;
+  filePath?: string;
 }
 
 export interface DataFeedMap {
