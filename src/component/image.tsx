@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { isNil } from 'lodash';
+
 // import { Dispatch } from 'redux';
 // import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
@@ -20,13 +22,22 @@ export interface ImageProps {
 
 export class ImageComponent extends React.Component<ImageProps> {
   render() {
-    return (
-      <img
-        src={this.props.src}
-        width={this.props.width.toString()}
-        height={this.props.height.toString()}
-      />
-    );
+    if (isNil(this.props.width)) {
+      return (
+        <img
+          src={this.props.src}
+        />
+      );
+    }
+    else {
+      return (
+        <img
+          src={this.props.src}
+          width={this.props.width.toString()}
+          height={this.props.height.toString()}
+        />
+      );
+    }
   }
 }
 

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { isNil } from 'lodash';
 
 import isomorphicPath from 'isomorphic-path';
 
@@ -29,6 +30,7 @@ import { getActiveMediaStateId } from '../selector/hsm';
 import { isString } from 'lodash';
 import { getActiveMrssDisplayItem } from '../selector/activeMrssDisplayItem';
 import { DataFeedItem } from '../type/dataFeed';
+import { isNullOrUndefined } from 'util';
 
 // -----------------------------------------------------------------------
 // Types
@@ -98,7 +100,26 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
   }
 
   renderMrssDisplayItem() {
+    
     console.log(this.props.activeMrssDisplayItem);
+
+    if (!isNil(this.props.activeMrssDisplayItem)) {
+      const dataFeedItem: DataFeedItem = this.props.activeMrssDisplayItem;
+      const src: string = isomorphicPath.join('file://', dataFeedItem.filePath);
+      switch (dataFeedItem.medium) {
+        case 'image':
+            return (
+              <Image
+                src={src}
+              />
+            );
+        case 'video':
+          break;
+        default:
+          debugger;
+      }
+    }
+
     return null;
   }
 
@@ -127,8 +148,8 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
     switch (contentItem.type) {
       case ContentItemType.Image:
       case ContentItemType.Video: {
-      // case 'Image': {
-      // case 'Video': {
+        // case 'Image': {
+        // case 'Video': {
         return this.renderMediaItem(mediaState, contentItem as DmMediaContentItem);
       }
       case ContentItemType.MrssFeed: {

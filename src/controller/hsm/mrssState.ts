@@ -15,7 +15,7 @@ import {
   getFeedPoolFilePath,
 } from '../../selector/dataFeed';
 
-import { postMessage } from '../runtime';
+import { postMessage, getReduxStore } from '../runtime';
 import { isString } from 'util';
 import { setActiveMrssDisplayItem } from '../../model/activeMrssDisplayItem';
 
@@ -86,7 +86,7 @@ export default class MrssState extends MediaHState {
             dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
           }
           else {
-            dispatch(this.advanceToNextMRSSItem());
+            dispatch(this.advanceToNextMRSSItem().bind(this));
           }
         }
         else {
@@ -165,7 +165,7 @@ export default class MrssState extends MediaHState {
             displayedItem = true;
           }
 
-          this.displayIndex = this.displayIndex++;
+          this.displayIndex++;
         }
       }
     };
@@ -174,13 +174,15 @@ export default class MrssState extends MediaHState {
   displayMRSSSItem(displayItem: DataFeedItem) {
 
     return (dispatch: any, getState: any) => {
-      const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
+
+      // const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
 
       console.log('******** DisplayMRSSItem:');
       console.log(displayItem);
 
       const mediaZoneHSM: MediaZoneHSM = this.stateMachine as MediaZoneHSM;
       dispatch(setActiveMrssDisplayItem(mediaZoneHSM.zoneId, displayItem));
+      dispatch(this.launchMrssTimer());
     };
   }
 
@@ -220,4 +222,21 @@ export default class MrssState extends MediaHState {
 
     // return HANDLED
   }
+
+  launchMrssTimer(): any {
+
+    return (dispatch: any, getState: any) => {
+
+      const interval: number = 4;
+      if (interval && interval > 0) {
+        this.timeout = setTimeout(this.mrssTimeoutHandler, interval * 1000, this);
+      }
+    };
+  }
+
+  mrssTimeoutHandler(mrssState: MrssState) {
+    const reduxStore: any = getReduxStore();
+    reduxStore.dispatch(mrssState.advanceToNextMRSSItem().bind(mrssState));
+  }
+
 }
