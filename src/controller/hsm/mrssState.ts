@@ -4,7 +4,7 @@ import { ZoneHSM } from './zoneHSM';
 import { DmMediaState, BsDmId } from '@brightsign/bsdatamodel';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import { MediaZoneHSM } from './mediaZoneHSM';
-import { CommandSequenceType } from '@brightsign/bscore';
+import { CommandSequenceType, EventType } from '@brightsign/bscore';
 import { HState } from './HSM';
 import { BsBrightSignPlayerState, BsBrightSignPlayerModelState } from '../../type/base';
 import { DataFeed, DataFeedItem } from '../../type/dataFeed';
@@ -109,6 +109,8 @@ export default class MrssState extends MediaHState {
         }
       } else if (event.EventType === 'MRSS_SPEC_UPDATED') {
         console.log('mrssSpecUpdated');
+      } else if (event.EventType === EventType.MediaEnd) {
+        dispatch(this.advanceToNextMRSSItem().bind(this));
       } else {
         return dispatch(this.mediaHStateEventHandler(event, stateData));
       }
@@ -182,7 +184,10 @@ export default class MrssState extends MediaHState {
 
       const mediaZoneHSM: MediaZoneHSM = this.stateMachine as MediaZoneHSM;
       dispatch(setActiveMrssDisplayItem(mediaZoneHSM.zoneId, displayItem));
-      dispatch(this.launchMrssTimer());
+
+      if (displayItem.medium === 'image') {
+        dispatch(this.launchMrssTimer());
+      }
     };
   }
 

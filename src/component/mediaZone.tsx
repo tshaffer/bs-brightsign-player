@@ -103,6 +103,8 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
     
     console.log(this.props.activeMrssDisplayItem);
 
+    const self = this;
+    
     if (!isNil(this.props.activeMrssDisplayItem)) {
       const dataFeedItem: DataFeedItem = this.props.activeMrssDisplayItem;
       const src: string = isomorphicPath.join('file://', dataFeedItem.filePath);
@@ -114,7 +116,14 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
               />
             );
         case 'video':
-          break;
+          return (
+            <Video
+              width={this.props.width}
+              height={this.props.height}
+              src={src}
+              onVideoRefRetrieved={self.videoRefRetrieved}
+            />
+          );
         default:
           debugger;
       }
