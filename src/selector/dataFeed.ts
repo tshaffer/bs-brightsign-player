@@ -73,7 +73,7 @@ export function getFeedPoolFilePath(hashValue: string): string {
   const feedPoolDirectory = getFeedPoolDirectory();
   const hashValueLength = hashValue.length;
   const dir1 = hashValue.substring(hashValueLength - 2, hashValueLength - 1);
-  const dir2 = hashValue.substring(hashValueLength -1, hashValueLength);
+  const dir2 = hashValue.substring(hashValueLength - 1, hashValueLength);
   const feedFileName = 'sha1-' + hashValue;
   return isomorphicPath.join(feedPoolDirectory, dir1, dir2, feedFileName);
 }

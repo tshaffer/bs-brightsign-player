@@ -63,7 +63,7 @@ let _syncSpec: ArSyncSpec;
 let _poolAssetFiles: ArFileLUT;
 let _autoSchedule: any;
 
-let _queuedEvents: ArEventType[] = [];
+const _queuedEvents: ArEventType[] = [];
 let _hsmList: HSM[] = [];
 let _playerHSM: PlayerHSM;
 
@@ -75,7 +75,7 @@ let _playerHSM: PlayerHSM;
 
 initializeButtonPanels();
 
-export function getPlatform() : string {
+export function getPlatform(): string {
   return platform;
 }
 
@@ -318,56 +318,56 @@ export function queueHsmEvent(
 }
 
 export function dispatchHsmEvent(
-    event: ArEventType
-  ): BsBrightSignPlayerModelThunkAction<undefined | void> {
+  event: ArEventType
+): BsBrightSignPlayerModelThunkAction<undefined | void> {
 
-    return ((dispatch: any) => {
+  return ((dispatch: any) => {
 
-      console.log('dispatchHsmEvent:');
-      console.log(event.EventType);
+    console.log('dispatchHsmEvent:');
+    console.log(event.EventType);
 
-      // const action = _playerHSM.Dispatch(event);
-      let action = _playerHSM.hsmDispatch(event).bind(_playerHSM);
+    // const action = _playerHSM.Dispatch(event);
+    let action = _playerHSM.hsmDispatch(event).bind(_playerHSM);
+    dispatch(action);
+
+    _hsmList.forEach((hsm) => {
+      action = hsm.hsmDispatch(event).bind(hsm);
       dispatch(action);
-
-      _hsmList.forEach((hsm) => {
-        action = hsm.hsmDispatch(event).bind(hsm);
-        dispatch(action);
-      });
     });
-  }
+  });
+}
 
 
-  function startPlayback() {
+function startPlayback() {
 
-    return (dispatch: any, getState: any) => {
+  return (dispatch: any, getState: any) => {
 
-      const bsdm: DmState = getState().bsdm;
+    const bsdm: DmState = getState().bsdm;
 
-      const zoneHSMs: ZoneHSM[] = [];
-      const zoneIds: BsDmId[] = dmGetZonesForSign(bsdm);
-      zoneIds.forEach((zoneId: BsDmId) => {
-        const bsdmZone: DmZone = dmGetZoneById(bsdm, { id: zoneId }) as DmZone;
+    const zoneHSMs: ZoneHSM[] = [];
+    const zoneIds: BsDmId[] = dmGetZonesForSign(bsdm);
+    zoneIds.forEach((zoneId: BsDmId) => {
+      const bsdmZone: DmZone = dmGetZoneById(bsdm, { id: zoneId }) as DmZone;
 
-        let zoneHSM: ZoneHSM;
+      let zoneHSM: ZoneHSM;
 
-        switch (bsdmZone.type) {
-          default: {
-            zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, zoneId, queueHsmEvent, bsdm);
-            break;
-          }
+      switch (bsdmZone.type) {
+        default: {
+          zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, zoneId, queueHsmEvent, bsdm);
+          break;
         }
-        zoneHSMs.push(zoneHSM);
-        _hsmList.push(zoneHSM);
-      });
+      }
+      zoneHSMs.push(zoneHSM);
+      _hsmList.push(zoneHSM);
+    });
 
-      zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
-        zoneHSM.constructorFunction();
-        console.log('runtime.ts#startPlayback - invoke zoneHSM.initialize()');
-        const action = zoneHSM.hsmInitialize().bind(zoneHSM);
-        dispatch(action);
-      });
-    };
-  }
+    zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
+      zoneHSM.constructorFunction();
+      console.log('runtime.ts#startPlayback - invoke zoneHSM.initialize()');
+      const action = zoneHSM.hsmInitialize().bind(zoneHSM);
+      dispatch(action);
+    });
+  };
+}
 
 
