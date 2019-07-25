@@ -112,6 +112,7 @@ declare module '@brightsign/assetpoolfetcher' {
     fileevent: EventListener;
     progressevent: EventListener;
     constructor(pool: AssetPool);
+    addEventListener(type: any, listener: any): any;
     start(list: Asset[], assetPoolParams?: AssetPoolFetcherParams): Promise<void> 
     cancel(): Promise<void> ;
   }

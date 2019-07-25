@@ -13,6 +13,10 @@ export default class AssetPoolFetcher {
     return;
   }
 
+  addEventListener(type: any, listener: any): any {
+    return;
+  }
+
   start(list: Asset[], assetPoolParams?: AssetPoolFetcherParams): Promise<void> {
     return Promise.resolve();
   }

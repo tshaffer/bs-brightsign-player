@@ -13,6 +13,7 @@ import { getFeedItems } from '../selector/dataFeed';
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
 import { ArEventType } from '../..';
 import { postMessage, getPlatform } from './runtime';
+import { totalmem } from 'os';
 
 let assetPoolFetcher: AssetPoolFetcher | null = null;
 
@@ -205,8 +206,30 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
           console.log(assetPoolFetcher);
         }
 
-        assetPoolFetcher.fileevent = handleFileEvent;
-        assetPoolFetcher.progressevent = handleProgressEvent;
+        // assetPoolFetcher.fileevent = handleFileEvent;
+        // assetPoolFetcher.progressevent = handleProgressEvent;
+        assetPoolFetcher.addEventListener("progressevent", function(data: any)
+        {
+          // ProgressEvent is defined at
+          // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
+          console.log('progressEvent:');
+          console.log(data.detail.fileName);
+          console.log(data.detail.index);
+          console.log(data.detail.total);
+          console.log(data.detail.currentFileTransferred);
+          console.log(data.detail.currentFileTotal);
+        });
+
+        assetPoolFetcher.addEventListener("fileevent", function(data: any)
+        {
+          // FileEvent is at data.detail
+          // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
+          console.log('fileEvent:');
+          console.log(data.detail.fileName);
+          console.log(data.detail.index);
+          console.log(data.detail.responseCode);
+        });
+
 
         console.log('assetPoolFetcher.start');
         assetPoolFetcher.start(assetList)
