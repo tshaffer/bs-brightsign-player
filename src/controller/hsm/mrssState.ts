@@ -54,7 +54,8 @@ export default class MrssState extends MediaHState {
       // console.log(event.EventType);
 
       if (event.EventType === 'ENTRY_SIGNAL') {
-        // console.log('mrssState ' + this.id + ': entry signal');
+
+        console.log('mrssState ' + this.id + ': entry signal');
         dispatch(this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry));
 
         this.waitForContentTimer = null;
@@ -103,9 +104,13 @@ export default class MrssState extends MediaHState {
       } else if (event.EventType === 'EXIT_SIGNAL') {
         dispatch(this.mediaHStateExitHandler());
       } else if (event.EventType === 'MRSSNotFullyLoadedPlaybackEvent') {
+
+        console.log('received MRSSNotFullyLoadedPlaybackEvent');
+
         const dataFeedId: string = event.EventData;
         if (dataFeedId === this.dataFeedId) {
-          dispatch(this.launchWaitForContentTimer());
+          console.log('invoke launchWaitForContentTimer');
+          dispatch(this.launchWaitForContentTimer().bind(this));
         }
       } else if (event.EventType === 'MRSS_SPEC_UPDATED') {
         console.log('mrssSpecUpdated');
