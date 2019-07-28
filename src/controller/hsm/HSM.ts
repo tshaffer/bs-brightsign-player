@@ -16,7 +16,6 @@ export class HSM {
   constructorHandler: (() => void) | null;
   initialPseudoStateHandler: () => (HState | null);
 
-
   constructor(hsmId: string, dispatchEvent: ((event: ArEventType) => void)) {
     this.hsmId = hsmId;
     this.dispatchEvent = dispatchEvent;
@@ -33,15 +32,42 @@ export class HSM {
 
   hsmInitialize() {
 
-    let action: any;
-    let status: string;
-
     return ((dispatch: any) => {
+
+      console.log('***** HSM.ts#hsmInitialize');
+      console.log(this);
+
+      const self = this;
 
       dispatch(addHSM(this));
 
       const hStateAction: ActionWithPayload = setActiveHState(this.hsmId, null);
       dispatch(hStateAction);
+
+      // execute initial transition
+      if (!isNil(this.initialPseudoStateHandler)) {
+        const action = (this.initialPseudoStateHandler() as any).bind(this);
+        // this.activeState = dispatch(action);
+        // console.log(this.activeState);
+
+
+        dispatch(action).
+          then((aState: any) => {
+            self.activeState = aState;
+            dispatch(self.completeHsmInitialization().bind(self));
+          });
+      }
+      else {
+        dispatch(this.completeHsmInitialization().bind(this));
+      }
+    });
+  }
+
+  completeHsmInitialization() {
+
+    let action: any;
+
+    return ((dispatch: any) => {
 
       const stateData: HSMStateData = { nextState: null };
 
@@ -54,16 +80,11 @@ export class HSM {
       // init event
       const initEvent: ArEventType = { EventType: 'INIT_SIGNAL' };
 
-      // execute initial transition
-      if (!isNil(this.initialPseudoStateHandler)) {
-        action = (this.initialPseudoStateHandler() as any).bind(this);
-        this.activeState = dispatch(action);
-        // console.log(this.activeState);
-      }
-
       // if there is no activeState, the playlist is empty
       if (isNil(this.activeState)) {
         dispatch(setActiveHState(this.hsmId, null));
+        console.log('***** return from HSM.ts#completeHsmInitialization');
+        console.log(this);
         return;
       }
 
@@ -86,7 +107,7 @@ export class HSM {
           entryStates[0] = activeState;
 
           // send an empty event to get the super state
-          action = (this.activeState).HStateEventHandler(emptyEvent, stateData).bind(this.activeState);          
+          action = (this.activeState).HStateEventHandler(emptyEvent, stateData).bind(this.activeState);
           status = dispatch(action);
 
           activeState = stateData.nextState as HState;
@@ -124,6 +145,8 @@ export class HSM {
           if (status !== 'TRANSITION') {
             this.activeState = sourceState;
             dispatch(setActiveHState(this.hsmId, this.activeState));
+            console.log('***** return from HSM.ts#completeHsmInitialization');
+            console.log(this);
             return;
           }
 
@@ -134,6 +157,7 @@ export class HSM {
     });
   }
 
+
   // TEDTODO - remove casts
   hsmDispatch(event: ArEventType) {
 
@@ -142,8 +166,8 @@ export class HSM {
 
     return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
 
-      // console.log('HSM.ts#Dispatch');
-      // console.log(event.EventType);
+      console.log('***** HSM.ts#Dispatch');
+      console.log(event.EventType);
 
       // if there is no activeState, the playlist is empty
       if (this.activeState == null) {
@@ -311,7 +335,7 @@ export class HSM {
         this.activeState = t;                                                   // update the current state */
 
         // console.log('HSM.ts#Dispatch: invoke handler with initEvent');
-        
+
         // drill into the target hierarchy...
         action = t.HStateEventHandler(initEvent, stateData).bind(t);
         status = dispatch(action);

@@ -46,17 +46,12 @@ export class PlayerHSM extends HSM {
   }
 
   initializePlayerStateMachine(): any {
-
     return (dispatch: any) => {
-      this.restartPlayback('').then(() => {
-        const event = {
-          EventType: 'TRANSITION_TO_PLAYING'
-        };
-        dispatch(this.postMessage(event));
-      });
-
-      return this.stWaiting;
-    };
+      return this.restartPlayback('')
+        .then(() => {
+          return Promise.resolve(this.stPlaying);
+        });
+    }
   }
 }
 
@@ -112,8 +107,8 @@ class STPlaying extends HState {
 
               // set timer for next feed download
               const updateInterval = dataFeedSource.updateInterval;
-              console.log('updateInterval:');
-              console.log(updateInterval);  // in seconds; setTimeout is in msec.
+              // console.log('updateInterval:');
+              // console.log(updateInterval);  // in seconds; setTimeout is in msec.
               dispatch(this.launchRetrieveFeedTimer(updateInterval, dataFeedSource, bsdm).bind(this));
             });
         }

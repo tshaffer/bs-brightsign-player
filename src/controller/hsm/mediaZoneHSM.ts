@@ -156,7 +156,7 @@ export class MediaZoneHSM extends ZoneHSM {
 
   videoOrImagesZoneGetInitialState(): any {
     return (dispatch: any) => {
-      return this.activeState;
+      return Promise.resolve(this.activeState);
     };
   }
 

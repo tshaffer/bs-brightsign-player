@@ -117,7 +117,7 @@ export default class MrssState extends MediaHState {
       } else if (event.EventType === EventType.MediaEnd) {
         dispatch(this.advanceToNextMRSSItem().bind(this));
       } else {
-        return dispatch(this.mediaHStateEventHandler(event, stateData));
+        return dispatch(this.mediaHStateEventHandler(event, stateData).bind(this));
       }
 
       stateData.nextState = this.superState;
