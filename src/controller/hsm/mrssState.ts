@@ -112,6 +112,10 @@ export default class MrssState extends MediaHState {
           console.log('invoke launchWaitForContentTimer');
           dispatch(this.launchWaitForContentTimer().bind(this));
         }
+      } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
+        console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
+        // dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
+        return 'HANDLED';
       } else if (event.EventType === 'MRSS_SPEC_UPDATED') {
         console.log('mrssSpecUpdated');
       } else if (event.EventType === EventType.MediaEnd) {

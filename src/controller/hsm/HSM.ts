@@ -15,12 +15,16 @@ export class HSM {
   activeState: HState | null;
   constructorHandler: (() => void) | null;
   initialPseudoStateHandler: () => (HState | null);
+  initializationInProgress: boolean;
+  initializationComplete: boolean;
 
   constructor(hsmId: string, dispatchEvent: ((event: ArEventType) => void)) {
     this.hsmId = hsmId;
     this.dispatchEvent = dispatchEvent;
     this.activeState = null;
     this.constructorHandler = null;
+    this.initializationInProgress = false;
+    this.initializationComplete = false;
   }
 
   constructorFunction() {
@@ -33,6 +37,8 @@ export class HSM {
   hsmInitialize() {
 
     return ((dispatch: any) => {
+
+      this.initializationInProgress = true;
 
       console.log('***** HSM.ts#hsmInitialize');
       console.log(this);
@@ -85,6 +91,8 @@ export class HSM {
         dispatch(setActiveHState(this.hsmId, null));
         console.log('***** return from HSM.ts#completeHsmInitialization');
         console.log(this);
+        this.initializationInProgress = false;
+        this.initializationComplete = true;
         return;
       }
 
@@ -147,6 +155,8 @@ export class HSM {
             dispatch(setActiveHState(this.hsmId, this.activeState));
             console.log('***** return from HSM.ts#completeHsmInitialization');
             console.log(this);
+            this.initializationInProgress = false;
+            this.initializationComplete = true;
             return;
           }
 
