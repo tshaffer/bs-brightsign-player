@@ -50,9 +50,6 @@ export default class MrssState extends MediaHState {
 
     return (dispatch: any, getState: any) => {
 
-      // console.log('STDisplayingMrssStateEventHandler event received');
-      // console.log(event.EventType);
-
       if (event.EventType === 'ENTRY_SIGNAL') {
 
         console.log('mrssState ' + this.id + ': entry signal');
@@ -107,17 +104,47 @@ export default class MrssState extends MediaHState {
 
         console.log('received MRSSNotFullyLoadedPlaybackEvent');
 
-        const dataFeedId: string = event.EventData;
-        if (dataFeedId === this.dataFeedId) {
-          console.log('invoke launchWaitForContentTimer');
-          dispatch(this.launchWaitForContentTimer().bind(this));
-        }
+        // temporary while I figure out the confusion between dataFeedId & dataFeedSourceId.
+        dispatch(this.launchWaitForContentTimer().bind(this));
+
+        // const dataFeedId: string = event.EventData;
+        // // if (dataFeedId === this.dataFeedId) {
+        // if (dataFeedId === this.dataFeedSourceId) {
+        //   console.log('launchWaitForContentTimer');
+        //   dispatch(this.launchWaitForContentTimer().bind(this));
+        // }
+        // else {
+        //   console.log('do not launchWaitForContentTimer');
+        //   console.log('dataFeedId: ' + dataFeedId);
+        //   console.log('this:');
+        //   console.log(this);
+        //   console.log('this.dataFeedSourceId: ' + this.dataFeedSourceId);
+        // }
       } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
         // dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
         return 'HANDLED';
       } else if (event.EventType === 'MRSS_SPEC_UPDATED') {
-        console.log('mrssSpecUpdated');
+        console.log('***** ***** mrssSpecUpdated');
+
+        const dataFeedSourceId = event.EventData as BsDmId;
+
+        console.log('dataFeedSourceId: ' + dataFeedSourceId);
+
+        // const bsBrightSignPlayerState: BsBrightSignPlayerState = getState();
+        const dataFeed: DataFeed | null = getDataFeedById(getState(), dataFeedSourceId);
+
+        if (!isNil(dataFeed)) {
+          console.log('dataFeed found');
+          this.currentFeed = dataFeed;
+          this.displayIndex = 0;
+        }
+        else {
+          console.log('dataFeed not found');
+        }
+
+
+
       } else if (event.EventType === EventType.MediaEnd) {
         dispatch(this.advanceToNextMRSSItem().bind(this));
       } else {
@@ -136,9 +163,12 @@ export default class MrssState extends MediaHState {
       console.log('************ AdvanceToNextMRSSItem');
 
       let displayedItem = false;
-
+      
       while (!displayedItem) {
         if (!isNil(this.currentFeed)) {
+
+          // console.log('this.currentFeed not nil, length = ' + this.currentFeed.items.length);
+          // console.log('this.displayIndex: ' + this.displayIndex);
 
           if (this.displayIndex >= this.currentFeed.items.length) {
             this.displayIndex = 0;
@@ -151,10 +181,11 @@ export default class MrssState extends MediaHState {
                   if (isNil(this.displayIndex)) {
                     this.displayIndex = 0;
                   }
-                  this.advanceToNextMRSSItem();
+                  dispatch(this.advanceToNextMRSSItem());
                 }
                 else {
-                  this.launchWaitForContentTimer();
+                  dispatch(this.launchWaitForContentTimer().bind(this));
+                  // this.launchWaitForContentTimer();
                 }
               }
             }
@@ -165,7 +196,9 @@ export default class MrssState extends MediaHState {
 
           const displayItem: DataFeedItem = this.currentFeed.items[this.displayIndex];
           const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
-          console.log(filePath);
+
+          console.log('displayItem.guid: ' + displayItem.guid);
+          console.log('filePath: ' + filePath);
 
           if (isString(filePath) && filePath.length > 0) {
             /*
@@ -187,9 +220,6 @@ export default class MrssState extends MediaHState {
     return (dispatch: any, getState: any) => {
 
       // const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
-
-      console.log('******** DisplayMRSSItem:');
-      console.log(displayItem);
 
       const mediaZoneHSM: MediaZoneHSM = this.stateMachine as MediaZoneHSM;
       dispatch(setActiveMrssDisplayItem(mediaZoneHSM.zoneId, displayItem));
@@ -220,18 +250,18 @@ export default class MrssState extends MediaHState {
         if (isNil(mrssState.displayIndex)) {
           mrssState.displayIndex = 0;
         }
-        mrssState.advanceToNextMRSSItem();
+        dispatch(mrssState.advanceToNextMRSSItem());
       }
       else {
-        mrssState.launchWaitForContentTimer();
+        dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
       }
     }
     else if (!isNil(mrssState.currentFeed) && !isNil(mrssState.currentFeed.items) && mrssState.currentFeed.items.length === 0) {
-      mrssState.launchTimer();
+      dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
     }
     else {
       mrssState.displayIndex = 0;
-      mrssState.advanceToNextMRSSItem();
+      dispatch(mrssState.advanceToNextMRSSItem());
     }
 
     // return HANDLED

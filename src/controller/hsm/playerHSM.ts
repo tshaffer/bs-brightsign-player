@@ -147,7 +147,7 @@ class STPlaying extends HState {
   launchRetrieveFeedTimer(updateInterval: number, dataFeedSource: DmDataFeedSource, bsdm: DmState): any {
     return (dispatch: any, getState: any) => {
       // test
-      updateInterval = 15;
+      updateInterval = 60;
       setTimeout(this.retrieveFeedTimeoutHandler.bind(this), updateInterval * 1000, dispatch, this, dataFeedSource, bsdm);
     };
   }

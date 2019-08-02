@@ -231,6 +231,16 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
         });
 
 
+        console.log('post MRSS_SPEC_UPDATED message');
+
+        // indicate that the mrss spec has been updated
+        const event: ArEventType = {
+          EventType: 'MRSS_SPEC_UPDATED',
+          EventData: dataFeedSource.id,
+        };
+        const action: any = postMessage(event);
+        dispatch(action);
+
         console.log('assetPoolFetcher.start');
         assetPoolFetcher.start(assetList)
           .then(() => {
