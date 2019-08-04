@@ -118,8 +118,10 @@ export function getRuntimeFiles(): Promise<void> {
 function launchHSM() {
   return ((dispatch: any) => {
     _playerHSM = new PlayerHSM('playerHSM', startPlayback, restartPlayback, postMessage, queueHsmEvent);
+    console.log('---------- launchHSM, launch _playerHSM.hsmInitialize');
     const action: any = _playerHSM.hsmInitialize().bind(_playerHSM);
     dispatch(action);
+    console.log('---------- launchHSM, returned from _playerHSM.hsmInitialize');
   });
 }
 
@@ -295,6 +297,8 @@ function restartPlayback(presentationName: string): Promise<void> {
         _autotronStore.dispatch(addUserVariable(userVariableId, userVariable.defaultValue));
       }
 
+      console.log('---------- resolve promise in restart playback');
+
       return Promise.resolve();
     });
 }
@@ -388,9 +392,10 @@ function startPlayback() {
 
     zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
       zoneHSM.constructorFunction();
-      console.log('runtime.ts#startPlayback - invoke zoneHSM.initialize()');
+      console.log('---------- runtime.ts#startPlayback - invoke zoneHSM.initialize()');
       const action = zoneHSM.hsmInitialize().bind(zoneHSM);
       dispatch(action);
+      console.log('---------- runtime.ts#startPlayback - return from zoneHSM.initialize()');
     });
   };
 }

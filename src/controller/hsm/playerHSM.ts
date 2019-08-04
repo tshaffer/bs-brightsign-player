@@ -49,6 +49,7 @@ export class PlayerHSM extends HSM {
     return (dispatch: any) => {
       return this.restartPlayback('')
         .then(() => {
+          console.log('initializePlayerStateMachine COMPLETE');
           return Promise.resolve(this.stPlaying);
         });
     }
