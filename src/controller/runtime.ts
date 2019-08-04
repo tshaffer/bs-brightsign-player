@@ -119,7 +119,10 @@ function launchHSM() {
   return ((dispatch: any) => {
     _playerHSM = new PlayerHSM('playerHSM', startPlayback, restartPlayback, postMessage, queueHsmEvent);
     const action: any = _playerHSM.hsmInitialize().bind(_playerHSM);
-    dispatch(action);
+    dispatch(action).then(() => {
+      const hsmInitializationComplete = hsmInitialized();
+      console.log('69696969 - end of launchHSM, hsmInitializationComplete = ' + hsmInitializationComplete);
+    });
   });
 }
 
@@ -383,16 +386,21 @@ function startPlayback() {
       _hsmList.push(zoneHSM);
     });
 
+    const promises: any[] = [];
+
     zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
       zoneHSM.constructorFunction();
       console.log('runtime.ts#startPlayback - invoke zoneHSM.initialize()');
       const action = zoneHSM.hsmInitialize().bind(zoneHSM);
-      dispatch(action);
+      promises.push(dispatch(action));
     });
 
-    const hsmInitializationComplete = hsmInitialized();
-    console.log('69696969 - end of startPlayback, hsmInitializationComplete: ' + hsmInitializationComplete);
+    Promise.all(promises).then(() => {
+      const hsmInitializationComplete = hsmInitialized();
+      console.log('69696969 - end of startPlayback, hsmInitializationComplete: ' + hsmInitializationComplete);
+    });
   };
 }
+
 
 

@@ -42,43 +42,48 @@ export class HSM {
 
       const self = this;
 
-      dispatch(addHSM(self));
+      return new Promise((resolve, reject) => {
 
-      const hStateAction: ActionWithPayload = setActiveHState(self.hsmId, null);
-      dispatch(hStateAction);
+        dispatch(addHSM(self));
 
-      // execute initial transition
-      if (!isNil(self.initialPseudoStateHandler)) {
-        const action = (self.initialPseudoStateHandler() as any).bind(self);
-        // self.activeState = dispatch(action);
-        // console.log(self.activeState);
+        const hStateAction: ActionWithPayload = setActiveHState(self.hsmId, null);
+        dispatch(hStateAction);
+
+        // execute initial transition
+        if (!isNil(self.initialPseudoStateHandler)) {
+          const action = (self.initialPseudoStateHandler() as any).bind(self);
+          // self.activeState = dispatch(action);
+          // console.log(self.activeState);
 
 
-        dispatch(action).
-          then((aState: any) => {
-            self.activeState = aState;
-            dispatch(self.completeHsmInitialization().bind(self));
-            const hsmInitializationComplete = hsmInitialized();
-            console.log('969696969 - end of hsmInitialize-0, hsmInitializationComplete: ' + hsmInitializationComplete);
-            if (hsmInitializationComplete) {
-              const event: ArEventType = {
-                EventType: 'NOP',
-              };
-              dispatch(queueHsmEvent(event));
-            }
-          });
-      }
-      else {
-        dispatch(self.completeHsmInitialization().bind(self));
-        const hsmInitializationComplete = hsmInitialized();
-        console.log('969696969 - end of hsmInitialize-1, hsmInitializationComplete: ' + hsmInitializationComplete);
-        if (hsmInitializationComplete) {
-          const event: ArEventType = {
-            EventType: 'NOP',
-          };
-          dispatch(queueHsmEvent(event));
+          dispatch(action).
+            then((aState: any) => {
+              self.activeState = aState;
+              dispatch(self.completeHsmInitialization().bind(self));
+              const hsmInitializationComplete = hsmInitialized();
+              console.log('969696969 - end of hsmInitialize-0, hsmInitializationComplete: ' + hsmInitializationComplete);
+              // if (hsmInitializationComplete) {
+              //   const event: ArEventType = {
+              //     EventType: 'NOP',
+              //   };
+              //   dispatch(queueHsmEvent(event));
+              // }
+              return resolve();
+            });
         }
-      }
+        else {
+          dispatch(self.completeHsmInitialization().bind(self));
+          const hsmInitializationComplete = hsmInitialized();
+          console.log('969696969 - end of hsmInitialize-1, hsmInitializationComplete: ' + hsmInitializationComplete);
+          return resolve();
+          // if (hsmInitializationComplete) {
+          //   const event: ArEventType = {
+          //     EventType: 'NOP',
+          //   };
+          //   dispatch(queueHsmEvent(event));
+          // }
+        }
+      });
     });
   }
 
