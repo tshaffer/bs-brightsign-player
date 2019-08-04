@@ -4,8 +4,9 @@ import {
 } from '../../type/runtime';
 
 import { isNil } from 'lodash';
-import { setActiveHState, addHSM, BsBrightSignPlayerState } from '../../index';
+import { setActiveHState, addHSM, BsBrightSignPlayerState, hsmInitialized } from '../../index';
 import { ActionWithPayload } from '../../..';
+import { queueHsmEvent } from '../../controller/runtime';
 
 export class HSM {
 
@@ -15,16 +16,14 @@ export class HSM {
   activeState: HState | null;
   constructorHandler: (() => void) | null;
   initialPseudoStateHandler: () => (HState | null);
-  initializationInProgress: boolean;
-  initializationComplete: boolean;
+  initialized: boolean;
 
   constructor(hsmId: string, dispatchEvent: ((event: ArEventType) => void)) {
     this.hsmId = hsmId;
     this.dispatchEvent = dispatchEvent;
     this.activeState = null;
     this.constructorHandler = null;
-    this.initializationInProgress = false;
-    this.initializationComplete = false;
+    this.initialized = false;
   }
 
   constructorFunction() {
@@ -38,33 +37,47 @@ export class HSM {
 
     return ((dispatch: any) => {
 
-      this.initializationInProgress = true;
-
       console.log('***** HSM.ts#hsmInitialize');
       console.log(this);
 
       const self = this;
 
-      dispatch(addHSM(this));
+      dispatch(addHSM(self));
 
-      const hStateAction: ActionWithPayload = setActiveHState(this.hsmId, null);
+      const hStateAction: ActionWithPayload = setActiveHState(self.hsmId, null);
       dispatch(hStateAction);
 
       // execute initial transition
-      if (!isNil(this.initialPseudoStateHandler)) {
-        const action = (this.initialPseudoStateHandler() as any).bind(this);
-        // this.activeState = dispatch(action);
-        // console.log(this.activeState);
+      if (!isNil(self.initialPseudoStateHandler)) {
+        const action = (self.initialPseudoStateHandler() as any).bind(self);
+        // self.activeState = dispatch(action);
+        // console.log(self.activeState);
 
 
         dispatch(action).
           then((aState: any) => {
             self.activeState = aState;
             dispatch(self.completeHsmInitialization().bind(self));
+            const hsmInitializationComplete = hsmInitialized();
+            console.log('969696969 - end of hsmInitialize-0, hsmInitializationComplete: ' + hsmInitializationComplete);
+            if (hsmInitializationComplete) {
+              const event: ArEventType = {
+                EventType: 'NOP',
+              };
+              dispatch(queueHsmEvent(event));
+            }
           });
       }
       else {
-        dispatch(this.completeHsmInitialization().bind(this));
+        dispatch(self.completeHsmInitialization().bind(self));
+        const hsmInitializationComplete = hsmInitialized();
+        console.log('969696969 - end of hsmInitialize-1, hsmInitializationComplete: ' + hsmInitializationComplete);
+        if (hsmInitializationComplete) {
+          const event: ArEventType = {
+            EventType: 'NOP',
+          };
+          dispatch(queueHsmEvent(event));
+        }
       }
     });
   }
@@ -91,8 +104,7 @@ export class HSM {
         dispatch(setActiveHState(this.hsmId, null));
         console.log('***** return from HSM.ts#completeHsmInitialization');
         console.log(this);
-        this.initializationInProgress = false;
-        this.initializationComplete = true;
+        this.initialized = true;
         return;
       }
 
@@ -155,8 +167,7 @@ export class HSM {
             dispatch(setActiveHState(this.hsmId, this.activeState));
             console.log('***** return from HSM.ts#completeHsmInitialization');
             console.log(this);
-            this.initializationInProgress = false;
-            this.initializationComplete = true;
+            this.initialized = true;
             return;
           }
 

@@ -305,50 +305,49 @@ export function postMessage(event: ArEventType) {
   });
 }
 
-export function queueHsmEvent(
-  event: ArEventType
-) {
+export function hsmInitialized(): boolean {
+
+  if (!_playerHSM.initialized) {
+    return false;
+  }
+
+  if (_hsmList.length === 0) {
+    return false;
+  }
+
+  for (const hsm of _hsmList) {
+    if (!hsm.initialized) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+export function queueHsmEvent(event: ArEventType) {
   return ((dispatch: any) => {
-    _queuedEvents.push(event);
-    while (_queuedEvents.length > 0) {
-      const eventDispatched = dispatch(dispatchHsmEvent(_queuedEvents[0]));
-      if (eventDispatched) {
+    if (event.EventType !== 'NOP') {
+      _queuedEvents.push(event);
+    }
+    if (hsmInitialized()) {
+      while (_queuedEvents.length > 0) {
+        dispatch(dispatchHsmEvent(_queuedEvents[0]));
         _queuedEvents.shift();
       }
-      else {
-        return;
-      }
     }
-    // while (_queuedEvents.length === 1) {
-    //   const eventDispatched = dispatch(dispatchHsmEvent(event));
-    //   if (eventDispatched) {
-    //     _queuedEvents.shift();
-    //   }
-    // }
   });
 }
 
-export function dispatchHsmEvent(
+function dispatchHsmEvent(
   event: ArEventType
-// ): BsBrightSignPlayerModelThunkAction<undefined | void> {
-  ): any {
+  // ): BsBrightSignPlayerModelThunkAction<undefined | void> {
+): any {
 
   return ((dispatch: any) => {
 
     console.log('dispatchHsmEvent:');
     console.log(event.EventType);
-
-    // only dispatch the event if initialization is not in progress
-    if (!_playerHSM.initializationComplete || _playerHSM.initializationInProgress) {
-      console.log('***** _playerHSM initialization either no complete or in progress');
-      return false;
-    }
-    for (const hsm of _hsmList) {
-      if (!hsm.initializationComplete || hsm.initializationInProgress) {
-        console.log('***** hsm initialization either no complete or in progress');
-        return false;
-      }
-    }
 
     let action = _playerHSM.hsmDispatch(event).bind(_playerHSM);
     dispatch(action);
@@ -357,8 +356,6 @@ export function dispatchHsmEvent(
       action = hsm.hsmDispatch(event).bind(hsm);
       dispatch(action);
     });
-
-    return true;
   });
 }
 
@@ -392,6 +389,9 @@ function startPlayback() {
       const action = zoneHSM.hsmInitialize().bind(zoneHSM);
       dispatch(action);
     });
+
+    const hsmInitializationComplete = hsmInitialized();
+    console.log('69696969 - end of startPlayback, hsmInitializationComplete: ' + hsmInitializationComplete);
   };
 }
 
