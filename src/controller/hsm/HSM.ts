@@ -56,15 +56,16 @@ export class HSM {
         // this.activeState = dispatch(action);
         // console.log(this.activeState);
 
-
         dispatch(action).
           then((aState: any) => {
             self.activeState = aState;
-            dispatch(self.completeHsmInitialization().bind(self));
+            const bc = self.completeHsmInitialization().bind(self);
+            return dispatch(bc);
           });
       }
       else {
-        dispatch(this.completeHsmInitialization().bind(this));
+        const bc = self.completeHsmInitialization().bind(self);
+        return dispatch(bc);
       }
     });
   }
@@ -162,6 +163,7 @@ export class HSM {
 
           activeState = stateData.nextState as HState;
           this.activeState = activeState;
+
         }
       }
     });

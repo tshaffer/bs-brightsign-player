@@ -118,8 +118,12 @@ export function getRuntimeFiles(): Promise<void> {
 function launchHSM() {
   return ((dispatch: any) => {
     _playerHSM = new PlayerHSM('playerHSM', startPlayback, restartPlayback, postMessage, queueHsmEvent);
+    debugger;
     const action: any = _playerHSM.hsmInitialize().bind(_playerHSM);
-    dispatch(action);
+    // dispatch(action);
+    dispatch(action).then( () => {
+      debugger;
+    });
   });
 }
 
@@ -389,6 +393,7 @@ function startPlayback() {
     zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
       zoneHSM.constructorFunction();
       console.log('runtime.ts#startPlayback - invoke zoneHSM.initialize()');
+      debugger;
       const action = zoneHSM.hsmInitialize().bind(zoneHSM);
       dispatch(action);
     });
