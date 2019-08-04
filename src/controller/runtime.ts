@@ -398,6 +398,12 @@ function startPlayback() {
     Promise.all(promises).then(() => {
       const hsmInitializationComplete = hsmInitialized();
       console.log('69696969 - end of startPlayback, hsmInitializationComplete: ' + hsmInitializationComplete);
+      if (hsmInitializationComplete) {
+        const event: ArEventType = {
+          EventType: 'NOP',
+        };
+        dispatch(queueHsmEvent(event));
+      }
     });
   };
 }

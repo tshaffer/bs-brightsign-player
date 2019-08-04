@@ -59,23 +59,27 @@ export class HSM {
           dispatch(action).
             then((aState: any) => {
               self.activeState = aState;
-              dispatch(self.completeHsmInitialization().bind(self));
-              const hsmInitializationComplete = hsmInitialized();
-              console.log('969696969 - end of hsmInitialize-0, hsmInitializationComplete: ' + hsmInitializationComplete);
-              // if (hsmInitializationComplete) {
-              //   const event: ArEventType = {
-              //     EventType: 'NOP',
-              //   };
-              //   dispatch(queueHsmEvent(event));
-              // }
-              return resolve();
+              const promise = dispatch(self.completeHsmInitialization().bind(self));
+              promise.then(() => {
+                const hsmInitializationComplete = hsmInitialized();
+                console.log('969696969 - end of hsmInitialize-0, hsmInitializationComplete: ' + hsmInitializationComplete);
+                // if (hsmInitializationComplete) {
+                //   const event: ArEventType = {
+                //     EventType: 'NOP',
+                //   };
+                //   dispatch(queueHsmEvent(event));
+                // }
+                return resolve();
+              });
             });
         }
         else {
-          dispatch(self.completeHsmInitialization().bind(self));
-          const hsmInitializationComplete = hsmInitialized();
-          console.log('969696969 - end of hsmInitialize-1, hsmInitializationComplete: ' + hsmInitializationComplete);
-          return resolve();
+          const promise = dispatch(self.completeHsmInitialization().bind(self));
+          promise.then( () => {
+            const hsmInitializationComplete = hsmInitialized();
+            console.log('969696969 - end of hsmInitialize-1, hsmInitializationComplete: ' + hsmInitializationComplete);
+            return resolve();
+          });
           // if (hsmInitializationComplete) {
           //   const event: ArEventType = {
           //     EventType: 'NOP',
@@ -93,93 +97,97 @@ export class HSM {
 
     return ((dispatch: any) => {
 
-      const stateData: HSMStateData = { nextState: null };
+      const self = this;
 
-      // empty event used to get super states
-      const emptyEvent: ArEventType = { EventType: 'EMPTY_SIGNAL' };
+      return new Promise((resolve, reject) => {
+        const stateData: HSMStateData = { nextState: null };
 
-      // entry event
-      const entryEvent: ArEventType = { EventType: 'ENTRY_SIGNAL' };
+        // empty event used to get super states
+        const emptyEvent: ArEventType = { EventType: 'EMPTY_SIGNAL' };
 
-      // init event
-      const initEvent: ArEventType = { EventType: 'INIT_SIGNAL' };
+        // entry event
+        const entryEvent: ArEventType = { EventType: 'ENTRY_SIGNAL' };
 
-      // if there is no activeState, the playlist is empty
-      if (isNil(this.activeState)) {
-        dispatch(setActiveHState(this.hsmId, null));
-        console.log('***** return from HSM.ts#completeHsmInitialization');
-        console.log(this);
-        this.initialized = true;
-        return;
-      }
+        // init event
+        const initEvent: ArEventType = { EventType: 'INIT_SIGNAL' };
 
-      if (!isNil(this.activeState)) {
-        let activeState: HState = this.activeState;
-
-        // start at the top state
-        if (isNil(this.topState)) {
-          // TODO
-          debugger;
+        // if there is no activeState, the playlist is empty
+        if (isNil(self.activeState)) {
+          dispatch(setActiveHState(self.hsmId, null));
+          console.log('***** return from HSM.ts#completeHsmInitialization');
+          console.log(self);
+          self.initialized = true;
+          return resolve();
         }
-        let sourceState = this.topState;
 
-        while (true) {
+        if (!isNil(self.activeState)) {
+          let activeState: HState = self.activeState;
 
-          const entryStates = [];
-          let entryStateIndex = 0;
+          // start at the top state
+          if (isNil(self.topState)) {
+            // TODO
+            debugger;
+          }
+          let sourceState = self.topState;
 
-          // target of the initial transition
-          entryStates[0] = activeState;
+          while (true) {
 
-          // send an empty event to get the super state
-          action = (this.activeState).HStateEventHandler(emptyEvent, stateData).bind(this.activeState);
-          status = dispatch(action);
+            const entryStates = [];
+            let entryStateIndex = 0;
 
-          activeState = stateData.nextState as HState;
-          this.activeState = activeState;
+            // target of the initial transition
+            entryStates[0] = activeState;
 
-          // walk up the tree until the current source state is hit
-          while (activeState.id !== (sourceState).id) {
-            entryStateIndex = entryStateIndex + 1;
-            entryStates[entryStateIndex] = activeState;
-            action = this.activeState.HStateEventHandler(emptyEvent, stateData).bind(this.activeState);
+            // send an empty event to get the super state
+            action = (self.activeState).HStateEventHandler(emptyEvent, stateData).bind(self.activeState);
             status = dispatch(action);
+
             activeState = stateData.nextState as HState;
-            this.activeState = activeState;
-          }
+            self.activeState = activeState;
 
-          // restore the target of the initial transition
-          // activeState = entryStates[0];
+            // walk up the tree until the current source state is hit
+            while (activeState.id !== (sourceState).id) {
+              entryStateIndex = entryStateIndex + 1;
+              entryStates[entryStateIndex] = activeState;
+              action = self.activeState.HStateEventHandler(emptyEvent, stateData).bind(self.activeState);
+              status = dispatch(action);
+              activeState = stateData.nextState as HState;
+              self.activeState = activeState;
+            }
 
-          // retrace the entry path in reverse (desired) order
-          while (entryStateIndex >= 0) {
-            const entryState = entryStates[entryStateIndex];
-            action = entryState.HStateEventHandler(entryEvent, stateData).bind(entryState).bind(entryState);
+            // restore the target of the initial transition
+            // activeState = entryStates[0];
+
+            // retrace the entry path in reverse (desired) order
+            while (entryStateIndex >= 0) {
+              const entryState = entryStates[entryStateIndex];
+              action = entryState.HStateEventHandler(entryEvent, stateData).bind(entryState).bind(entryState);
+              status = dispatch(action);
+              entryStateIndex = entryStateIndex - 1;
+            }
+
+            // new source state is the current state
+            sourceState = entryStates[0];
+
+            // console.log('HSM.ts#initialize: invoke handler with initEvent');
+            // console.log(sourceState.id);
+
+            action = sourceState.HStateEventHandler(initEvent, stateData).bind(sourceState);
             status = dispatch(action);
-            entryStateIndex = entryStateIndex - 1;
+            if (status !== 'TRANSITION') {
+              self.activeState = sourceState;
+              dispatch(setActiveHState(self.hsmId, self.activeState));
+              console.log('***** return from HSM.ts#completeHsmInitialization');
+              console.log(self);
+              self.initialized = true;
+              return resolve();
+            }
+
+            activeState = stateData.nextState as HState;
+            self.activeState = activeState;
           }
-
-          // new source state is the current state
-          sourceState = entryStates[0];
-
-          // console.log('HSM.ts#initialize: invoke handler with initEvent');
-          // console.log(sourceState.id);
-
-          action = sourceState.HStateEventHandler(initEvent, stateData).bind(sourceState);
-          status = dispatch(action);
-          if (status !== 'TRANSITION') {
-            this.activeState = sourceState;
-            dispatch(setActiveHState(this.hsmId, this.activeState));
-            console.log('***** return from HSM.ts#completeHsmInitialization');
-            console.log(this);
-            this.initialized = true;
-            return;
-          }
-
-          activeState = stateData.nextState as HState;
-          this.activeState = activeState;
         }
-      }
+      });
     });
   }
 
