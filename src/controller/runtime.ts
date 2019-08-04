@@ -305,50 +305,50 @@ export function postMessage(event: ArEventType) {
   });
 }
 
-export function queueHsmEvent(
-  event: ArEventType
-) {
+function hsmInitialized(): boolean {
+
+  if (!_playerHSM.initializationComplete || _playerHSM.initializationInProgress) {
+    console.log('***** _playerHSM initialization either no complete or in progress');
+    return false;
+  }
+  for (const hsm of _hsmList) {
+    if (!hsm.initializationComplete || hsm.initializationInProgress) {
+      console.log('***** hsm initialization either no complete or in progress');
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function queueHsmEvent(event: ArEventType) {
   return ((dispatch: any) => {
-    _queuedEvents.push(event);
-    while (_queuedEvents.length > 0) {
-      const eventDispatched = dispatch(dispatchHsmEvent(_queuedEvents[0]));
-      if (eventDispatched) {
-        _queuedEvents.shift();
-      }
-      else {
-        return;
+    if (!isNil(event)) {
+      _queuedEvents.push(event);
+    }
+    if (hsmInitialized()) {
+      while (_queuedEvents.length > 0) {
+        const eventDispatched = dispatch(dispatchHsmEvent(_queuedEvents[0]));
+        if (eventDispatched) {
+          _queuedEvents.shift();
+        }
+        else {
+          return;
+        }
       }
     }
-    // while (_queuedEvents.length === 1) {
-    //   const eventDispatched = dispatch(dispatchHsmEvent(event));
-    //   if (eventDispatched) {
-    //     _queuedEvents.shift();
-    //   }
-    // }
   });
 }
 
-export function dispatchHsmEvent(
+function dispatchHsmEvent(
   event: ArEventType
-// ): BsBrightSignPlayerModelThunkAction<undefined | void> {
-  ): any {
+  // ): BsBrightSignPlayerModelThunkAction<undefined | void> {
+): any {
 
   return ((dispatch: any) => {
 
     console.log('dispatchHsmEvent:');
     console.log(event.EventType);
-
-    // only dispatch the event if initialization is not in progress
-    if (!_playerHSM.initializationComplete || _playerHSM.initializationInProgress) {
-      console.log('***** _playerHSM initialization either no complete or in progress');
-      return false;
-    }
-    for (const hsm of _hsmList) {
-      if (!hsm.initializationComplete || hsm.initializationInProgress) {
-        console.log('***** hsm initialization either no complete or in progress');
-        return false;
-      }
-    }
 
     let action = _playerHSM.hsmDispatch(event).bind(_playerHSM);
     dispatch(action);
