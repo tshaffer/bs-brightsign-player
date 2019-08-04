@@ -119,7 +119,9 @@ function launchHSM() {
   return ((dispatch: any) => {
     _playerHSM = new PlayerHSM('playerHSM', startPlayback, restartPlayback, postMessage, queueHsmEvent);
     const action: any = _playerHSM.hsmInitialize().bind(_playerHSM);
-    dispatch(action);
+    dispatch(action).then( () => {
+      debugger;
+    });
   });
 }
 
@@ -319,12 +321,6 @@ export function queueHsmEvent(
         return;
       }
     }
-    // while (_queuedEvents.length === 1) {
-    //   const eventDispatched = dispatch(dispatchHsmEvent(event));
-    //   if (eventDispatched) {
-    //     _queuedEvents.shift();
-    //   }
-    // }
   });
 }
 

@@ -38,34 +38,40 @@ export class HSM {
 
     return ((dispatch: any) => {
 
-      this.initializationInProgress = true;
-
-      console.log('***** HSM.ts#hsmInitialize');
-      console.log(this);
-
       const self = this;
 
-      dispatch(addHSM(this));
+      return new Promise((resolve, reject) => {
 
-      const hStateAction: ActionWithPayload = setActiveHState(this.hsmId, null);
-      dispatch(hStateAction);
+        self.initializationInProgress = true;
 
-      // execute initial transition
-      if (!isNil(this.initialPseudoStateHandler)) {
-        const action = (this.initialPseudoStateHandler() as any).bind(this);
-        // this.activeState = dispatch(action);
-        // console.log(this.activeState);
+        console.log('***** HSM.ts#hsmInitialize');
+        console.log(self);
+
+        dispatch(addHSM(self));
+
+        const hStateAction: ActionWithPayload = setActiveHState(self.hsmId, null);
+        dispatch(hStateAction);
+
+        // execute initial transition
+        if (!isNil(self.initialPseudoStateHandler)) {
+          const action = (self.initialPseudoStateHandler() as any).bind(self);
+          // this.activeState = dispatch(action);
+          // console.log(this.activeState);
+
+          dispatch(action).
+            then((aState: any) => {
+              self.activeState = aState;
+              dispatch(self.completeHsmInitialization().bind(self));
+              return resolve();
+            });
+        }
+        else {
+          dispatch(self.completeHsmInitialization().bind(self));
+          return resolve();
+        }
 
 
-        dispatch(action).
-          then((aState: any) => {
-            self.activeState = aState;
-            dispatch(self.completeHsmInitialization().bind(self));
-          });
-      }
-      else {
-        dispatch(this.completeHsmInitialization().bind(this));
-      }
+      });
     });
   }
 
