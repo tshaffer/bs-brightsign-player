@@ -13,7 +13,6 @@ import { getFeedItems } from '../selector/dataFeed';
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
 import { ArEventType } from '../..';
 import { postMessage, getPlatform } from './runtime';
-import { totalmem } from 'os';
 
 let assetPoolFetcher: AssetPoolFetcher | null = null;
 

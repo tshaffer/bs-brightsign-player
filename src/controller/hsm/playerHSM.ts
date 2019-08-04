@@ -196,6 +196,7 @@ class STPlaying extends HState {
         const readDataFeedsAction: any = this.readDataFeeds(getState().bsdm);
         dispatch(readDataFeedsAction)
           .then(() => {
+
             // initiate data feed downloads
             dispatch(this.fetchDataFeeds(getState().bsdm));
 
@@ -205,7 +206,8 @@ class STPlaying extends HState {
 
             return 'HANDLED';
           });
-        // if event["EventType"] = "MRSS_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_LOADED"     or event["EventType"] = "CONTENT_DATA_FEED_UNCHANGED" then
+        
+      // if event["EventType"] = "MRSS_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_LOADED"     or event["EventType"] = "CONTENT_DATA_FEED_UNCHANGED" then
       } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
         dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
