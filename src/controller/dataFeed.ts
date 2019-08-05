@@ -19,7 +19,7 @@ let assetPoolFetcher: AssetPoolFetcher | null = null;
 function getFeedCacheRoot(): string {
   switch (getPlatform()) {
     case 'Desktop':
-      default:
+    default:
       return '/Users/tedshaffer/Desktop/autotron/feed_cache/';
     case 'BrightSign':
       return 'feed_cache/';
@@ -34,6 +34,72 @@ function getFeedAssetPool(): AssetPool {
     case 'BrightSign':
       return new AssetPool('SD:/feedPool');
   }
+}
+
+function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
+
+  return (dispatch: any, getState: any) => {
+
+    const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.feedSourceId + '.xml';
+    const isMrssFeed: boolean = feedIsMRSS(feedFileName);
+    if (!isMrssFeed) {
+      return Promise.resolve();
+    }
+
+    console.log('Read existing content for feed ' + bsdmDataFeed.feedSourceId);
+
+    let xmlFileContents: string;
+
+    try {
+      xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+      return xmlStringToJson(xmlFileContents)
+        .then((rawFeed) => {
+          const items: DataFeedItem[] = getFeedItems(rawFeed);
+          console.log(items);
+
+          const assetList: Asset[] = [];
+          for (const feedItem of items) {
+            const asset: Asset = {
+              link: feedItem.url,
+              name: feedItem.url,
+              changeHint: feedItem.guid,
+              hash: {
+                method: 'SHA1',
+                hex: feedItem.guid,
+              }
+            };
+            assetList.push(asset);
+          }
+
+          const dataFeed: DataFeed = {
+            id: bsdmDataFeed.feedSourceId,
+            sourceId: bsdmDataFeed.feedSourceId,
+            assetList,
+            items,
+          };
+          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.feedSourceId, dataFeed);
+          dispatch(addDataFeedAction);
+          return Promise.resolve();
+        });
+
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  };
+}
+
+
+export function readDataFeedContentSync(dataFeed: DmcDataFeed) {
+  return (dispatch: any, getState: any) => {
+    switch (dataFeed.usage) {
+      case DataFeedUsageType.Mrss: {
+        return dispatch(readMrssContentSync(dataFeed));
+      }
+      default:
+        debugger;
+        break;
+    }
+  };
 }
 
 export function readFeedContent(bsdm: DmState, dataFeedId: BsDmId) {
@@ -207,8 +273,7 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
 
         // assetPoolFetcher.fileevent = handleFileEvent;
         // assetPoolFetcher.progressevent = handleProgressEvent;
-        assetPoolFetcher.addEventListener("progressevent", function(data: any)
-        {
+        assetPoolFetcher.addEventListener("progressevent", function (data: any) {
           // ProgressEvent is defined at
           // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
           console.log('progressEvent:');
@@ -219,8 +284,7 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
           console.log(data.detail.currentFileTotal);
         });
 
-        assetPoolFetcher.addEventListener("fileevent", function(data: any)
-        {
+        assetPoolFetcher.addEventListener("fileevent", function (data: any) {
           // FileEvent is at data.detail
           // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
           console.log('fileEvent:');

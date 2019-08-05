@@ -4,7 +4,7 @@ import { Action } from 'redux';
 import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById, dmResetDefaultPropertyValues } from '@brightsign/bsdatamodel';
 import { isNil, isString } from 'lodash';
 
-import { readFeedContent, downloadMRSSContent, retrieveLiveDataFeed } from '../dataFeed';
+import { readFeedContent, downloadMRSSContent, retrieveLiveDataFeed, readDataFeedContentSync } from '../dataFeed';
 
 export class PlayerHSM extends HSM {
 
@@ -157,8 +157,35 @@ class STPlaying extends HState {
     dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedSource.id));
   }
 
-  // ONLY SUPPORTS ONE FEED
   readDataFeeds(bsdm: DmState) {
+
+    return (dispatch: any) => {
+
+      const dataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
+
+      const readNextFile = (index: number): Promise<void> => {
+
+        if (index >= dataFeedIds.length) {
+          return Promise.resolve();
+        }
+
+        const dataFeedId = dataFeedIds[index];
+        const maybeDataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId });
+        const dataFeed: DmcDataFeed = maybeDataFeed as DmcDataFeed;
+        return dispatch(readDataFeedContentSync(dataFeed))
+          .then(() => {
+            return readNextFile(index + 1);
+          }).catch((error: Error) => {
+            debugger;
+          });
+      };
+
+      return readNextFile(0);
+    };
+  }
+
+  // ONLY SUPPORTS ONE FEED
+  oldreadDataFeeds(bsdm: DmState) {
     return (dispatch: any, getState: any) => {
       const dataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
       const dataFeedId = dataFeedIds[0];
@@ -189,9 +216,6 @@ class STPlaying extends HState {
 
         console.log(this.id + ': entry signal');
 
-        // // initiate data feed downloads
-        // dispatch(this.addDataFeeds(getState().bsdm));
-
         // read existing data feeds
         const readDataFeedsAction: any = this.readDataFeeds(getState().bsdm);
         dispatch(readDataFeedsAction)
@@ -206,7 +230,7 @@ class STPlaying extends HState {
 
             return 'HANDLED';
           });
-        
+
       // if event["EventType"] = "MRSS_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_LOADED"     or event["EventType"] = "CONTENT_DATA_FEED_UNCHANGED" then
       } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
