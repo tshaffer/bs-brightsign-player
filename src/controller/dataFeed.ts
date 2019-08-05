@@ -102,28 +102,6 @@ export function readDataFeedContentSync(dataFeed: DmcDataFeed) {
   };
 }
 
-export function readFeedContent(bsdm: DmState, dataFeedId: BsDmId) {
-
-  return (dispatch: any, getState: any) => {
-
-    const dataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId });
-
-    if (!isNil(dataFeed)) {
-      if (dataFeed.usage === DataFeedUsageType.Mrss) {
-        const mrssContent: any = readMrssContent(dataFeed);
-        const promise: any = dispatch(mrssContent);
-        return promise;
-        // dispatch(this.readMrssContent(dataFeed));
-      }
-      else {
-        // ReadLiveFeedContent()
-      }
-    }
-
-    // dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedSourceId));
-  };
-}
-
 function readMrssContent(bsdmDataFeed: DmcDataFeed) {
 
   return (dispatch: any, getState: any) => {
@@ -188,9 +166,16 @@ function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<vo
 }
 
 
-export function retrieveLiveDataFeed(bsdm: DmState, dataFeedSource: DmDataFeedSource): Promise<any> {
+export function retrieveDataFeed(bsdm: DmState, dataFeedSource: DmDataFeedSource): Promise<any> {
+
+  // TODODF - authentication
+  // TODODF - headRequest
+  // TODODF - user agent string
+  // TODODF - binding
+
 
   // simplified version - URL only; simple string
+  // TODODF - data feed source with user variable?
   if (!isNil(dataFeedSource)) {
     const remoteDataFeedSource: DmRemoteDataFeedSource = dataFeedSource as DmRemoteDataFeedSource;
     const urlPS: DmParameterizedString = remoteDataFeedSource.url;
