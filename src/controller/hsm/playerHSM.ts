@@ -152,14 +152,6 @@ class STPlaying extends HState {
       const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
       dispatch(action);
       
-      /*
-        ' send internal message indicating that the data feed has been updated
-        liveTextDataUpdatedEvent = { }
-        liveTextDataUpdatedEvent["EventType"] = "LIVE_DATA_FEED_UPDATE"
-        liveTextDataUpdatedEvent["EventData"] = liveDataFeed
-        m.bsp.msgPort.PostMessage(liveTextDataUpdatedEvent)
-      */
-
       // TODODF - headRequest
 
       // set timer to check for feed update
@@ -186,7 +178,6 @@ class STPlaying extends HState {
       }
     };
   }
-
 
   queueRetrieveLiveDataFeed(bsdm: DmState, dataFeedId: BsDmId) {
 
@@ -290,8 +281,7 @@ class STPlaying extends HState {
             return 'HANDLED';
           });
 
-        // if event["EventType"] = "MRSS_DATA_FEED_LOADED" or event["EventType"] = "CONTENT_DATA_FEED_LOADED"     or event["EventType"] = "CONTENT_DATA_FEED_UNCHANGED" then
-      } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
+      } else if (isString(event.EventType) && (event.EventType === 'MRSS_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_UNCHANGED')) {
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
         dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
         return 'HANDLED';
