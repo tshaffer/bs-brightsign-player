@@ -3,7 +3,7 @@ import axios from 'axios';
 
 import { DataFeed, DataFeedItem } from '../type/dataFeed';
 import { DmState, BsDmId, DmcDataFeed, dmGetDataFeedById, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
-import { isNil } from 'lodash';
+import { isNil, isObject } from 'lodash';
 import { DataFeedUsageType } from '@brightsign/bscore';
 import AssetPool, { Asset } from '@brightsign/assetpool';
 import { xmlStringToJson } from '../utility/helpers';
@@ -41,19 +41,23 @@ function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
   return (dispatch: any, getState: any) => {
 
     const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.feedSourceId + '.xml';
-    const isMrssFeed: boolean = feedIsMRSS(feedFileName);
-    if (!isMrssFeed) {
-      return Promise.resolve();
-    }
 
     console.log('Read existing content for feed ' + bsdmDataFeed.feedSourceId);
 
     let xmlFileContents: string;
 
     try {
+
       xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+      
       return xmlStringToJson(xmlFileContents)
         .then((rawFeed) => {
+
+          const isMrssFeed: boolean = feedIsMrss(rawFeed);
+          if (!isMrssFeed) {
+            return Promise.resolve();
+          }
+
           const items: DataFeedItem[] = getFeedItems(rawFeed);
           console.log(items);
 
@@ -76,6 +80,7 @@ function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
             sourceId: bsdmDataFeed.feedSourceId,
             assetList,
             items,
+            isMrss: true,
           };
           const addDataFeedAction: any = addDataFeed(bsdmDataFeed.feedSourceId, dataFeed);
           dispatch(addDataFeedAction);
@@ -102,62 +107,6 @@ export function readDataFeedContentSync(dataFeed: DmcDataFeed) {
   };
 }
 
-function readMrssContent(bsdmDataFeed: DmcDataFeed) {
-
-  return (dispatch: any, getState: any) => {
-
-    return new Promise((resolve, reject) => {
-
-      const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.feedSourceId + '.xml';
-      const isMrssFeed: boolean = feedIsMRSS(feedFileName);
-      //   if not m.isMRSSFeed and m.parser$ = "" then
-      if (!isMrssFeed) {
-        return resolve();
-      }
-
-      console.log('Read existing content for feed ' + bsdmDataFeed.feedSourceId);
-
-      let xmlFileContents: string;
-
-      try {
-        xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-        xmlStringToJson(xmlFileContents)
-          .then((rawFeed) => {
-            const items: DataFeedItem[] = getFeedItems(rawFeed);
-            console.log(items);
-
-            const assetList: Asset[] = [];
-            for (const feedItem of items) {
-              const asset: Asset = {
-                link: feedItem.url,
-                name: feedItem.url,
-                changeHint: feedItem.guid,
-                hash: {
-                  method: 'SHA1',
-                  hex: feedItem.guid,
-                }
-              };
-              assetList.push(asset);
-            }
-
-            const dataFeed: DataFeed = {
-              id: bsdmDataFeed.feedSourceId,
-              sourceId: bsdmDataFeed.feedSourceId,
-              assetList,
-              items,
-            };
-            const addDataFeedAction: any = addDataFeed(bsdmDataFeed.feedSourceId, dataFeed);
-            dispatch(addDataFeedAction);
-            return resolve();
-          });
-
-      } catch (err) {
-        return reject(err);
-      }
-    });
-  };
-}
-
 function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<void> {
   const jsonString = JSON.stringify(data, null, 2);
   console.log('invoke fs.writeFile');
@@ -166,7 +115,7 @@ function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<vo
 }
 
 
-export function retrieveDataFeed(bsdm: DmState, dataFeedSource: DmDataFeedSource): Promise<any> {
+export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed, dataFeedSource: DmDataFeedSource): Promise<any> {
 
   // TODODF - authentication
   // TODODF - headRequest
@@ -200,6 +149,12 @@ export function retrieveDataFeed(bsdm: DmState, dataFeedSource: DmDataFeedSource
   return Promise.reject('dataFeedSource is null');
 }
 
+
+export function downloadFeedContent() {
+  return (dispatch: any, getState: any) => {
+    debugger;
+  };
+}
 
 export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSource) {
 
@@ -241,6 +196,7 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
           sourceId: dataFeedSource.id,
           assetList,
           items,
+          isMrss: true,
         };
         dispatch(addDataFeed(dataFeedSource.id, dataFeed));
 
@@ -258,7 +214,7 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
 
         // assetPoolFetcher.fileevent = handleFileEvent;
         // assetPoolFetcher.progressevent = handleProgressEvent;
-        assetPoolFetcher.addEventListener("progressevent", function (data: any) {
+        assetPoolFetcher.addEventListener('progressevent', (data: any) => {
           // ProgressEvent is defined at
           // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
           console.log('progressEvent:');
@@ -269,7 +225,7 @@ export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSour
           console.log(data.detail.currentFileTotal);
         });
 
-        assetPoolFetcher.addEventListener("fileevent", function (data: any) {
+        assetPoolFetcher.addEventListener('fileevent', (data: any) => {
           // FileEvent is at data.detail
           // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
           console.log('fileEvent:');
@@ -329,30 +285,44 @@ function handleProgressEvent(progressEvent: any) {
 }
 
 
-function feedIsMRSS(feedFileName: string): boolean {
+export function feedIsMrss(feed: any): boolean {
 
-  let fileContents: string;
-
-  try {
-    fileContents = fs.readFileSync(feedFileName, 'utf8');
-  } catch (err) {
-    return false;
+  if (isObject(feed) && isObject(feed.rss) && isObject(feed.rss.$)) {
+    if (feed.rss.$.hasOwnProperty('xmlns:media')) {
+      const attr: string = feed.rss.$['xmlns:media'];
+      if (attr.startsWith('http://search.yahoo.com/mrss')) {
+        return true;
+      }
+    }
   }
 
-  return true;
-
-  // feedXML = CreateObject("roXMLElement")
-  // if not feedXML.Parse(xml) then
-  //   return false
-  //   end if
-
-  // if feedXML.HasAttribute("xmlns:media") then
-  //   attrs = feedXML.GetAttributes()
-  //   if attrs["xmlns:media"] = "http://search.yahoo.com/mrss/" then
-  //   return true
-  //   end if
-  // end if
-
-  // return false
+  return false;
 }
+
+// function feedIsMRSS(feedFileName: string): boolean {
+
+//   let fileContents: string;
+
+//   try {
+//     fileContents = fs.readFileSync(feedFileName, 'utf8');
+//   } catch (err) {
+//     return false;
+//   }
+
+//   return true;
+
+//   // feedXML = CreateObject("roXMLElement")
+//   // if not feedXML.Parse(xml) then
+//   //   return false
+//   //   end if
+
+//   // if feedXML.HasAttribute("xmlns:media") then
+//   //   attrs = feedXML.GetAttributes()
+//   //   if attrs["xmlns:media"] = "http://search.yahoo.com/mrss/" then
+//   //   return true
+//   //   end if
+//   // end if
+
+//   // return false
+// }
 
