@@ -58,8 +58,10 @@ export default class MrssState extends MediaHState {
         this.waitForContentTimer = null;
 
         this.firstItemDisplayed = false;
-        // PreDrawImage
-        // set default transition
+        
+        // TODODF PreDrawImage
+        
+        // TODODF set default transition
 
         this.currentFeed = null;
         this.pendingFeed = null;
