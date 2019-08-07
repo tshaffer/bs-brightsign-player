@@ -102,10 +102,7 @@ export default class MrssState extends MediaHState {
 
         console.log('received MRSSNotFullyLoadedPlaybackEvent');
 
-        // dispatch(this.launchWaitForContentTimer().bind(this));
-
         const dataFeedId: string = event.EventData;
-        // if (dataFeedId === this.dataFeedId) {
         if (dataFeedId === this.dataFeedId) {
           console.log('launchWaitForContentTimer');
           dispatch(this.launchWaitForContentTimer().bind(this));
@@ -113,9 +110,7 @@ export default class MrssState extends MediaHState {
         else {
           console.log('do not launchWaitForContentTimer');
           console.log('dataFeedId: ' + dataFeedId);
-          console.log('this:');
-          console.log(this);
-          console.log('this.dataFeedSourceId: ' + this.dataFeedId);
+          console.log('this.dataFeedId: ' + this.dataFeedId);
         }
       } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
