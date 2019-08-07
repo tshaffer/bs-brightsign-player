@@ -86,7 +86,7 @@ export class MediaZoneHSM extends ZoneHSM {
         const dataFeedId: BsDmId = dataFeedContentItem.dataFeedId;
         const dataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId });
         if (!isNil(dataFeed)) {
-          newState = new MrssState(this, bsdmMediaState, superState, dataFeedId, dataFeed.feedSourceId);
+          newState = new MrssState(this, bsdmMediaState, superState, dataFeedId);
         }
         break;
       default:

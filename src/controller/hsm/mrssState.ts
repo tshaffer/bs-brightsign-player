@@ -22,7 +22,6 @@ import { setActiveMrssDisplayItem } from '../../model/activeMrssDisplayItem';
 export default class MrssState extends MediaHState {
 
   dataFeedId: BsDmId;
-  dataFeedSourceId: BsDmId;
 
   liveDataFeed: DataFeed;
   currentFeed: DataFeed | null;
@@ -32,13 +31,12 @@ export default class MrssState extends MediaHState {
 
   waitForContentTimer: any;
 
-  constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState, dataFeedId: BsDmId, dataFeedSourceId: BsDmId) {
+  constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState, dataFeedId: BsDmId) {
 
     super(zoneHSM, mediaState.id);
     this.mediaState = mediaState;
     this.superState = superState;
     this.dataFeedId = dataFeedId;
-    this.dataFeedSourceId = dataFeedSourceId;
 
     this.HStateEventHandler = this.STDisplayingMrssStateEventHandler;
 
@@ -67,9 +65,7 @@ export default class MrssState extends MediaHState {
         this.pendingFeed = null;
 
         // see if the designated feed has already been downloaded (doesn't imply content exists)
-        const bsBrightSignPlayerState: BsBrightSignPlayerState = getState();
-        // const dataFeed: DataFeed | null = getDataFeedById(bsBrightSignPlayerState, this.dataFeedId);
-        const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedSourceId);
+        const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedId);
         if (!isNil(dataFeed)) {
 
           this.currentFeed = dataFeed;
@@ -106,22 +102,21 @@ export default class MrssState extends MediaHState {
 
         console.log('received MRSSNotFullyLoadedPlaybackEvent');
 
-        // temporary while I figure out the confusion between dataFeedId & dataFeedSourceId.
-        dispatch(this.launchWaitForContentTimer().bind(this));
+        // dispatch(this.launchWaitForContentTimer().bind(this));
 
-        // const dataFeedId: string = event.EventData;
-        // // if (dataFeedId === this.dataFeedId) {
-        // if (dataFeedId === this.dataFeedSourceId) {
-        //   console.log('launchWaitForContentTimer');
-        //   dispatch(this.launchWaitForContentTimer().bind(this));
-        // }
-        // else {
-        //   console.log('do not launchWaitForContentTimer');
-        //   console.log('dataFeedId: ' + dataFeedId);
-        //   console.log('this:');
-        //   console.log(this);
-        //   console.log('this.dataFeedSourceId: ' + this.dataFeedSourceId);
-        // }
+        const dataFeedId: string = event.EventData;
+        // if (dataFeedId === this.dataFeedId) {
+        if (dataFeedId === this.dataFeedId) {
+          console.log('launchWaitForContentTimer');
+          dispatch(this.launchWaitForContentTimer().bind(this));
+        }
+        else {
+          console.log('do not launchWaitForContentTimer');
+          console.log('dataFeedId: ' + dataFeedId);
+          console.log('this:');
+          console.log(this);
+          console.log('this.dataFeedSourceId: ' + this.dataFeedId);
+        }
       } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
         // dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
@@ -129,12 +124,12 @@ export default class MrssState extends MediaHState {
       } else if (event.EventType === 'MRSS_SPEC_UPDATED') {
         console.log('***** ***** mrssSpecUpdated');
 
-        const dataFeedSourceId = event.EventData as BsDmId;
+        const dataFeedId = event.EventData as BsDmId;
 
-        console.log('dataFeedSourceId: ' + dataFeedSourceId);
+        console.log('dataFeedId: ' + dataFeedId);
 
         // const bsBrightSignPlayerState: BsBrightSignPlayerState = getState();
-        const dataFeed: DataFeed | null = getDataFeedById(getState(), dataFeedSourceId);
+        const dataFeed: DataFeed | null = getDataFeedById(getState(), dataFeedId);
 
         if (!isNil(dataFeed)) {
           console.log('dataFeed found');

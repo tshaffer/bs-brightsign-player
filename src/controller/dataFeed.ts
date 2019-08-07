@@ -2,7 +2,7 @@ import * as fs from 'fs-extra';
 import axios from 'axios';
 
 import { DataFeed, DataFeedItem } from '../type/dataFeed';
-import { DmState, BsDmId, DmcDataFeed, dmGetDataFeedById, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString } from '@brightsign/bsdatamodel';
+import { DmState, BsDmId, DmcDataFeed, dmGetDataFeedById, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedSourceForFeedId } from '@brightsign/bsdatamodel';
 import { isNil, isObject } from 'lodash';
 import { DataFeedUsageType } from '@brightsign/bscore';
 import AssetPool, { Asset } from '@brightsign/assetpool';
@@ -40,9 +40,9 @@ function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
 
   return (dispatch: any, getState: any) => {
 
-    const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.feedSourceId + '.xml';
+    const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
 
-    console.log('Read existing content for feed ' + bsdmDataFeed.feedSourceId);
+    console.log('Read existing content for feed ' + bsdmDataFeed.id);
 
     let xmlFileContents: string;
 
@@ -76,19 +76,23 @@ function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
           }
 
           const dataFeed: DataFeed = {
-            id: bsdmDataFeed.feedSourceId,
+            id: bsdmDataFeed.id,
             sourceId: bsdmDataFeed.feedSourceId,
             assetList,
             items,
             isMrss: true,
           };
-          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.feedSourceId, dataFeed);
+          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, dataFeed);
           dispatch(addDataFeedAction);
           return Promise.resolve();
+        }).catch((err) => {
+          // TODODF - if err is for file not found
+          return Promise.resolve();
         });
-
     } catch (err) {
-      return Promise.reject(err);
+      // return Promise.reject(err);
+      // TODODF
+      return Promise.resolve();
     }
   };
 }
@@ -115,7 +119,7 @@ function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<vo
 }
 
 
-export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed, dataFeedSource: DmDataFeedSource): Promise<any> {
+export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<any> {
 
   // TODODF - authentication
   // TODODF - headRequest
@@ -125,28 +129,31 @@ export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed, dataFeedS
 
   // simplified version - URL only; simple string
   // TODODF - data feed source with user variable?
-  if (!isNil(dataFeedSource)) {
-    const remoteDataFeedSource: DmRemoteDataFeedSource = dataFeedSource as DmRemoteDataFeedSource;
-    const urlPS: DmParameterizedString = remoteDataFeedSource.url;
-    const url: string | null = dmGetSimpleStringFromParameterizedString(urlPS);
-    if (!isNil(url)) {
-      return axios({
-        method: 'get',
-        url,
-        responseType: 'text',
-      }).then((response: any) => {
-        fs.writeFileSync(getFeedCacheRoot() + dataFeedSource.id + '.xml', response.data);
-        return xmlStringToJson(response.data);
-      }).then((feedAsJson) => {
-        console.log(feedAsJson);
-        return Promise.resolve(feedAsJson);
-      }).catch((err) => {
-        console.log(err);
-        return Promise.reject(err);
-      });
-    }
+  const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeed.id });
+  if (isNil(dataFeedSource)) {
+    debugger;
   }
-  return Promise.reject('dataFeedSource is null');
+
+  const remoteDataFeedSource: DmRemoteDataFeedSource = dataFeedSource as DmRemoteDataFeedSource;
+  const urlPS: DmParameterizedString = remoteDataFeedSource.url;
+  const url: string | null = dmGetSimpleStringFromParameterizedString(urlPS);
+  if (!isNil(url)) {
+    return axios({
+      method: 'get',
+      url,
+      responseType: 'text',
+    }).then((response: any) => {
+      fs.writeFileSync(getFeedCacheRoot() + dataFeed.id + '.xml', response.data);
+      return xmlStringToJson(response.data);
+    }).then((feedAsJson) => {
+      console.log(feedAsJson);
+      return Promise.resolve(feedAsJson);
+    }).catch((err) => {
+      console.log(err);
+      return Promise.reject(err);
+    });
+  }
+  return Promise.reject('dataFeedSources url is null');
 }
 
 
@@ -156,9 +163,11 @@ export function downloadFeedContent() {
   };
 }
 
-export function downloadMRSSContent(rawFeed: any, dataFeedSource: DmDataFeedSource) {
+export function downloadMRSSContent(bsdm: DmState, rawFeed: any, dataFeedId: BsDmId) {
 
   return (dispatch: any, getState: any) => {
+
+    const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeedId }) as DmDataFeedSource;
 
     // write the mrss feed to the card
     fsSaveObjectAsLocalJsonFile(rawFeed, getFeedCacheRoot() + dataFeedSource.id + '.json')

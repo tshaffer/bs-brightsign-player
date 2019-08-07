@@ -1,7 +1,7 @@
 import { HSM, HState, STTopEventHandler } from './HSM';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import { Action } from 'redux';
-import { DmState, BsDmId, dmGetDataFeedSourceIdsForSign, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById, dmResetDefaultPropertyValues } from '@brightsign/bsdatamodel';
+import { DmState, BsDmId, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById, dmGetDataFeedSourceForFeedId } from '@brightsign/bsdatamodel';
 import { isNil, isString } from 'lodash';
 
 import { downloadMRSSContent, retrieveDataFeed, readDataFeedContentSync, feedIsMrss, downloadFeedContent } from '../dataFeed';
@@ -90,7 +90,7 @@ class STPlaying extends HState {
   }
 
   // see PlayingEventUrlHandler in autorun for reference
-  processRetrievedDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed,  dataFeedSource: DmDataFeedSource) {
+  processRetrievedDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed) {
 
     // TODODF - headRequest
 
@@ -137,7 +137,7 @@ class STPlaying extends HState {
         dispatch(downloadFeedContent());
       }
       else if (dataFeed.usage === DataFeedUsageType.Mrss && (dataFeed.parserPlugin !== '' || isMRSSFeed)) {
-        dispatch(downloadMRSSContent(feedAsJson, dataFeedSource));
+        dispatch(downloadMRSSContent(bsdm, feedAsJson, dataFeed.id));
       }
 
       // TODODF autoGenerateUserVariables
@@ -147,7 +147,7 @@ class STPlaying extends HState {
       // send internal message indicating that the data feed has been updated
       const event: ArEventType = {
         EventType: 'LIVE_DATA_FEED_UPDATE',
-        EventData: dataFeedSource.id,
+        EventData: dataFeed.id,
       };
       const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
       dispatch(action);
@@ -155,8 +155,7 @@ class STPlaying extends HState {
       // TODODF - headRequest
 
       // set timer to check for feed update
-      const updateInterval = dataFeedSource.updateInterval;
-      dispatch(this.launchRetrieveFeedTimer(updateInterval, dataFeedSource, bsdm).bind(this));
+      dispatch(this.launchRetrieveFeedTimer(dataFeed.id, bsdm).bind(this));
     };
   }
 
@@ -170,9 +169,9 @@ class STPlaying extends HState {
         const dataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
         const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, { id: dataFeed.feedSourceId });
         if (!isNil(dataFeedSource)) {
-          retrieveDataFeed(bsdm, dataFeed, dataFeedSource)
+          retrieveDataFeed(bsdm, dataFeed)
             .then((feedAsJson) => {
-              dispatch(this.processRetrievedDataFeed(feedAsJson, bsdm, dataFeed, dataFeedSource));
+              dispatch(this.processRetrievedDataFeed(feedAsJson, bsdm, dataFeed));
             });
         }
       }
@@ -195,9 +194,9 @@ class STPlaying extends HState {
           if (this.dataFeedIdsToDownload.length === 1) {
             const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, { id: dataFeed.feedSourceId });
             if (!isNil(dataFeedSource)) {
-              retrieveDataFeed(bsdm, dataFeed, dataFeedSource)
+              retrieveDataFeed(bsdm, dataFeed)
                 .then((feedAsJson) => {
-                  dispatch(this.processRetrievedDataFeed(feedAsJson, bsdm, dataFeed, dataFeedSource));
+                  dispatch(this.processRetrievedDataFeed(feedAsJson, bsdm, dataFeed));
                 });
             }
           }
@@ -206,17 +205,22 @@ class STPlaying extends HState {
     };
   }
 
-  launchRetrieveFeedTimer(updateInterval: number, dataFeedSource: DmDataFeedSource, bsdm: DmState): any {
+  launchRetrieveFeedTimer(dataFeedId: BsDmId, bsdm: DmState): any {
     return (dispatch: any, getState: any) => {
+
+      const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeedId }) as DmDataFeedSource;
+      let updateInterval = dataFeedSource.updateInterval;
+
       // test
       updateInterval = 60;
-      setTimeout(this.retrieveFeedTimeoutHandler.bind(this), updateInterval * 1000, dispatch, this, dataFeedSource, bsdm);
+
+      setTimeout(this.retrieveFeedTimeoutHandler.bind(this), updateInterval * 1000, dispatch, this, dataFeedId, bsdm);
     };
   }
 
-  retrieveFeedTimeoutHandler(dispatch: any, playerHSM: PlayerHSM, dataFeedSource: DmDataFeedSource, bsdm: DmState): any {
+  retrieveFeedTimeoutHandler(dispatch: any, playerHSM: PlayerHSM, dataFeedId: BsDmId, bsdm: DmState): any {
     console.log('retrieveFeedTimeoutHandler invoked');
-    dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedSource.id));
+    dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedId));
   }
 
   readDataFeeds(bsdm: DmState) {
