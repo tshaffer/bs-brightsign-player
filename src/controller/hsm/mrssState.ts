@@ -56,25 +56,32 @@ export default class MrssState extends MediaHState {
         this.waitForContentTimer = null;
 
         this.firstItemDisplayed = false;
-        
+
         // TODODF PreDrawImage
-        
+
         // TODODF set default transition
 
         this.currentFeed = null;
         this.pendingFeed = null;
 
         // see if the designated feed has already been downloaded (doesn't imply content exists)
+        // TODODF - does the code below properly check to see if the designated feed has been downloaded?
         const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedId);
         if (!isNil(dataFeed)) {
 
+          // create local versions of key objects
+          // m.assetCollection = m.liveDataFeed.assetCollection
+          // m.assetPoolFiles = m.liveDataFeed.assetPoolFiles
           this.currentFeed = dataFeed;
-          // protect the feed that is getting displayed
+
+          // TODODF - protect the feed that is getting displayed
+          // m.ProtectMRSSFeed("display-" + m.liveDataFeed.id$, m.assetCollection)
 
           this.displayIndex = 0;
+
           // distinguish between a feed that has no content and a feed in which no content has been downloaded
           if (dataFeed.items.length === 0 || (!allDataFeedContentExists(dataFeed))) {
-
+            // no content in feed - send a message to self to trigger exit from state (like video playback failure)
             const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
               EventType: 'MRSSNotFullyLoadedPlaybackEvent',
               EventData: dataFeed.id,
@@ -86,7 +93,7 @@ export default class MrssState extends MediaHState {
           }
         }
         else {
-
+          // this situation will occur when the feed itself has not downloaded yet - send a message to self to trigger exit from state (like video playback failure)
           const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
             EventType: 'MRSSNotFullyLoadedPlaybackEvent',
             EventData: this.dataFeedId,
@@ -96,8 +103,13 @@ export default class MrssState extends MediaHState {
         }
         dispatch(this.launchTimer());
         return 'HANDLED';
+
       } else if (event.EventType === 'EXIT_SIGNAL') {
         dispatch(this.mediaHStateExitHandler());
+
+        // TODODF
+      } else if (event.EventType === 'VideoPlaybackFailureEvent') {
+
       } else if (event.EventType === 'MRSSNotFullyLoadedPlaybackEvent') {
 
         console.log('received MRSSNotFullyLoadedPlaybackEvent');
@@ -112,33 +124,63 @@ export default class MrssState extends MediaHState {
           console.log('dataFeedId: ' + dataFeedId);
           console.log('this.dataFeedId: ' + this.dataFeedId);
         }
+
+      // TODODF - in autorun, this message is handled by STPlayingEventHandler
       } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
         // dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
         return 'HANDLED';
+
       } else if (event.EventType === 'MRSS_SPEC_UPDATED') {
         console.log('***** ***** mrssSpecUpdated');
 
         const dataFeedId = event.EventData as BsDmId;
-
         console.log('dataFeedId: ' + dataFeedId);
 
-        // const bsBrightSignPlayerState: BsBrightSignPlayerState = getState();
-        const dataFeed: DataFeed | null = getDataFeedById(getState(), dataFeedId);
+        if (dataFeedId === this.dataFeedId) {
 
-        if (!isNil(dataFeed)) {
-          console.log('dataFeed found');
-          this.currentFeed = dataFeed;
-          this.displayIndex = 0;
+          const dataFeed: DataFeed | null = getDataFeedById(getState(), dataFeedId) as DataFeed;
+          if (isNil(this.currentFeed) || !dataFeedContentExists(this.currentFeed)) {
+
+            // this is the first time that data is available
+            this.pendingFeed = null;
+            this.currentFeed = dataFeed;
+
+            // protect the feed that is getting displayed
+            // TODODF - this.ProtectMRSSFeed("display-" + m.liveDataFeed.id$, m.assetCollection)
+
+            // feed may have been downloaded but it might not have content yet (empty mrss feed)
+            // or feed has been downloaded but not all of its content has been downloaded yet - in this case, move on to the next item if possible
+            if ((this.currentFeed.items.length === 0) || !allDataFeedContentExists(this.currentFeed)) {
+              if (!isNil(this.currentFeed) && (!dataFeedContentExists(this.currentFeed))) {
+                this.advanceToNextMRSSItem();
+              }
+/*
+              else if type(m.signChannelEndEvent) = "roAssociativeArray" then
+                return m.ExecuteTransition(m.signChannelEndEvent, stateData, "")
+*/
+              else {
+                dispatch(this.launchWaitForContentTimer().bind(this));
+                return 'HANDLED';
+              }
+            }
+
+            // all content exists - display an item
+            this.displayIndex = 0;
+            this.advanceToNextMRSSItem();
+          }
+          else {
+            // feed was updated. play through existing feed until it reaches the end; then switch to new feed.
+            // note - this does not imply that the feed actually changed.
+            this.pendingFeed = this.currentFeed;
+          }
         }
-        else {
-          console.log('dataFeed not found');
-        }
 
-
+        return 'HANDLED';
 
       } else if (event.EventType === EventType.MediaEnd) {
         dispatch(this.advanceToNextMRSSItem().bind(this));
+      
       } else {
         return dispatch(this.mediaHStateEventHandler(event, stateData).bind(this));
       }
@@ -155,7 +197,7 @@ export default class MrssState extends MediaHState {
       console.log('************ AdvanceToNextMRSSItem');
 
       let displayedItem = false;
-      
+
       while (!displayedItem) {
         if (!isNil(this.currentFeed)) {
 
