@@ -131,7 +131,8 @@ export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<
   // TODODF - data feed source with user variable?
   const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeed.id });
   if (isNil(dataFeedSource)) {
-    debugger;
+    console.log('******** retrieveDataFeed - dataFeedSource not found.');
+    // debugger;
   }
 
   const remoteDataFeedSource: DmRemoteDataFeedSource = dataFeedSource as DmRemoteDataFeedSource;
@@ -170,7 +171,7 @@ export function downloadMRSSContent(bsdm: DmState, rawFeed: any, dataFeedId: BsD
     const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeedId }) as DmDataFeedSource;
 
     // write the mrss feed to the card
-    fsSaveObjectAsLocalJsonFile(rawFeed, getFeedCacheRoot() + dataFeedSource.id + '.json')
+    fsSaveObjectAsLocalJsonFile(rawFeed, getFeedCacheRoot() + dataFeedId + '.json')
       .then(() => {
 
         /* feed level properties
@@ -201,13 +202,14 @@ export function downloadMRSSContent(bsdm: DmState, rawFeed: any, dataFeedId: BsD
         console.log('assetList created');
 
         const dataFeed: DataFeed = {
-          id: dataFeedSource.id,
+          // id: dataFeedSource.id,
+          id: dataFeedId,
           sourceId: dataFeedSource.id,
           assetList,
           items,
           isMrss: true,
         };
-        dispatch(addDataFeed(dataFeedSource.id, dataFeed));
+        dispatch(addDataFeed(dataFeedId, dataFeed));
 
         console.log('check for existence of assetPoolFetcher');
 
@@ -249,7 +251,8 @@ export function downloadMRSSContent(bsdm: DmState, rawFeed: any, dataFeedId: BsD
         // indicate that the mrss spec has been updated
         const event: ArEventType = {
           EventType: 'MRSS_SPEC_UPDATED',
-          EventData: dataFeedSource.id,
+          // EventData: dataFeedSource.id,
+          EventData: dataFeed.id,
         };
         const action: any = postMessage(event);
         dispatch(action);
@@ -262,7 +265,8 @@ export function downloadMRSSContent(bsdm: DmState, rawFeed: any, dataFeedId: BsD
             // after all files complete
             const event: ArEventType = {
               EventType: 'MRSS_DATA_FEED_LOADED',
-              EventData: dataFeedSource.id,
+              // EventData: dataFeedSource.id,
+              EventData: dataFeed.id,
             };
             const action: any = postMessage(event);
             dispatch(action);
