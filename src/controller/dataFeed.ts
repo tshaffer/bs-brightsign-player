@@ -2,7 +2,7 @@ import * as fs from 'fs-extra';
 import axios from 'axios';
 
 import { DataFeed, DataFeedItem } from '../type/dataFeed';
-import { DmState, BsDmId, DmcDataFeed, dmGetDataFeedById, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedSourceForFeedId } from '@brightsign/bsdatamodel';
+import { DmState, BsDmId, DmcDataFeed, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedSourceForFeedId } from '@brightsign/bsdatamodel';
 import { isNil, isObject } from 'lodash';
 import { DataFeedUsageType } from '@brightsign/bscore';
 import AssetPool, { Asset } from '@brightsign/assetpool';
@@ -201,6 +201,10 @@ export function downloadMRSSContent(bsdm: DmState, rawFeed: any, dataFeedId: BsD
 
         console.log('assetList created');
 
+        console.log('***** - downloadMRSSContent, addDataFeed');
+        console.log('***** - dataFeedId = ' + dataFeedId);
+        console.log('***** - items length = ' + items.length.toString());
+
         const dataFeed: DataFeed = {
           // id: dataFeedSource.id,
           id: dataFeedId,
@@ -213,15 +217,16 @@ export function downloadMRSSContent(bsdm: DmState, rawFeed: any, dataFeedId: BsD
 
         console.log('check for existence of assetPoolFetcher');
 
-        if (isNil(assetPoolFetcher)) {
-          console.log('assetPoolFetcher does not exist, create it');
-          const feedAssetPool: AssetPool = getFeedAssetPool();
-          console.log('created and retrieved feedAssetPool');
-          console.log(feedAssetPool);
-          assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
-          console.log('assetPoolFetcher created');
-          console.log(assetPoolFetcher);
-        }
+        console.log('but even if it exists, create a new one');
+        // if (isNil(assetPoolFetcher)) {
+        console.log('assetPoolFetcher does not exist, create it');
+        const feedAssetPool: AssetPool = getFeedAssetPool();
+        console.log('created and retrieved feedAssetPool');
+        console.log(feedAssetPool);
+        assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
+        console.log('assetPoolFetcher created');
+        console.log(assetPoolFetcher);
+        // }
 
         // assetPoolFetcher.fileevent = handleFileEvent;
         // assetPoolFetcher.progressevent = handleProgressEvent;
@@ -272,6 +277,7 @@ export function downloadMRSSContent(bsdm: DmState, rawFeed: any, dataFeedId: BsD
             dispatch(action);
           })
           .catch((err) => {
+            console.log('err caught in assetPoolFetcher.start');
             console.log(err);
             debugger;
           });

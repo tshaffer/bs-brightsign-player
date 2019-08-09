@@ -66,6 +66,7 @@ export default class MrssState extends MediaHState {
 
         // see if the designated feed has already been downloaded (doesn't imply content exists)
         // TODODF - does the code below properly check to see if the designated feed has been downloaded?
+        console.log('mrssState.ts#STDisplayingMrssStateEventHandler, entry signal - invoke getDataFeedById: ' + this.dataFeedId);
         const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedId);
         if (!isNil(dataFeed)) {
 
@@ -125,9 +126,9 @@ export default class MrssState extends MediaHState {
           console.log('this.dataFeedId: ' + this.dataFeedId);
         }
 
-      // TODODF - in autorun, this message is handled by STPlayingEventHandler
+        // TODODF - in autorun, this message is handled by STPlayingEventHandler
       } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
-        console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
+        console.log(this.id + ': MRSS_DATA_FEED_LOADED event received in mrssState event handler');
         // dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
         return 'HANDLED';
 
@@ -139,7 +140,9 @@ export default class MrssState extends MediaHState {
 
         if (dataFeedId === this.dataFeedId) {
 
+          console.log('mrssState.ts#STDisplayingMrssStateEventHandler, MRSS_SPEC_UPDATED signal - invoke getDataFeedById: ' + this.dataFeedId);
           const dataFeed: DataFeed | null = getDataFeedById(getState(), dataFeedId) as DataFeed;
+          
           if (isNil(this.currentFeed) || !dataFeedContentExists(this.currentFeed)) {
 
             // this is the first time that data is available
@@ -155,10 +158,10 @@ export default class MrssState extends MediaHState {
               if (!isNil(this.currentFeed) && (!dataFeedContentExists(this.currentFeed))) {
                 this.advanceToNextMRSSItem();
               }
-/*
-              else if type(m.signChannelEndEvent) = "roAssociativeArray" then
-                return m.ExecuteTransition(m.signChannelEndEvent, stateData, "")
-*/
+              /*
+                            else if type(m.signChannelEndEvent) = "roAssociativeArray" then
+                              return m.ExecuteTransition(m.signChannelEndEvent, stateData, "")
+              */
               else {
                 dispatch(this.launchWaitForContentTimer().bind(this));
                 return 'HANDLED';
@@ -170,9 +173,18 @@ export default class MrssState extends MediaHState {
             this.advanceToNextMRSSItem();
           }
           else {
+
+            console.log('***** - STDisplayingMrssStateEventHandler, feed was updated. play through existing feed until it reaches the end; then switch to new feed.');
+
             // feed was updated. play through existing feed until it reaches the end; then switch to new feed.
             // note - this does not imply that the feed actually changed.
-            this.pendingFeed = this.currentFeed;
+            // this.pendingFeed = this.currentFeed;
+            this.pendingFeed = dataFeed;
+
+            // are these important?
+            // m.pendingAssetCollection = m.liveDataFeed.assetCollection
+            // m.pendingAssetPoolFiles = m.liveDataFeed.assetPoolFiles
+
           }
         }
 
@@ -180,7 +192,7 @@ export default class MrssState extends MediaHState {
 
       } else if (event.EventType === EventType.MediaEnd) {
         dispatch(this.advanceToNextMRSSItem().bind(this));
-      
+
       } else {
         return dispatch(this.mediaHStateEventHandler(event, stateData).bind(this));
       }
@@ -199,6 +211,7 @@ export default class MrssState extends MediaHState {
       let displayedItem = false;
 
       while (!displayedItem) {
+
         if (!isNil(this.currentFeed)) {
 
           // console.log('this.currentFeed not nil, length = ' + this.currentFeed.items.length);
@@ -207,9 +220,18 @@ export default class MrssState extends MediaHState {
           if (this.displayIndex >= this.currentFeed.items.length) {
             this.displayIndex = 0;
             if (!isNil(this.pendingFeed)) {
+
+              console.log('***** - AdvanceToNextMRSSItem switch to pending feed');
+
+              console.log('***** - before switch, number of items is: ' + this.currentFeed.items.length.toString());
+
               this.currentFeed = this.pendingFeed;
               this.pendingFeed = null;
+
+              console.log('***** - after switch, number of items is: ' + this.currentFeed.items.length.toString());
+
               // protect the feed that we're switching to (see autorun.brs)
+
               if (this.currentFeed.items.length === 0 || (!allDataFeedContentExists(this.currentFeed))) {
                 if (dataFeedContentExists(this.currentFeed)) {
                   if (isNil(this.displayIndex)) {

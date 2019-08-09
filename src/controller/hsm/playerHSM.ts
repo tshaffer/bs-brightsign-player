@@ -266,6 +266,8 @@ class STPlaying extends HState {
     return (dispatch: any, getState: any) => {
       stateData.nextState = null;
 
+      console.log('***** - STPlayingEventHandler, event type ' + event.EventType)
+
       if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
 
         console.log(this.id + ': entry signal');
@@ -286,7 +288,7 @@ class STPlaying extends HState {
           });
 
       } else if (isString(event.EventType) && (event.EventType === 'MRSS_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_UNCHANGED')) {
-        console.log(this.id + ': MRSS_DATA_FEED_LOADED event received');
+        console.log(this.id + ': MRSS_DATA_FEED_LOADED event received in playerHSM');
         dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
         return 'HANDLED';
       }
