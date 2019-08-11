@@ -139,7 +139,7 @@ export default class MrssState extends MediaHState {
         }
 
         // TODODF - in autorun, this message is handled by STPlayingEventHandler
-      } else if (isString(event.EventType) && event.EventType === 'MRSS_DATA_FEED_LOADED') {
+      } else if (event.EventType === 'MRSS_DATA_FEED_LOADED') {
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received in mrssState event handler');
         // dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
         return 'HANDLED';
@@ -195,19 +195,16 @@ export default class MrssState extends MediaHState {
             // note - this does not imply that the feed actually changed.
             // this.pendingFeed = this.currentFeed;
             this.pendingFeed = dataFeed;
-
-            // are these important?
-            // m.pendingAssetCollection = m.liveDataFeed.assetCollection
-            // m.pendingAssetPoolFiles = m.liveDataFeed.assetPoolFiles
-
           }
         }
-
         return 'HANDLED';
-
+      } else if (event.EventType === 'EndOfFeed') {
+        const newEvent: ArEventType = {
+          EventType: EventType.MediaEnd,
+        };
+        return dispatch(this.mediaHStateEventHandler(newEvent, stateData).bind(this));
       } else if (event.EventType === EventType.MediaEnd) {
-        dispatch(this.advanceToNextMRSSItem().bind(this));
-
+        return dispatch(this.advanceToNextMRSSItem().bind(this));
       } else {
         return dispatch(this.mediaHStateEventHandler(event, stateData).bind(this));
       }
@@ -350,7 +347,7 @@ export default class MrssState extends MediaHState {
 
     return (dispatch: any, getState: any) => {
 
-      const interval: number = 4;
+      const interval: number = 3;
       if (interval && interval > 0) {
         this.timeout = setTimeout(this.mrssTimeoutHandler, interval * 1000, this);
       }
@@ -362,13 +359,16 @@ export default class MrssState extends MediaHState {
 
     const reduxStore: any = getReduxStore();
 
+    // if (mrssState.atEndOfFeed().bind(mrssState)) { ?proper way to do this?
     const atEndOfFeed = mrssState.atEndOfFeed.bind(mrssState);
     const endOfFeed = atEndOfFeed();
     if (endOfFeed) {
-    // if (mrssState.atEndOfFeed.bind(mrssState)) {
       const event: ArEventType = {
-        EventType: EventType.MediaEnd,
+        EventType: 'EndOfFeed',
       };
+      reduxStore.dispatch(mrssState.stateMachine.dispatchEvent(event));
+      // return dispatch(this.mediaHStateEventHandler(event, stateData));
+
     }
     else {
       reduxStore.dispatch(mrssState.advanceToNextMRSSItem().bind(mrssState));
