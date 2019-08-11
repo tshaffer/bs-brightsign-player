@@ -29,13 +29,10 @@ export default class ImageState extends MediaHState {
         dispatch(this.launchTimer());
         return 'HANDLED';
       } else if (event.EventType === 'EXIT_SIGNAL') {
-        dispatch(this.mediaHStateExitHandler());
+        return dispatch(this.mediaHStateExitHandler());
       } else {
         return dispatch(this.mediaHStateEventHandler(event, stateData));
       }
-
-      stateData.nextState = this.superState;
-      return 'SUPER';
     };
   }
 }

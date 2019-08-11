@@ -1,10 +1,12 @@
 import { HState } from './HSM';
 import { EventType, CommandSequenceType, EventIntrinsicAction, CommandType, audioFileSuffixes, ContentItemType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
-import { DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData, 
-  DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString, DmBpOutputCommandData, DmKeyboardEventData, DmSuperStateContentItem, dmGetMediaStateById } from '@brightsign/bsdatamodel';
+import {
+  DmcCommand, dmGetCommandSequenceIdForParentAndType, DmState, DmCommandSequence, dmGetCommandSequenceStateById, dmGetCommandById, DmCommandData, DmMessageCommandData,
+  DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString, DmBpOutputCommandData, DmKeyboardEventData, DmSuperStateContentItem, dmGetMediaStateById
+} from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from './mediaZoneHSM';
-import { getReduxStore, tmpGetVideoElementRef, queueHsmEvent } from '../../index';
+import { getReduxStore, tmpGetVideoElementRef, queueHsmEvent, BsBspThunkAction, BsBspDispatch, BsBspVoidThunkAction, BsBspAction } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition, DmCommandOperation } from '@brightsign/bsdatamodel';
 import { isNil } from 'lodash';
@@ -134,7 +136,7 @@ export class MediaHState extends HState {
 
   mediaHStateEventHandler(dispatchedEvent: ArEventType, stateData: HSMStateData): any {
 
-    return (dispatch: any) => {
+    return (dispatch: BsBspDispatch) => {
 
       const matchedEvent: DmcEvent | null = this.getMatchedEvent(this.mediaState, dispatchedEvent);
 
@@ -152,8 +154,9 @@ export class MediaHState extends HState {
     };
   }
 
-  mediaHStateExitHandler(): any {
-    return (dispatch: any) => {
+  mediaHStateExitHandler(): BsBspVoidThunkAction {
+
+    return (dispatch, getState) => {
 
       if (this.timeout) {
         clearTimeout(this.timeout);
@@ -164,7 +167,7 @@ export class MediaHState extends HState {
 
   }
 
-  launchTimer(): any {
+  launchTimer(): BsBspVoidThunkAction {
 
     return (dispatch: any, getState: any) => {
 
@@ -184,7 +187,7 @@ export class MediaHState extends HState {
     };
   }
 
-  timeoutHandler(mediaHState: MediaHState) {
+  timeoutHandler(mediaHState: MediaHState): void {
 
     const event: ArEventType = {
       EventType: EventType.Timer,
@@ -194,7 +197,7 @@ export class MediaHState extends HState {
     reduxStore.dispatch(mediaHState.stateMachine.dispatchEvent(event));
   }
 
-  executePauseVideoCommand() {
+  executePauseVideoCommand(): void {
     console.log('pause video');
     tmpGetVideoElementRef().pause();
 
@@ -203,11 +206,11 @@ export class MediaHState extends HState {
     // videoElementRef.removeAttribute('src');
   }
 
-  executeResumeVideoCommand() {
+  executeResumeVideoCommand(): void {
     tmpGetVideoElementRef().play();
   }
 
-  executeSendZoneMessage(operation: DmCommandOperation) {
+  executeSendZoneMessage(operation: DmCommandOperation): BsBspVoidThunkAction {
     return (dispatch: any) => {
 
       console.log(operation);
@@ -225,12 +228,13 @@ export class MediaHState extends HState {
     };
   }
 
-  executeSendBpOutput(operation: DmCommandOperation) {
+  executeSendBpOutput(operation: DmCommandOperation): void {
     const bpOutputCommandData: DmBpOutputCommandData = operation.data as DmBpOutputCommandData;
     setBpOutput(bpOutputCommandData);
   }
 
-  executeCommand(command: DmcCommand, zoneHSM: MediaZoneHSM) {
+  executeCommand(command: DmcCommand, zoneHSM: MediaZoneHSM): BsBspVoidThunkAction {
+
     return (dispatch: any) => {
 
       console.log('executeCommand:');
@@ -262,7 +266,12 @@ export class MediaHState extends HState {
     };
   }
 
-  executeMediaStateCommands(mediaStateId: BsDmId, zoneHSM: MediaZoneHSM, commandSequenceType: CommandSequenceType) {
+  executeMediaStateCommands(
+    mediaStateId: BsDmId,
+    zoneHSM: MediaZoneHSM,
+    // commandSequenceType: CommandSequenceType): BsBspVoidThunkAction {
+    commandSequenceType: CommandSequenceType): any {
+
     return (dispatch: any, getState: any) => {
 
       const bsdm: DmState = getState().bsdm;
@@ -284,8 +293,8 @@ export class MediaHState extends HState {
     };
   }
 
-  executeTransitionCommands(event: DmcEvent) {
-    return (dispatch: any, getState: any) => {
+  executeTransitionCommands(event: DmcEvent): BsBspVoidThunkAction {
+    return (dispatch: BsBspDispatch, getState: any) => {
       const bsdm: DmState = getState().bsdm;
       const sequenceId: BsDmId | null =
         dmGetCommandSequenceIdForParentAndType(bsdm, { id: event.id, type: CommandSequenceType.Event });
