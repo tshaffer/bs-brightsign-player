@@ -5,6 +5,7 @@ import { HSMStateData, ArEventType } from '../../type/runtime';
 import { CommandSequenceType } from '@brightsign/bscore';
 import { MediaZoneHSM } from './mediaZoneHSM';
 import { HState } from './HSM';
+import { BsBspStringThunkAction, BsBspDispatch } from '../..';
 
 export default class ImageState extends MediaHState {
 
@@ -20,16 +21,18 @@ export default class ImageState extends MediaHState {
     this.HStateEventHandler = this.STDisplayingImageEventHandler;
   }
 
-  STDisplayingImageEventHandler(event: ArEventType, stateData: HSMStateData): any {
+  STDisplayingImageEventHandler(event: ArEventType, stateData: HSMStateData): BsBspStringThunkAction {
 
-    return (dispatch: any) => {
+    return (dispatch: BsBspDispatch) => {
       if (event.EventType === 'ENTRY_SIGNAL') {
         console.log(this.id + ': entry signal');
         dispatch(this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry));
         dispatch(this.launchTimer());
         return 'HANDLED';
       } else if (event.EventType === 'EXIT_SIGNAL') {
-        return dispatch(this.mediaHStateExitHandler());
+        dispatch(this.mediaHStateExitHandler());
+        stateData.nextState = this.superState;
+        return 'SUPER';
       } else {
         return dispatch(this.mediaHStateEventHandler(event, stateData));
       }
