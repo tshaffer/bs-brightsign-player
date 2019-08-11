@@ -6,7 +6,7 @@ import {
   DmZoneMessageEventData, DmParameterizedString, dmGetSimpleStringFromParameterizedString, DmBpOutputCommandData, DmKeyboardEventData, DmSuperStateContentItem, dmGetMediaStateById
 } from '@brightsign/bsdatamodel';
 import { MediaZoneHSM } from './mediaZoneHSM';
-import { getReduxStore, tmpGetVideoElementRef, queueHsmEvent, BsBspThunkAction, BsBspDispatch, BsBspVoidThunkAction, BsBspAction } from '../../index';
+import { getReduxStore, tmpGetVideoElementRef, queueHsmEvent, BsBspThunkAction, BsBspDispatch, BsBspVoidThunkAction, BsBspAction, BsBspStringThunkAction } from '../../index';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DmMediaState, DmcEvent, DmcMediaState, dmGetEventIdsForMediaState, DmTimer, DmEvent, dmGetEventStateById, DmEventData, DmBpEventData, DmcTransition, DmCommandOperation } from '@brightsign/bsdatamodel';
 import { isNil } from 'lodash';
@@ -134,7 +134,7 @@ export class MediaHState extends HState {
     return 'SUPER';
   }
 
-  mediaHStateEventHandler(dispatchedEvent: ArEventType, stateData: HSMStateData): any {
+  mediaHStateEventHandler(dispatchedEvent: ArEventType, stateData: HSMStateData): BsBspStringThunkAction {
 
     return (dispatch: BsBspDispatch) => {
 
@@ -269,8 +269,7 @@ export class MediaHState extends HState {
   executeMediaStateCommands(
     mediaStateId: BsDmId,
     zoneHSM: MediaZoneHSM,
-    // commandSequenceType: CommandSequenceType): BsBspVoidThunkAction {
-    commandSequenceType: CommandSequenceType): any {
+    commandSequenceType: CommandSequenceType): BsBspVoidThunkAction {
 
     return (dispatch: any, getState: any) => {
 
