@@ -20,6 +20,8 @@ import { isNil } from 'lodash';
 import { ContentItemType } from '@brightsign/bscore';
 import SuperState from './superState';
 import { HState } from './HSM';
+import MediaListState from './mediaListState';
+
 
 export class MediaZoneHSM extends ZoneHSM {
 
@@ -88,6 +90,9 @@ export class MediaZoneHSM extends ZoneHSM {
         if (!isNil(dataFeed)) {
           newState = new MrssState(this, bsdmMediaState, superState, dataFeedId);
         }
+        break;
+      case ContentItemType.MediaList:
+        newState = new MediaListState(this, bsdmMediaState, superState, bsdm);
         break;
       default:
         break;

@@ -6,7 +6,8 @@ import { HSM } from '../controller/hsm/HSM';
 import { UserVariableMap } from './userVariable';
 import { DataFeedMap } from './dataFeed';
 import { MrssDisplayItemMap } from './activeMrssDisplayItem';
-import { Action, Dispatch } from 'redux';
+import { Dispatch } from 'redux';
+import { Action } from 'redux';
 
 /** @internal */
 /** @private */

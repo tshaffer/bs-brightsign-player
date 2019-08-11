@@ -3,7 +3,8 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { Sign } from './sign';
-import { Dispatch, bindActionCreators } from 'redux';
+import { bindActionCreators } from 'redux';
+import { Dispatch } from 'redux';
 import { processKeyPress } from '../controller/device/player';
 import { DmState } from '@brightsign/bsdatamodel';
 

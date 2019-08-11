@@ -43,6 +43,7 @@ export type SubscribedEvents = { [ eventKey : string] : HState}
 export type StateMachineShape = { };
 
 export interface ArState {
-  bsdm : DmState;
-  stateMachine : StateMachineShape;
+  bsdm? : DmState;
+  stateMachine? : StateMachineShape;
+  stateName?: string;
 }
