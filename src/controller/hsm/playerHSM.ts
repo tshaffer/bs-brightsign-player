@@ -288,6 +288,7 @@ class STPlaying extends HState {
           });
 
       } else if (isString(event.EventType) && (event.EventType === 'MRSS_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_UNCHANGED')) {
+        console.log('******* - cc30');
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received in playerHSM');
         dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
         return 'HANDLED';

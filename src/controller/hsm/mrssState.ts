@@ -73,6 +73,8 @@ export default class MrssState extends MediaHState {
 
         if (!isNil(dataFeed)) {
 
+          console.log('******* - cc');
+
           // create local versions of key objects
           // m.assetCollection = m.liveDataFeed.assetCollection
           // m.assetPoolFiles = m.liveDataFeed.assetPoolFiles
@@ -86,6 +88,8 @@ export default class MrssState extends MediaHState {
           // distinguish between a feed that has no content and a feed in which no content has been downloaded
           if (dataFeed.items.length === 0 || (!allDataFeedContentExists(dataFeed))) {
 
+            console.log('******* - cc1');
+
             // **** I'm surprised that it exits if it doesn't have all content - that seems contradictory to other spots
             // **** where it plays whatever is available.
 
@@ -97,10 +101,12 @@ export default class MrssState extends MediaHState {
             dispatch(postMessage(mrssNotFullyLoadedPlaybackEvent));
           }
           else {
+            console.log('******* - cc2');
             dispatch(this.advanceToNextMRSSItem().bind(this));
           }
         }
         else {
+          console.log('******* - cc3');
           // this situation will occur when the feed itself has not downloaded yet - send a message to self to trigger exit from state (like video playback failure)
           const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
             EventType: 'MRSSNotFullyLoadedPlaybackEvent',
@@ -113,17 +119,20 @@ export default class MrssState extends MediaHState {
         return 'HANDLED';
 
       } else if (event.EventType === 'EXIT_SIGNAL') {
+        console.log('******* - cc4');
         dispatch(this.mediaHStateExitHandler());
 
         // TODODF
       } else if (event.EventType === 'VideoPlaybackFailureEvent') {
 
       } else if (event.EventType === 'MRSSNotFullyLoadedPlaybackEvent') {
+        console.log('******* - cc5');
 
         console.log('received MRSSNotFullyLoadedPlaybackEvent');
 
         const dataFeedId: string = event.EventData;
         if (dataFeedId === this.dataFeedId) {
+          console.log('******* - cc6');
           // if type(m.signChannelEndEvent) = "roAssociativeArray" then
           // return m.ExecuteTransition(m.signChannelEndEvent, stateData, "")
           // else if type(m.currentFeed) = "roAssociativeArray" and m.currentFeed.ContentExists( m.assetPoolFiles ) then
@@ -133,6 +142,7 @@ export default class MrssState extends MediaHState {
           dispatch(this.launchWaitForContentTimer().bind(this));
         }
         else {
+          console.log('******* - cc7');
           console.log('do not launchWaitForContentTimer');
           console.log('dataFeedId: ' + dataFeedId);
           console.log('this.dataFeedId: ' + this.dataFeedId);
@@ -140,17 +150,20 @@ export default class MrssState extends MediaHState {
 
         // TODODF - in autorun, this message is handled by STPlayingEventHandler
       } else if (event.EventType === 'MRSS_DATA_FEED_LOADED') {
+        console.log('******* - cc8');
         console.log(this.id + ': MRSS_DATA_FEED_LOADED event received in mrssState event handler');
         // dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
         return 'HANDLED';
 
       } else if (event.EventType === 'MRSS_SPEC_UPDATED') {
+        console.log('******* - cc9');
         console.log('***** ***** mrssSpecUpdated');
 
         const dataFeedId = event.EventData as BsDmId;
         console.log('dataFeedId: ' + dataFeedId);
 
         if (dataFeedId === this.dataFeedId) {
+          console.log('******* - cc10');
 
           console.log('mrssState.ts#STDisplayingMrssStateEventHandler, MRSS_SPEC_UPDATED signal - invoke getDataFeedById: ' + this.dataFeedId);
           const dataFeed: DataFeed | null = getDataFeedById(getState(), dataFeedId) as DataFeed;
@@ -159,6 +172,7 @@ export default class MrssState extends MediaHState {
           // ******** are these really two separate objects? or do they point to the same thing?
 
           if (isNil(this.currentFeed) || !dataFeedContentExists(this.currentFeed)) {
+            console.log('******* - cc11');
 
             // this is the first time that data is available
             this.pendingFeed = null;
@@ -171,13 +185,21 @@ export default class MrssState extends MediaHState {
             // or feed has been downloaded but not all of its content has been downloaded yet - in this case, move on to the next item if possible
             if ((this.currentFeed.items.length === 0) || !allDataFeedContentExists(this.currentFeed)) {
               if (!isNil(this.currentFeed) && (!dataFeedContentExists(this.currentFeed))) {
+                console.log('******* - cc12');
                 this.advanceToNextMRSSItem();
               }
               /*
                 else if type(m.signChannelEndEvent) = "roAssociativeArray" then
                   return m.ExecuteTransition(m.signChannelEndEvent, stateData, "")
               */
+              // ASSERTION
+              // there is a feed associated with this state.
+              // the feed has items specified
+              // not all the specified feed items have been downloaded
+              // some of the specified feed items have been downloaded
+              // REPRODUCE THIS SITUATION - WHY WOULDN'T IT PLAY THE CONTENT IT HAS?
               else {
+                console.log('******* - cc13');
                 dispatch(this.launchWaitForContentTimer().bind(this));
                 return 'HANDLED';
               }
@@ -188,6 +210,7 @@ export default class MrssState extends MediaHState {
             this.advanceToNextMRSSItem();
           }
           else {
+            console.log('******* - cc14');
 
             console.log('***** - STDisplayingMrssStateEventHandler, feed was updated. play through existing feed until it reaches the end; then switch to new feed.');
 
@@ -199,13 +222,16 @@ export default class MrssState extends MediaHState {
         }
         return 'HANDLED';
       } else if (event.EventType === 'EndOfFeed') {
+        console.log('******* - cc15');
         const newEvent: ArEventType = {
           EventType: EventType.MediaEnd,
         };
         return dispatch(this.mediaHStateEventHandler(newEvent, stateData).bind(this));
       } else if (event.EventType === EventType.MediaEnd) {
+        console.log('******* - cc16');
         return dispatch(this.advanceToNextMRSSItem().bind(this));
       } else {
+        console.log('******* - cc17');
         return dispatch(this.mediaHStateEventHandler(event, stateData).bind(this));
       }
 
@@ -237,6 +263,7 @@ export default class MrssState extends MediaHState {
           if (this.displayIndex >= this.currentFeed.items.length) {
             this.displayIndex = 0;
             if (!isNil(this.pendingFeed)) {
+              console.log('******* - cc18');
 
               console.log('***** - AdvanceToNextMRSSItem switch to pending feed');
 
@@ -253,6 +280,7 @@ export default class MrssState extends MediaHState {
               if (this.currentFeed.items.length === 0 || (!allDataFeedContentExists(this.currentFeed))) {
                 // if true, if it has some content, play it.
                 if (dataFeedContentExists(this.currentFeed)) {
+                  console.log('******* - cc19');
                   if (isNil(this.displayIndex)) {
                     this.displayIndex = 0;
                   }
@@ -260,6 +288,8 @@ export default class MrssState extends MediaHState {
                 }
                 // otherwise, wait for content
                 else {
+                  console.log('******* - cc20');
+
                   dispatch(this.launchWaitForContentTimer().bind(this));
                   // this.launchWaitForContentTimer();
                 }
@@ -280,6 +310,8 @@ export default class MrssState extends MediaHState {
             /*
               m.ProtectMRSSItem(displayItem) ' with the current code, this may be unnecessary since the entire feed is protected.
             */
+            console.log('******* - cc21');
+
             displayItem.filePath = filePath;
             dispatch(this.displayMRSSSItem(displayItem));
             displayedItem = true;
@@ -309,6 +341,7 @@ export default class MrssState extends MediaHState {
   launchWaitForContentTimer(): any {
     return (dispatch: any, getState: any) => {
       if (isNumber(this.waitForContentTimer)) {
+        console.log('******* - cc22');
         clearTimeout(this.waitForContentTimer);
       }
 
@@ -322,20 +355,26 @@ export default class MrssState extends MediaHState {
   waitForContentTimeoutHandler(dispatch: any, mrssState: MrssState) {
     console.log('************ waitForContentTimeoutHandler');
     if (!isNil(mrssState.currentFeed) && (mrssState.currentFeed.items.length === 0 || (!allDataFeedContentExists(mrssState.currentFeed)))) {
+      console.log('******* - cc23');
       if (dataFeedContentExists(mrssState.currentFeed)) {
         if (isNil(mrssState.displayIndex)) {
+          console.log('******* - cc24');
+
           mrssState.displayIndex = 0;
         }
         dispatch(mrssState.advanceToNextMRSSItem());
       }
       else {
+        console.log('******* - cc25');
         dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
       }
     }
     else if (!isNil(mrssState.currentFeed) && !isNil(mrssState.currentFeed.items) && mrssState.currentFeed.items.length === 0) {
+      console.log('******* - cc26');
       dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
     }
     else {
+      console.log('******* - cc27');
       mrssState.displayIndex = 0;
       dispatch(mrssState.advanceToNextMRSSItem());
     }
@@ -363,6 +402,8 @@ export default class MrssState extends MediaHState {
     const atEndOfFeed = mrssState.atEndOfFeed.bind(mrssState);
     const endOfFeed = atEndOfFeed();
     if (endOfFeed) {
+      console.log('******* - cc28');
+
       const event: ArEventType = {
         EventType: 'EndOfFeed',
       };
@@ -371,6 +412,8 @@ export default class MrssState extends MediaHState {
 
     }
     else {
+      console.log('******* - cc29');
+
       reduxStore.dispatch(mrssState.advanceToNextMRSSItem().bind(mrssState));
     }
   }
