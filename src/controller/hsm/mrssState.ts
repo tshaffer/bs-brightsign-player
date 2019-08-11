@@ -67,7 +67,10 @@ export default class MrssState extends MediaHState {
         // see if the designated feed has already been downloaded (doesn't imply content exists)
         // TODODF - does the code below properly check to see if the designated feed has been downloaded?
         console.log('mrssState.ts#STDisplayingMrssStateEventHandler, entry signal - invoke getDataFeedById: ' + this.dataFeedId);
+
+        // get the data feed associated with the state
         const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedId);
+
         if (!isNil(dataFeed)) {
 
           // create local versions of key objects
@@ -82,6 +85,10 @@ export default class MrssState extends MediaHState {
 
           // distinguish between a feed that has no content and a feed in which no content has been downloaded
           if (dataFeed.items.length === 0 || (!allDataFeedContentExists(dataFeed))) {
+
+            // **** I'm surprised that it exits if it doesn't have all content - that seems contradictory to other spots
+            // **** where it plays whatever is available.
+
             // no content in feed - send a message to self to trigger exit from state (like video playback failure)
             const mrssNotFullyLoadedPlaybackEvent: ArEventType = {
               EventType: 'MRSSNotFullyLoadedPlaybackEvent',
@@ -117,6 +124,11 @@ export default class MrssState extends MediaHState {
 
         const dataFeedId: string = event.EventData;
         if (dataFeedId === this.dataFeedId) {
+          // if type(m.signChannelEndEvent) = "roAssociativeArray" then
+          // return m.ExecuteTransition(m.signChannelEndEvent, stateData, "")
+          // else if type(m.currentFeed) = "roAssociativeArray" and m.currentFeed.ContentExists( m.assetPoolFiles ) then
+          // 	m.AdvanceToNextMRSSItem()
+
           console.log('launchWaitForContentTimer');
           dispatch(this.launchWaitForContentTimer().bind(this));
         }
@@ -142,7 +154,10 @@ export default class MrssState extends MediaHState {
 
           console.log('mrssState.ts#STDisplayingMrssStateEventHandler, MRSS_SPEC_UPDATED signal - invoke getDataFeedById: ' + this.dataFeedId);
           const dataFeed: DataFeed | null = getDataFeedById(getState(), dataFeedId) as DataFeed;
-          
+          // **** dataFeed is the updated data feed
+          // **** currentFeed is the feed that the state is currently displaying
+          // ******** are these really two separate objects? or do they point to the same thing?
+
           if (isNil(this.currentFeed) || !dataFeedContentExists(this.currentFeed)) {
 
             // this is the first time that data is available
@@ -159,8 +174,8 @@ export default class MrssState extends MediaHState {
                 this.advanceToNextMRSSItem();
               }
               /*
-                            else if type(m.signChannelEndEvent) = "roAssociativeArray" then
-                              return m.ExecuteTransition(m.signChannelEndEvent, stateData, "")
+                else if type(m.signChannelEndEvent) = "roAssociativeArray" then
+                  return m.ExecuteTransition(m.signChannelEndEvent, stateData, "")
               */
               else {
                 dispatch(this.launchWaitForContentTimer().bind(this));
@@ -202,6 +217,11 @@ export default class MrssState extends MediaHState {
     };
   }
 
+  // bases operations on currentFeed
+  // simple case, plays the item pointed to by displayIndex - increments displayIndex
+  // if displayIndex >= numItems in feed, reset index to 0. checks for existence of pendingFeed
+  // if pending feed is not nil, it sets current feed to pending feed, and sets pending feed to null
+
   advanceToNextMRSSItem() {
 
     return (dispatch: any, getState: any) => {
@@ -232,13 +252,16 @@ export default class MrssState extends MediaHState {
 
               // protect the feed that we're switching to (see autorun.brs)
 
+              // check to see if the feed it switched to is empty OR doesn't have all its content
               if (this.currentFeed.items.length === 0 || (!allDataFeedContentExists(this.currentFeed))) {
+                // if true, if it has some content, play it.
                 if (dataFeedContentExists(this.currentFeed)) {
                   if (isNil(this.displayIndex)) {
                     this.displayIndex = 0;
                   }
                   dispatch(this.advanceToNextMRSSItem());
                 }
+                // otherwise, wait for content
                 else {
                   dispatch(this.launchWaitForContentTimer().bind(this));
                   // this.launchWaitForContentTimer();
@@ -334,9 +357,26 @@ export default class MrssState extends MediaHState {
     };
   }
 
+  // equivalent to   'else if type(event) = "roTimerEvent" then' in autorun
   mrssTimeoutHandler(mrssState: MrssState) {
+
     const reduxStore: any = getReduxStore();
-    reduxStore.dispatch(mrssState.advanceToNextMRSSItem().bind(mrssState));
+
+    const atEndOfFeed = mrssState.atEndOfFeed.bind(mrssState);
+    const endOfFeed = atEndOfFeed();
+    if (endOfFeed) {
+    // if (mrssState.atEndOfFeed.bind(mrssState)) {
+      const event: ArEventType = {
+        EventType: EventType.MediaEnd,
+      };
+    }
+    else {
+      reduxStore.dispatch(mrssState.advanceToNextMRSSItem().bind(mrssState));
+    }
   }
 
+  //  need to also consider the case where it's not at the end but there's no more content.
+  atEndOfFeed(): boolean {
+    return this.displayIndex >= (this.currentFeed as DataFeed).items.length;
+  }
 }
