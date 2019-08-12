@@ -30,7 +30,8 @@ export interface BsBrightSignPlayerModelState {
   dataFeeds: DataFeedMap;
 }
 
-export type BsBspDispatch = Dispatch<BsBrightSignPlayerModelState>;
+// BsBrightSignPlayerState
+export type BsBspDispatch = Dispatch<BsBrightSignPlayerState>;
 
 export interface BsBspBaseAction extends Action {
   type: string;
@@ -39,10 +40,10 @@ export interface BsBspBaseAction extends Action {
   meta?: {};
 }
 
-export type BsBspVoidThunkAction = (dispatch: BsBspDispatch, getState: () => BsBrightSignPlayerModelState, extraArgument: undefined) => void;
-export type BsBspStringThunkAction = (dispatch: BsBspDispatch, getState: () => BsBrightSignPlayerModelState, extraArgument: undefined) => string;
+export type BsBspVoidThunkAction = (dispatch: BsBspDispatch, getState: () => BsBrightSignPlayerState, extraArgument: undefined) => void;
+export type BsBspStringThunkAction = (dispatch: BsBspDispatch, getState: () => BsBrightSignPlayerState, extraArgument: undefined) => string;
 
-export type BsBspThunkAction<T> = (dispatch: BsBspDispatch, getState: () => BsBrightSignPlayerModelState, extraArgument: undefined) => BsBspAction<T>;
+export type BsBspThunkAction<T> = (dispatch: BsBspDispatch, getState: () => BsBrightSignPlayerState, extraArgument: undefined) => BsBspAction<T>;
 // export type SimpleThunkAction<T> = (dispatch: BsBspDispatch) => BsBspAction<T>;
 
 export interface BsBspAction<T> extends BsBspBaseAction {
