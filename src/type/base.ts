@@ -6,6 +6,7 @@ import { HSM } from '../controller/hsm/HSM';
 import { UserVariableMap } from './userVariable';
 import { DataFeedMap } from './dataFeed';
 import { MrssDisplayItemMap } from './activeMrssDisplayItem';
+import { MediaListDisplayItemMap } from './activeMediaListDisplayItem';
 import { Dispatch } from 'redux';
 import { Action } from 'redux';
 
@@ -26,11 +27,13 @@ export interface BsBrightSignPlayerModelState {
   hsms: HSM[];
   activeHStates: HStateMap;
   activeMrssDisplayItems: MrssDisplayItemMap;
+  activeMediaListDisplayItems: MediaListDisplayItemMap;
   userVariables: UserVariableMap;
   dataFeeds: DataFeedMap;
 }
 
-// BsBrightSignPlayerState
+// BsBrightSignPlayerState: 
+// Dispatch<BsBrightSignPlayerState> means: redux dispatch with a state of this shape (BsBrightSignPlayerState)
 export type BsBspDispatch = Dispatch<BsBrightSignPlayerState>;
 
 export interface BsBspBaseAction extends Action {

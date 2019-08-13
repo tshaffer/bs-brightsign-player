@@ -1,9 +1,9 @@
 import { MediaHState } from './mediaHState';
 import { BsBrightSignPlayerState } from '../../type/base';
 import { ZoneHSM } from './zoneHSM';
-import { DmMediaState, dmGetMediaStateById, DmcMediaListMediaState, DmMediaListContentItem, DmState, DmMediaStateContainer, dmGetMediaStateContainerById, DmMediaStateCollectionState, DmMediaStateSequenceMap, DmcMediaStateContainer, DmcMediaListItem, dmGetMediaListItemById, BsDmId, DmImageContentItem, DmVideoContentItem, DmAudioContentItem, dmGetAssetItemById, DmcEvent } from '@brightsign/bsdatamodel';
+import { DmMediaState, dmGetMediaStateById, DmcMediaListMediaState, DmMediaListContentItem, DmState, DmMediaStateContainer, dmGetMediaStateContainerById, DmMediaStateCollectionState, DmMediaStateSequenceMap, DmcMediaStateContainer, DmcMediaListItem, dmGetMediaListItemById, BsDmId, DmImageContentItem, DmVideoContentItem, DmAudioContentItem, dmGetAssetItemById, DmcEvent, DmMediaContentItem } from '@brightsign/bsdatamodel';
 import { HState } from './HSM';
-import { BsBspDispatch, BsBspStringThunkAction } from '../../type/base';
+import { BsBspDispatch, BsBspStringThunkAction, BsBspVoidThunkAction } from '../../type/base';
 import { ContentItemType, BsAssetItem, CommandSequenceType, MediaListPlaybackType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import {
@@ -22,6 +22,7 @@ import {
 } from '@brightsign/bs-content-manager';
 import { isNil } from 'lodash';
 import { MediaZoneHSM } from './mediaZoneHSM';
+import { setActiveMediaListDisplayItem } from '../../index';
 
 export default class MediaListState extends MediaHState {
 
@@ -34,9 +35,12 @@ export default class MediaListState extends MediaHState {
   specifiedStartIndex: number;
   playbackIndex: number;
   numItems: number;
+  playbackIndices: number[] = [];
 
-  transitionToNextEventList: ArEventType[];
-  transitionToPreviousEventList: ArEventType[];
+  transitionToNextEventList: ArEventType[] = [];
+  transitionToPreviousEventList: ArEventType[] = [];
+
+  mediaContentItems: DmMediaContentItem[] = [];
 
   constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState, bsdm: DmState) {
 
@@ -84,24 +88,27 @@ export default class MediaListState extends MediaHState {
 
     const contentItems: ArMediaListItemItem[] = [];
 
+    const mySelf = this;
+
     if (sequencesByParentId.hasOwnProperty(mediaListState.id)) {
       const sequenceByParentId: any = (sequencesByParentId as any)[mediaListState.id];
 
       sequenceByParentId.sequence.forEach((mediaListItemStateId: BsDmId) => {
         const mediaListItemState: DmcMediaListItem = dmGetMediaListItemById(bsdm, { id: mediaListItemStateId }) as DmcMediaListItem;
+        mySelf.mediaContentItems.push(mediaListItemState.contentItem);
         switch (mediaListItemState.contentItem.type) {
           case ContentItemType.Image:
             const imageContentItem: DmImageContentItem = mediaListItemState.contentItem as DmImageContentItem;
-            contentItems.push(this.buildImageItem(bsdm, imageContentItem.name, imageContentItem));
+            contentItems.push(mySelf.buildImageItem(bsdm, imageContentItem.name, imageContentItem));
             break;
           case ContentItemType.Video:
             const videoContentItem: DmVideoContentItem = mediaListItemState.contentItem as DmVideoContentItem;
             // const videoItem: ArVideoItem = this.buildVideoItem(bsdm, videoContentItem.name, videoContentItem);
-            contentItems.push(this.buildVideoItem(bsdm, videoContentItem.name, videoContentItem));
+            contentItems.push(mySelf.buildVideoItem(bsdm, videoContentItem.name, videoContentItem));
             break;
           case ContentItemType.Audio:
             const audioContentItem: DmAudioContentItem = mediaListItemState.contentItem as DmAudioContentItem;
-            contentItems.push(this.buildAudioItem(bsdm, audioContentItem.name, audioContentItem));
+            contentItems.push(mySelf.buildAudioItem(bsdm, audioContentItem.name, audioContentItem));
             break;
           default:
             break;
@@ -110,6 +117,10 @@ export default class MediaListState extends MediaHState {
     }
 
     this.numItems = contentItems.length;
+
+    for (let i = 0; i < this.numItems; i++) {
+      this.playbackIndices.push(i);
+    }
 
     // const mlDataFeedId: BsDmId = mediaListContentItem.dataFeedId;
 
@@ -230,8 +241,40 @@ export default class MediaListState extends MediaHState {
     console.log('shuffleMediaListContent');
   }
 
-  advanceMediaListPlayback(playImmediate: boolean, executeNextCommands: boolean) {
-    console.log('advanceMediaListPlayback');
+
+  launchMediaListPlaybackItem(playImmediate: boolean, executeNextCommands: boolean, executePrevCommands: boolean): BsBspVoidThunkAction {
+
+    return (dispatch: BsBspDispatch, getState: any) => {
+
+      // TODO - not sure of the proper approach to perform this check
+      // Make sure we have a valid list
+      // itemIndex = m.playbackIndices[m.playbackIndex%]
+      const itemIndex = this.playbackIndices[this.playbackIndex];
+
+      // ' get current media item and launch playback
+      const mediaZoneHSM: MediaZoneHSM = this.stateMachine as MediaZoneHSM;
+      const mediaContentItem = this.mediaContentItems[itemIndex]
+      dispatch(setActiveMediaListDisplayItem(mediaZoneHSM.zoneId, mediaContentItem));
+
+      // TODOML
+      // if m.sendZoneMessage...
+      //   if executeNextCommands then
+      //   if executePrevCommands then
+    }
+
+  }
+
+
+  advanceMediaListPlayback(playImmediate: boolean, executeNextCommands: boolean): BsBspVoidThunkAction {
+
+    return (dispatch: BsBspDispatch, getState: any) => {
+      dispatch(this.launchMediaListPlaybackItem(playImmediate, executeNextCommands, false));
+
+      this.playbackIndex++;
+      if (this.playbackIndex >= this.numItems) {
+        this.playbackIndex = 0;
+      }
+    }
   }
 
   STDisplayingMediaListItemEventHandler(event: ArEventType, stateData: HSMStateData): BsBspStringThunkAction {
@@ -244,7 +287,7 @@ export default class MediaListState extends MediaHState {
         const bsdm: DmState = getState().bsdm;
         const mediaListState = dmGetMediaStateById(bsdm, { id: this.mediaState.id }) as DmcMediaListMediaState;
         const mediaListContentItem: DmMediaListContentItem = mediaListState.contentItem as DmMediaListContentItem;
-    
+
         /* 
           ' if using a live data feed, populate items here
           if type(m.liveDataFeed) = "roAssociativeArray" then
@@ -286,7 +329,7 @@ export default class MediaListState extends MediaHState {
         if (mediaListContentItem.playbackType === MediaListPlaybackType.FromBeginning) {
           this.playbackIndex = this.startIndex;
         }
-  
+
         if (this.numItems > 0) {
 
           this.playbackActive = true;
@@ -306,7 +349,7 @@ export default class MediaListState extends MediaHState {
             this.shuffleMediaListContent();
           }
 
-          this.advanceMediaListPlayback(true, false);
+          dispatch(this.advanceMediaListPlayback(true, false));
 
         }
         else {
@@ -330,23 +373,23 @@ export default class MediaListState extends MediaHState {
         return dispatch(this.mediaHStateEventHandler(event, stateData));
       }
 
-/*
-if m.transitionToNextEventList.count() > 0 then
-  advance = m.HandleIntraStateEvent(event, m.transitionToNextEventList)
-  if advance then
-    m.AdvanceMediaListPlayback(true, true)
-    return "HANDLED"
-  end if
-end if
-
-if m.transitionToPreviousEventList.count() > 0 then
-  retreat = m.HandleIntraStateEvent(event, m.transitionToPreviousEventList)
-  if retreat then
-    m.RetreatMediaListPlayback(true, true)
-    return "HANDLED"
-  end if
-end if
-*/
+      /*
+      if m.transitionToNextEventList.count() > 0 then
+        advance = m.HandleIntraStateEvent(event, m.transitionToNextEventList)
+        if advance then
+          m.AdvanceMediaListPlayback(true, true)
+          return "HANDLED"
+        end if
+      end if
+      
+      if m.transitionToPreviousEventList.count() > 0 then
+        retreat = m.HandleIntraStateEvent(event, m.transitionToPreviousEventList)
+        if retreat then
+          m.RetreatMediaListPlayback(true, true)
+          return "HANDLED"
+        end if
+      end if
+      */
       if (this.transitionToNextEventList.length > 0) {
 
       }

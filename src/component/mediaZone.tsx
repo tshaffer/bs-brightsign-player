@@ -29,6 +29,7 @@ import { connect } from 'react-redux';
 import { getActiveMediaStateId } from '../selector/hsm';
 import { isString } from 'lodash';
 import { getActiveMrssDisplayItem } from '../selector/activeMrssDisplayItem';
+import { getActiveMediaListDisplayItem } from '../selector/activeMediaListDisplayItem';
 import { DataFeedItem } from '../type/dataFeed';
 import { isNullOrUndefined } from 'util';
 
@@ -45,6 +46,7 @@ export interface MediaZoneProps {
   height: number;
   activeMediaStateId: string;
   activeMrssDisplayItem: DataFeedItem;
+  activeMediaListDisplayItem: DmMediaContentItem;
   postBSPMessage: any;
 }
 
@@ -96,6 +98,59 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
       }
     }
 
+    return null;
+  }
+
+  renderMediaListDisplayItem() {
+
+    const self = this;
+    
+    if (!isNil(this.props.activeMediaListDisplayItem)) {
+
+      const mediaContentItem = this.props.activeMediaListDisplayItem;
+      console.log(mediaContentItem);
+
+      const fileId: string = mediaContentItem.name;
+      const poolFilePath: string = getPoolFilePath(fileId);
+      const src: string = isomorphicPath.join('file://', poolFilePath);
+  
+      const mediaType: ContentItemType = mediaContentItem.type;
+
+      switch (mediaType) {
+        case 'Image': {
+          return (
+            <Image
+              width={this.props.width}
+              height={this.props.height}
+              src={src}
+            />
+          );
+        }
+        case 'Video': {
+          return (
+            <Video
+              width={this.props.width}
+              height={this.props.height}
+              src={src}
+              onVideoRefRetrieved={self.videoRefRetrieved}
+            />
+          );
+        }
+        default: {
+          debugger;
+        }
+      }
+  
+/*
+assetId:"8ac064b7-f9d2-4010-a856-8cbcdf02c1fc"
+defaultTransition:"No effect"
+name:"Colorado.jpg"
+transitionDuration:1
+type:"Image"
+useImageBuffer:false
+videoPlayerRequired:false
+*/      
+    }
     return null;
   }
 
@@ -164,6 +219,9 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
       case ContentItemType.MrssFeed: {
         return this.renderMrssDisplayItem();
       }
+      case ContentItemType.MediaList: {
+        return this.renderMediaListDisplayItem();
+      }
       default: {
         break;
       }
@@ -186,6 +244,7 @@ const mapStateToProps = (state: any, ownProps: any): any => {
     height: ownProps.height,
     activeMediaStateId: getActiveMediaStateId(state, ownProps.zone.id),
     activeMrssDisplayItem: getActiveMrssDisplayItem(state, ownProps.zone.id),
+    activeMediaListDisplayItem: getActiveMediaListDisplayItem(state, ownProps.zone.id),
   };
 };
 

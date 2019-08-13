@@ -284,6 +284,7 @@ export default class MrssState extends MediaHState {
                   if (isNil(this.displayIndex)) {
                     this.displayIndex = 0;
                   }
+                  // TODO - is this right? calls itself?
                   dispatch(this.advanceToNextMRSSItem());
                 }
                 // otherwise, wait for content

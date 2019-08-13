@@ -7,6 +7,7 @@ import {
 import { BsBrightSignPlayerModelState } from '../type';
 import { activeHStateReducer, isValidActiveHStates } from './activeHState';
 import { activeMrssDisplayItemReducer, isValidActiveMrssDisplayItems } from './activeMrssDisplayItem';
+import { activeMediaListDisplayItemReducer, isValidActiveMediaListDisplayItems } from './activeMediaListDisplayItem';
 import { BsBrightSignPlayerModelBaseAction, BsBrightSignPlayerModelBatchAction, BSBSBRIGHTSIGNPLAYERMODEL_BATCH } from '.';
 import { hsmReducer, isValidHSMs } from './hsm';
 import { isObject } from 'lodash';
@@ -42,6 +43,7 @@ const enableBatching = (
 export const bsBrightSignPlayerReducer: BsBrightSignPlayerReducer = enableBatching(combineReducers<BsBrightSignPlayerModelState>({
   activeHStates: activeHStateReducer,
   activeMrssDisplayItems: activeMrssDisplayItemReducer,
+  activeMediaListDisplayItems: activeMediaListDisplayItemReducer,
   hsms: hsmReducer,
   userVariables: userVariableReducer,
   dataFeeds: dataFeedReducer,
@@ -55,6 +57,7 @@ export const isValidBsBrightSignPlayerModelState = (state: any): boolean => {
   return isObject(state)
     && state.hasOwnProperty('activeHStates') && isValidActiveHStates(state.activeHStates)
     && state.hasOwnProperty('activeMrssDisplayItems') && isValidActiveMrssDisplayItems(state.activeMrssDisplayItems)
+    && state.hasOwnProperty('activeMediaListDisplayItems') && isValidActiveMediaListDisplayItems(state.activeMediaListDisplayItems)
     && state.hasOwnProperty('dataFeeds') && isValidDataFeedState(state.dataFeeds)
     && state.hasOwnProperty('hsms') && isValidHSMs(state.hsms)
     && state.hasOwnProperty('userVariables') && isValidUserVariableState(state.userVariables);
@@ -64,6 +67,7 @@ export const isValidBsBrightSignPlayerModelStateShallow = (state: any): boolean 
   return isObject(state)
   && state.hasOwnProperty('activeHStates') 
   && state.hasOwnProperty('activeMrssDisplayItems') 
+  && state.hasOwnProperty('activeMediaListDisplayItems') 
   && state.hasOwnProperty('dataFeeds') 
   && state.hasOwnProperty('hsms')
   && state.hasOwnProperty('userVariables');
