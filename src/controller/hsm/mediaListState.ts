@@ -1,10 +1,10 @@
 import { MediaHState } from './mediaHState';
 import { BsBrightSignPlayerState } from '../../type/base';
 import { ZoneHSM } from './zoneHSM';
-import { DmMediaState, dmGetMediaStateById, DmcMediaListMediaState, DmMediaListContentItem, DmState, DmMediaStateContainer, dmGetMediaStateContainerById, DmMediaStateCollectionState, DmMediaStateSequenceMap, DmcMediaStateContainer, DmcMediaListItem, dmGetMediaListItemById, BsDmId, DmImageContentItem, DmVideoContentItem, DmAudioContentItem, dmGetAssetItemById, DmcEvent, DmMediaContentItem } from '@brightsign/bsdatamodel';
+import { DmMediaState, dmGetMediaStateById, DmcMediaListMediaState, DmMediaListContentItem, DmState, DmMediaStateContainer, dmGetMediaStateContainerById, DmMediaStateCollectionState, DmMediaStateSequenceMap, DmcMediaStateContainer, DmcMediaListItem, dmGetMediaListItemById, BsDmId, DmImageContentItem, DmVideoContentItem, DmAudioContentItem, dmGetAssetItemById, DmcEvent, DmMediaContentItem, DmTimer } from '@brightsign/bsdatamodel';
 import { HState } from './HSM';
 import { BsBspDispatch, BsBspStringThunkAction, BsBspVoidThunkAction } from '../../type/base';
-import { ContentItemType, BsAssetItem, CommandSequenceType, MediaListPlaybackType } from '@brightsign/bscore';
+import { ContentItemType, BsAssetItem, CommandSequenceType, MediaListPlaybackType, EventType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 import {
   ArAudioItem,
@@ -20,7 +20,7 @@ import {
   cmBsAssetExists,
   cmGetBsAssetForAssetLocator,
 } from '@brightsign/bs-content-manager';
-import { isNil } from 'lodash';
+import { isNil, isNumber } from 'lodash';
 import { MediaZoneHSM } from './mediaZoneHSM';
 import { setActiveMediaListDisplayItem } from '../../index';
 
@@ -40,7 +40,12 @@ export default class MediaListState extends MediaHState {
   transitionToNextEventList: ArEventType[] = [];
   transitionToPreviousEventList: ArEventType[] = [];
 
+  advanceOnImageTimeout: boolean = false;
+  imageAdvanceTimeout: number = 0;
+
   mediaContentItems: DmMediaContentItem[] = [];
+
+  advanceOnTimeoutTimer: any;
 
   constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState, bsdm: DmState) {
 
@@ -73,6 +78,7 @@ export default class MediaListState extends MediaHState {
     }
     this.startIndex = this.specifiedStartIndex;
 
+    this.advanceOnImageTimeout = false;
     this.transitionToNextEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalForwardEventList);
     this.transitionToPreviousEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalBackwardEventList);
 
@@ -217,6 +223,13 @@ export default class MediaListState extends MediaHState {
   getTransitionEventList(bsdm: DmState, eventList: DmcEvent[]): ArEventType[] {
     const transitionEventList: ArEventType[] = [];
     eventList.forEach((event: DmcEvent) => {
+
+      // TODOML - fix me. this code is not differentiating between next transitions and previous transitions.
+      if (event.type === EventType.Timer) {
+        this.advanceOnImageTimeout = true;
+        this.imageAdvanceTimeout = (event.data as DmTimer).interval;
+      }
+
       const userEventName = this.getAutorunUserEventName(event);
       const eventData: any = this.getArEventDataFromBsdmEventData(bsdm, event);
       if (!isNil(userEventName)) {
@@ -244,26 +257,78 @@ export default class MediaListState extends MediaHState {
 
   launchMediaListPlaybackItem(playImmediate: boolean, executeNextCommands: boolean, executePrevCommands: boolean): BsBspVoidThunkAction {
 
+    const mySelf = this;
+    debugger;
+
     return (dispatch: BsBspDispatch, getState: any) => {
 
       // TODO - not sure of the proper approach to perform this check
       // Make sure we have a valid list
       // itemIndex = m.playbackIndices[m.playbackIndex%]
-      const itemIndex = this.playbackIndices[this.playbackIndex];
+      const itemIndex = mySelf.playbackIndices[mySelf.playbackIndex];
 
       // ' get current media item and launch playback
-      const mediaZoneHSM: MediaZoneHSM = this.stateMachine as MediaZoneHSM;
-      const mediaContentItem = this.mediaContentItems[itemIndex]
+      const mediaZoneHSM: MediaZoneHSM = mySelf.stateMachine as MediaZoneHSM;
+      const mediaContentItem = mySelf.mediaContentItems[itemIndex]
       dispatch(setActiveMediaListDisplayItem(mediaZoneHSM.zoneId, mediaContentItem));
 
       // TODOML
       // if m.sendZoneMessage...
       //   if executeNextCommands then
       //   if executePrevCommands then
+
+      // if timeout event is enabled, 
+      if (mySelf.advanceOnImageTimeout) {
+        dispatch(mySelf.launchAdvanceOnTimeoutTimer());
+      }
     }
 
   }
 
+  launchAdvanceOnTimeoutTimer(): any {
+
+    return (dispatch: any, getState: any) => {
+      if (isNumber(this.advanceOnTimeoutTimer)) {
+        clearTimeout(this.advanceOnTimeoutTimer);
+      }
+
+      console.log('************ launchAdvanceOnTimeoutTimer');
+
+      this.advanceOnTimeoutTimer = setTimeout(this.advanceOnTimeoutHandler, this.imageAdvanceTimeout * 1000, dispatch, this);
+    };
+  }
+
+  advanceOnTimeoutHandler(dispatch: any, mrssState: MediaListState) {
+
+    debugger;
+    console.log('************ advanceOnTimeoutHandler');
+    // if (!isNil(mrssState.currentFeed) && (mrssState.currentFeed.items.length === 0 || (!allDataFeedContentExists(mrssState.currentFeed)))) {
+    //   console.log('******* - cc23');
+    //   if (dataFeedContentExists(mrssState.currentFeed)) {
+    //     if (isNil(mrssState.displayIndex)) {
+    //       console.log('******* - cc24');
+
+    //       mrssState.displayIndex = 0;
+    //     }
+    //     dispatch(mrssState.advanceToNextMRSSItem());
+    //   }
+    //   else {
+    //     console.log('******* - cc25');
+    //     dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
+    //   }
+    // }
+    // else if (!isNil(mrssState.currentFeed) && !isNil(mrssState.currentFeed.items) && mrssState.currentFeed.items.length === 0) {
+    //   console.log('******* - cc26');
+    //   dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
+    // }
+    // else {
+    //   console.log('******* - cc27');
+    //   mrssState.displayIndex = 0;
+    //   dispatch(mrssState.advanceToNextMRSSItem());
+    // }
+
+    // return HANDLED
+  }
 
   advanceMediaListPlayback(playImmediate: boolean, executeNextCommands: boolean): BsBspVoidThunkAction {
 
