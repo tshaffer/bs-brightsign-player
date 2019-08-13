@@ -287,47 +287,29 @@ export default class MediaListState extends MediaHState {
 
   launchAdvanceOnTimeoutTimer(): any {
 
+    const mySelf = this;
+
     return (dispatch: any, getState: any) => {
-      if (isNumber(this.advanceOnTimeoutTimer)) {
-        clearTimeout(this.advanceOnTimeoutTimer);
+      if (isNumber(mySelf.advanceOnTimeoutTimer)) {
+        clearTimeout(mySelf.advanceOnTimeoutTimer);
       }
 
       console.log('************ launchAdvanceOnTimeoutTimer');
 
-      this.advanceOnTimeoutTimer = setTimeout(this.advanceOnTimeoutHandler, this.imageAdvanceTimeout * 1000, dispatch, this);
+      mySelf.advanceOnTimeoutTimer = setTimeout(mySelf.advanceOnTimeoutHandler, mySelf.imageAdvanceTimeout * 1000, dispatch, mySelf);
     };
   }
 
-  advanceOnTimeoutHandler(dispatch: any, mrssState: MediaListState) {
+  advanceOnTimeoutHandler(dispatch: any, mediaListState: MediaListState) {
 
-    debugger;
     console.log('************ advanceOnTimeoutHandler');
-    // if (!isNil(mrssState.currentFeed) && (mrssState.currentFeed.items.length === 0 || (!allDataFeedContentExists(mrssState.currentFeed)))) {
-    //   console.log('******* - cc23');
-    //   if (dataFeedContentExists(mrssState.currentFeed)) {
-    //     if (isNil(mrssState.displayIndex)) {
-    //       console.log('******* - cc24');
 
-    //       mrssState.displayIndex = 0;
-    //     }
-    //     dispatch(mrssState.advanceToNextMRSSItem());
-    //   }
-    //   else {
-    //     console.log('******* - cc25');
-    //     dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
-    //   }
-    // }
-    // else if (!isNil(mrssState.currentFeed) && !isNil(mrssState.currentFeed.items) && mrssState.currentFeed.items.length === 0) {
-    //   console.log('******* - cc26');
-    //   dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
-    // }
-    // else {
-    //   console.log('******* - cc27');
-    //   mrssState.displayIndex = 0;
-    //   dispatch(mrssState.advanceToNextMRSSItem());
-    // }
+    dispatch(mediaListState.advanceMediaListPlayback(true, true));
 
-    // return HANDLED
+    mediaListState.playbackIndex++;
+    if (mediaListState.playbackIndex >= mediaListState.numItems) {
+      mediaListState.playbackIndex = 0;
+    }
   }
 
   advanceMediaListPlayback(playImmediate: boolean, executeNextCommands: boolean): BsBspVoidThunkAction {
