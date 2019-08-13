@@ -35,6 +35,9 @@ export default class MediaListState extends MediaHState {
   playbackIndex: number;
   numItems: number;
 
+  transitionToNextEventList: ArEventType[];
+  transitionToPreviousEventList: ArEventType[];
+
   constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState, bsdm: DmState) {
 
     super(zoneHSM, mediaState.id);
@@ -66,15 +69,15 @@ export default class MediaListState extends MediaHState {
     }
     this.startIndex = this.specifiedStartIndex;
 
-
-
+    this.transitionToNextEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalForwardEventList);
+    this.transitionToPreviousEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalBackwardEventList);
 
     // review all of the following - eliminate as much as possible
     // mediaListInactivity
 
 
-    const containerObject = mediaListState.containerObject as DmcMediaStateContainer;
-    const mediaStateContainer: DmMediaStateContainer = dmGetMediaStateContainerById(bsdm, { id: containerObject.id }) as DmMediaStateContainer;
+    // const containerObject = mediaListState.containerObject as DmcMediaStateContainer;
+    // const mediaStateContainer: DmMediaStateContainer = dmGetMediaStateContainerById(bsdm, { id: containerObject.id }) as DmMediaStateContainer;
 
     const mediaStates: DmMediaStateCollectionState = bsdm.mediaStates;
     const sequencesByParentId: DmMediaStateSequenceMap = mediaStates.sequencesByParentId;
@@ -106,11 +109,15 @@ export default class MediaListState extends MediaHState {
       });
     }
 
-    const mlDataFeedId: BsDmId = mediaListContentItem.dataFeedId;
+    this.numItems = contentItems.length;
+
+    // const mlDataFeedId: BsDmId = mediaListContentItem.dataFeedId;
+
+
+
+
     // const dataFeedId = getUniqueDataFeedId(mlDataFeedId);
 
-    const transitionToNextEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalForwardEventList);
-    const transitionToPreviousEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalBackwardEventList);
 
     // const arMediaListItem: ArMediaListItem = {
     //   stateName: autorunMediaState.name,
@@ -322,9 +329,57 @@ export default class MediaListState extends MediaHState {
         // if m.transitionToPreviousEventList.count() > 0 then
         return dispatch(this.mediaHStateEventHandler(event, stateData));
       }
+
+/*
+if m.transitionToNextEventList.count() > 0 then
+  advance = m.HandleIntraStateEvent(event, m.transitionToNextEventList)
+  if advance then
+    m.AdvanceMediaListPlayback(true, true)
+    return "HANDLED"
+  end if
+end if
+
+if m.transitionToPreviousEventList.count() > 0 then
+  retreat = m.HandleIntraStateEvent(event, m.transitionToPreviousEventList)
+  if retreat then
+    m.RetreatMediaListPlayback(true, true)
+    return "HANDLED"
+  end if
+end if
+*/
+      if (this.transitionToNextEventList.length > 0) {
+
+      }
+
+      if (this.transitionToPreviousEventList.length > 0) {
+
+      }
+
       return 'HANDLED';
     };
   }
+
+  getMatchingNavigationEvent() {
+
+  }
+  handleIntrastateEvent(event: any, navigationEventList: any): boolean {
+    return false;
+  }
+  /*
+ Function HandleIntraStateEvent(event as object, navigationEventList as object) as boolean
+  
+  MEDIA_END = 8
+  
+  navigationEvent = m.GetMatchingNavigationEvent(navigationEventList, event)
+  if navigationEvent = invalid then
+    return false
+  end if
+  
+  return true
+  
+end function
+
+  */
 
 
 }
