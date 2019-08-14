@@ -51,8 +51,6 @@ export default class MediaListState extends MediaHState {
 
     super(zoneHSM, mediaState.id);
 
-    debugger;
-
     this.mediaState = mediaState;
 
     this.superState = superState;
@@ -258,7 +256,6 @@ export default class MediaListState extends MediaHState {
   launchMediaListPlaybackItem(playImmediate: boolean, executeNextCommands: boolean, executePrevCommands: boolean): BsBspVoidThunkAction {
 
     const mySelf = this;
-    debugger;
 
     return (dispatch: BsBspDispatch, getState: any) => {
 
@@ -301,15 +298,8 @@ export default class MediaListState extends MediaHState {
   }
 
   advanceOnTimeoutHandler(dispatch: any, mediaListState: MediaListState) {
-
     console.log('************ advanceOnTimeoutHandler');
-
     dispatch(mediaListState.advanceMediaListPlayback(true, true));
-
-    mediaListState.playbackIndex++;
-    if (mediaListState.playbackIndex >= mediaListState.numItems) {
-      mediaListState.playbackIndex = 0;
-    }
   }
 
   advanceMediaListPlayback(playImmediate: boolean, executeNextCommands: boolean): BsBspVoidThunkAction {
