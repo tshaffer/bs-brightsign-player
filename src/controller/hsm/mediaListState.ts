@@ -4,25 +4,12 @@ import { ZoneHSM } from './zoneHSM';
 import { DmMediaState, dmGetMediaStateById, DmcMediaListMediaState, DmMediaListContentItem, DmState, DmMediaStateContainer, dmGetMediaStateContainerById, DmMediaStateCollectionState, DmMediaStateSequenceMap, DmcMediaStateContainer, DmcMediaListItem, dmGetMediaListItemById, BsDmId, DmImageContentItem, DmVideoContentItem, DmAudioContentItem, dmGetAssetItemById, DmcEvent, DmMediaContentItem, DmTimer } from '@brightsign/bsdatamodel';
 import { HState } from './HSM';
 import { BsBspDispatch, BsBspStringThunkAction, BsBspVoidThunkAction } from '../../type/base';
-import { ContentItemType, BsAssetItem, CommandSequenceType, MediaListPlaybackType, EventType } from '@brightsign/bscore';
+import { CommandSequenceType, MediaListPlaybackType, EventType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
-import {
-  ArAudioItem,
-  ArMediaListItemItem,
-  ArImagePlaylistItem,
-  ArVideoItem,
-} from '../../type/arTypes';
 
-import {
-  BsAsset,
-  BsAssetBase,
-  cmGetBsAsset,
-  cmBsAssetExists,
-  cmGetBsAssetForAssetLocator,
-} from '@brightsign/bs-content-manager';
 import { isNil, isNumber } from 'lodash';
 import { MediaZoneHSM } from './mediaZoneHSM';
-import { setActiveMediaListDisplayItem } from '../../index';
+import { setActiveMediaListDisplayItem } from '../../model/activeMediaListDisplayItem';
 
 export default class MediaListState extends MediaHState {
 
@@ -40,8 +27,9 @@ export default class MediaListState extends MediaHState {
   transitionToNextEventList: ArEventType[] = [];
   transitionToPreviousEventList: ArEventType[] = [];
 
-  advanceOnImageTimeout: boolean = false;
-  imageAdvanceTimeout: number = 0;
+  // advanceOnImageTimeout: boolean = false;
+  imageAdvanceTimeout: number | null = null;
+  imageRetreatTimeout: number | null = null;
 
   mediaContentItems: DmMediaContentItem[] = [];
 
@@ -50,6 +38,8 @@ export default class MediaListState extends MediaHState {
   constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState, bsdm: DmState) {
 
     super(zoneHSM, mediaState.id);
+
+    const mySelf = this;
 
     this.mediaState = mediaState;
 
@@ -76,23 +66,25 @@ export default class MediaListState extends MediaHState {
     }
     this.startIndex = this.specifiedStartIndex;
 
-    this.advanceOnImageTimeout = false;
-    this.transitionToNextEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalForwardEventList);
-    this.transitionToPreviousEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalBackwardEventList);
+    this.imageAdvanceTimeout = null;
+    const advanceOnImageTimeout = this.getTransitionOnImageTimeout(mediaListState.itemGlobalForwardEventList);
+    if (advanceOnImageTimeout) {
+      this.imageAdvanceTimeout = (advanceOnImageTimeout.data as DmTimer).interval;
+    }
 
-    // review all of the following - eliminate as much as possible
+    this.imageRetreatTimeout = null;
+    const retreatOnImageTimeout = this.getTransitionOnImageTimeout(mediaListState.itemGlobalBackwardEventList);
+    if (retreatOnImageTimeout) {
+      this.imageRetreatTimeout = (retreatOnImageTimeout.data as DmTimer).interval;
+    }
+
+    // this.transitionToNextEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalForwardEventList);
+    // this.transitionToPreviousEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalBackwardEventList);
+
     // mediaListInactivity
-
-
-    // const containerObject = mediaListState.containerObject as DmcMediaStateContainer;
-    // const mediaStateContainer: DmMediaStateContainer = dmGetMediaStateContainerById(bsdm, { id: containerObject.id }) as DmMediaStateContainer;
 
     const mediaStates: DmMediaStateCollectionState = bsdm.mediaStates;
     const sequencesByParentId: DmMediaStateSequenceMap = mediaStates.sequencesByParentId;
-
-    const contentItems: ArMediaListItemItem[] = [];
-
-    const mySelf = this;
 
     if (sequencesByParentId.hasOwnProperty(mediaListState.id)) {
       const sequenceByParentId: any = (sequencesByParentId as any)[mediaListState.id];
@@ -100,36 +92,16 @@ export default class MediaListState extends MediaHState {
       sequenceByParentId.sequence.forEach((mediaListItemStateId: BsDmId) => {
         const mediaListItemState: DmcMediaListItem = dmGetMediaListItemById(bsdm, { id: mediaListItemStateId }) as DmcMediaListItem;
         mySelf.mediaContentItems.push(mediaListItemState.contentItem);
-        switch (mediaListItemState.contentItem.type) {
-          case ContentItemType.Image:
-            const imageContentItem: DmImageContentItem = mediaListItemState.contentItem as DmImageContentItem;
-            contentItems.push(mySelf.buildImageItem(bsdm, imageContentItem.name, imageContentItem));
-            break;
-          case ContentItemType.Video:
-            const videoContentItem: DmVideoContentItem = mediaListItemState.contentItem as DmVideoContentItem;
-            // const videoItem: ArVideoItem = this.buildVideoItem(bsdm, videoContentItem.name, videoContentItem);
-            contentItems.push(mySelf.buildVideoItem(bsdm, videoContentItem.name, videoContentItem));
-            break;
-          case ContentItemType.Audio:
-            const audioContentItem: DmAudioContentItem = mediaListItemState.contentItem as DmAudioContentItem;
-            contentItems.push(mySelf.buildAudioItem(bsdm, audioContentItem.name, audioContentItem));
-            break;
-          default:
-            break;
-        }
       });
     }
 
-    this.numItems = contentItems.length;
+    this.numItems = mySelf.mediaContentItems.length;
 
     for (let i = 0; i < this.numItems; i++) {
       this.playbackIndices.push(i);
     }
 
     // const mlDataFeedId: BsDmId = mediaListContentItem.dataFeedId;
-
-
-
 
     // const dataFeedId = getUniqueDataFeedId(mlDataFeedId);
 
@@ -157,96 +129,15 @@ export default class MediaListState extends MediaHState {
 
   }
 
-  buildImageItem(
-    bsdm: DmState, stateName: string, imageContentItem: DmImageContentItem): Partial<ArImagePlaylistItem> {
-
-    const assetItem = dmGetAssetItemById(bsdm, { id: imageContentItem.assetId }) as BsAssetItem;
-
-    const arImagePlaylistItem: Partial<ArImagePlaylistItem> = {
-      stateName,
-      fileName: assetItem.name, // TODO Handle BSN case. TBD based on content manager
-      filePath: this.getBsAssetItemPath(assetItem), // TODO Handle BSN case. TBD based on content manager
-      transitionEffect: {
-        transitionType: imageContentItem.defaultTransition,
-        transitionDuration: imageContentItem.transitionDuration * 1000,
-      },
-    };
-
-    arImagePlaylistItem.type = 'image';
-    return arImagePlaylistItem;
-  }
-
-  buildVideoItem(
-    bsdm: DmState,
-    stateName: string,
-    videoContentItem: DmVideoContentItem): ArVideoItem {
-
-    const assetItem = dmGetAssetItemById(bsdm, { id: videoContentItem.assetId }) as BsAssetItem;
-
-    return {
-      stateName,
-      fileName: assetItem.name, // TODO Handle BSN case. TBD based on content manager
-      filePath: this.getBsAssetItemPath(assetItem), // TODO Handle BSN case. TBD based on content manager
-      videoDisplayMode: videoContentItem.videoDisplayMode,
-      automaticallyLoop: videoContentItem.automaticallyLoop,
-      type: 'video',
-    };
-  }
-
-  buildAudioItem(
-    bsdm: DmState,
-    stateName: string,
-    audioContentItem: DmAudioContentItem): ArAudioItem {
-
-    const assetItem = dmGetAssetItemById(bsdm, { id: audioContentItem.assetId }) as BsAssetItem;
-
-    return {
-      stateName,
-      fileName: assetItem.name, // TODO Handle BSN case. TBD based on content manager
-      filePath: this.getBsAssetItemPath(assetItem), // TODO Handle BSN case. TBD based on content manager
-      volume: audioContentItem.volume,
-      type: 'audio',
-    };
-  }
-
-  getAutorunUserEventName(event: DmcEvent): string {
-    return event.name;
-  }
-
-  getArEventDataFromBsdmEventData(bsdm: DmState, event: DmcEvent): any {
-    const eventData: any = event.data;
-    return eventData;
-  }
-
-  getTransitionEventList(bsdm: DmState, eventList: DmcEvent[]): ArEventType[] {
-    const transitionEventList: ArEventType[] = [];
-    eventList.forEach((event: DmcEvent) => {
-
-      // TODOML - fix me. this code is not differentiating between next transitions and previous transitions.
+  getTransitionOnImageTimeout(eventList: DmcEvent[]): DmcEvent | null {
+    for (const event of eventList) {
       if (event.type === EventType.Timer) {
-        this.advanceOnImageTimeout = true;
-        this.imageAdvanceTimeout = (event.data as DmTimer).interval;
+        return event;
       }
-
-      const userEventName = this.getAutorunUserEventName(event);
-      const eventData: any = this.getArEventDataFromBsdmEventData(bsdm, event);
-      if (!isNil(userEventName)) {
-        const autorunUserEvent: ArEventType = {
-          EventType: userEventName,
-          data: eventData,
-        };
-        transitionEventList.push(autorunUserEvent);
-      }
-    });
-    return transitionEventList;
+    }
+    return null;
   }
-
-
-  getBsAssetItemPath = (bsAssetItem: BsAssetItem): string => {
-    const bsAsset: BsAsset = cmGetBsAsset(bsAssetItem) as BsAsset;
-    return bsAsset.fullPath;
-  }
-
+  
 
   shuffleMediaListContent() {
     console.log('shuffleMediaListContent');
@@ -266,7 +157,7 @@ export default class MediaListState extends MediaHState {
 
       // ' get current media item and launch playback
       const mediaZoneHSM: MediaZoneHSM = mySelf.stateMachine as MediaZoneHSM;
-      const mediaContentItem = mySelf.mediaContentItems[itemIndex]
+      const mediaContentItem = mySelf.mediaContentItems[itemIndex];
       dispatch(setActiveMediaListDisplayItem(mediaZoneHSM.zoneId, mediaContentItem));
 
       // TODOML
@@ -275,10 +166,10 @@ export default class MediaListState extends MediaHState {
       //   if executePrevCommands then
 
       // if timeout event is enabled, 
-      if (mySelf.advanceOnImageTimeout) {
+      if (!isNil(mySelf.imageAdvanceTimeout)) {
         dispatch(mySelf.launchAdvanceOnTimeoutTimer());
       }
-    }
+    };
 
   }
 
@@ -293,7 +184,7 @@ export default class MediaListState extends MediaHState {
 
       console.log('************ launchAdvanceOnTimeoutTimer');
 
-      mySelf.advanceOnTimeoutTimer = setTimeout(mySelf.advanceOnTimeoutHandler, mySelf.imageAdvanceTimeout * 1000, dispatch, mySelf);
+      mySelf.advanceOnTimeoutTimer = setTimeout(mySelf.advanceOnTimeoutHandler, (mySelf.imageAdvanceTimeout as number) * 1000, dispatch, mySelf);
     };
   }
 
@@ -311,7 +202,7 @@ export default class MediaListState extends MediaHState {
       if (this.playbackIndex >= this.numItems) {
         this.playbackIndex = 0;
       }
-    }
+    };
   }
 
   STDisplayingMediaListItemEventHandler(event: ArEventType, stateData: HSMStateData): BsBspStringThunkAction {
@@ -405,35 +296,34 @@ export default class MediaListState extends MediaHState {
         // else if m.stateMachine.type$ = "EnhancedAudio" and type(event) = "roAudioEventMx" then
         // else if m.stateMachine.type$ <> "EnhancedAudio" and IsAudioEvent(m.stateMachine, event) then
 
-        // if m.transitionToNextEventList.count() > 0 then
-        // if m.transitionToPreviousEventList.count() > 0 then
+        /*
+        if m.transitionToNextEventList.count() > 0 then
+          advance = m.HandleIntraStateEvent(event, m.transitionToNextEventList)
+          if advance then
+            m.AdvanceMediaListPlayback(true, true)
+            return "HANDLED"
+          end if
+        end if
+        
+        if m.transitionToPreviousEventList.count() > 0 then
+          retreat = m.HandleIntraStateEvent(event, m.transitionToPreviousEventList)
+          if retreat then
+            m.RetreatMediaListPlayback(true, true)
+            return "HANDLED"
+          end if
+        end if
+        */
+        if (this.transitionToNextEventList.length > 0) {
+
+        }
+
+        if (this.transitionToPreviousEventList.length > 0) {
+
+        }
+
         return dispatch(this.mediaHStateEventHandler(event, stateData));
       }
 
-      /*
-      if m.transitionToNextEventList.count() > 0 then
-        advance = m.HandleIntraStateEvent(event, m.transitionToNextEventList)
-        if advance then
-          m.AdvanceMediaListPlayback(true, true)
-          return "HANDLED"
-        end if
-      end if
-      
-      if m.transitionToPreviousEventList.count() > 0 then
-        retreat = m.HandleIntraStateEvent(event, m.transitionToPreviousEventList)
-        if retreat then
-          m.RetreatMediaListPlayback(true, true)
-          return "HANDLED"
-        end if
-      end if
-      */
-      if (this.transitionToNextEventList.length > 0) {
-
-      }
-
-      if (this.transitionToPreviousEventList.length > 0) {
-
-      }
 
       return 'HANDLED';
     };
@@ -442,6 +332,7 @@ export default class MediaListState extends MediaHState {
   getMatchingNavigationEvent() {
 
   }
+
   handleIntrastateEvent(event: any, navigationEventList: any): boolean {
     return false;
   }
