@@ -44,6 +44,7 @@ catch (e) {
 
 let srcDirectory = '';
 if (platform === 'Desktop') {
+  // srcDirectory = '/Users/tedshaffer/Desktop/autotron';
   srcDirectory = '/Users/tedshaffer/Desktop/autotron';
 }
 else {

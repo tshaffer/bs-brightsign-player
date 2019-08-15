@@ -5,7 +5,8 @@ import {
 
 import { isNil } from 'lodash';
 import { setActiveHState, addHSM, BsBrightSignPlayerState, hsmInitialized } from '../../index';
-import { ActionWithPayload } from '../../..';
+import { ActionWithPayload } from '../../model/baseAction';
+
 import { queueHsmEvent } from '../../controller/runtime';
 
 export class HSM {

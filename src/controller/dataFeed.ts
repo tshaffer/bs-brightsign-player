@@ -11,7 +11,8 @@ import { addDataFeed } from '../model/dataFeed';
 import { getFeedItems } from '../selector/dataFeed';
 
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
-import { ArEventType } from '../..';
+import { ArEventType } from '../type/runtime';
+
 import { postMessage, getPlatform } from './runtime';
 
 let assetPoolFetcher: AssetPoolFetcher | null = null;
@@ -36,6 +37,63 @@ function getFeedAssetPool(): AssetPool {
   }
 }
 
+function readFeedAsContent(dataFeed: DmcDataFeed) {
+  return (dispatch: any, getState: any) => {
+    console.log(dataFeed);
+
+    // TODOML - currently only implemented for a bsn dynamic playlist
+    const feedFileName: string = getFeedCacheRoot() + dataFeed.id + '.xml';
+
+    console.log('Read existing content for feed ' + dataFeed.id);
+
+    let xmlFileContents: string;
+
+    try {
+
+      xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+
+      return xmlStringToJson(xmlFileContents)
+        .then((rawFeed) => {
+
+          const isMrssFeed: boolean = feedIsMrss(rawFeed);
+          if (!isMrssFeed) {
+            return Promise.resolve();
+          }
+
+          const items: DataFeedItem[] = getFeedItems(rawFeed);
+          console.log(items);
+
+          convertMRSSFormatToContent(items);
+
+          return Promise.resolve();
+        }).catch((err) => {
+          debugger;
+        });
+    } catch (err) {
+      // return Promise.reject(err);
+      // TODODF
+      return Promise.resolve();
+    }
+  };
+}
+
+function convertMRSSFormatToContent(items: any[]) {
+  
+  // convert to format required for content feed
+  const articles: any[] = [];
+  const articleTitles: any[] = [];
+  const articlesByTitle: any = {}
+  const articleMediaTypes: any[] = [];
+  
+  for (const item of items) {
+    articles.push(item.url);
+    articleTitles.push(item.title);
+    articlesByTitle[item.title] = item.url;
+    articleMediaTypes.push(item.medium);
+  }
+}
+
+
 function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
 
   return (dispatch: any, getState: any) => {
@@ -49,7 +107,7 @@ function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
     try {
 
       xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-      
+
       return xmlStringToJson(xmlFileContents)
         .then((rawFeed) => {
 
@@ -97,12 +155,14 @@ function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
   };
 }
 
-
 export function readDataFeedContentSync(dataFeed: DmcDataFeed) {
   return (dispatch: any, getState: any) => {
     switch (dataFeed.usage) {
       case DataFeedUsageType.Mrss: {
         return dispatch(readMrssContentSync(dataFeed));
+      }
+      case DataFeedUsageType.Content: {
+        return dispatch(readFeedAsContent(dataFeed));
       }
       default:
         debugger;

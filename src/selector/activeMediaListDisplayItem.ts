@@ -1,5 +1,6 @@
 import { BsBrightSignPlayerState } from '../type';
-import { BsDmId, DmMediaContentItem } from '@brightsign/bsdatamodel';
+import { BsDmId } from '@brightsign/bsdatamodel';
+import { DmMediaContentItem } from '@brightsign/bsdatamodel';
 
 // ------------------------------------
 // Selectors

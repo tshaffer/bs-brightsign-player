@@ -1,7 +1,8 @@
 import { MediaHState } from './mediaHState';
 import { BsBrightSignPlayerState } from '../../type/base';
 import { ZoneHSM } from './zoneHSM';
-import { DmMediaState, dmGetMediaStateById, DmcMediaListMediaState, DmMediaListContentItem, DmState, DmMediaStateContainer, dmGetMediaStateContainerById, DmMediaStateCollectionState, DmMediaStateSequenceMap, DmcMediaStateContainer, DmcMediaListItem, dmGetMediaListItemById, BsDmId, DmImageContentItem, DmVideoContentItem, DmAudioContentItem, dmGetAssetItemById, DmcEvent, DmMediaContentItem, DmTimer } from '@brightsign/bsdatamodel';
+import { DmMediaContentItem } from '@brightsign/bsdatamodel';
+import { DmMediaState, dmGetMediaStateById, DmcMediaListMediaState, DmMediaListContentItem, DmState, DmMediaStateContainer, dmGetMediaStateContainerById, DmMediaStateCollectionState, DmMediaStateSequenceMap, DmcMediaStateContainer, DmcMediaListItem, dmGetMediaListItemById, BsDmId, DmImageContentItem, DmVideoContentItem, DmAudioContentItem, dmGetAssetItemById, DmcEvent, DmTimer } from '@brightsign/bsdatamodel';
 import { HState } from './HSM';
 import { BsBspDispatch, BsBspStringThunkAction, BsBspVoidThunkAction } from '../../type/base';
 import { CommandSequenceType, MediaListPlaybackType, EventType } from '@brightsign/bscore';
