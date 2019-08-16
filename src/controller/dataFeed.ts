@@ -1,19 +1,19 @@
 import * as fs from 'fs-extra';
 import axios from 'axios';
 
-import { DataFeed, DataFeedItem } from '../type/dataFeed';
+import { DataFeed, DataFeedItem, DataFeedContentItems } from '../type/dataFeed';
 import { DmState, BsDmId, DmcDataFeed, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedSourceForFeedId } from '@brightsign/bsdatamodel';
 import { isNil, isObject } from 'lodash';
 import { DataFeedUsageType } from '@brightsign/bscore';
 import AssetPool, { Asset } from '@brightsign/assetpool';
 import { xmlStringToJson } from '../utility/helpers';
 import { addDataFeed } from '../model/dataFeed';
-import { getFeedItems } from '../selector/dataFeed';
+import { getFeedItems, getFeedPoolFilePath } from '../selector/dataFeed';
 
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
 import { ArEventType } from '../type/runtime';
 
-import { postMessage, getPlatform } from './runtime';
+import { postMessage, getPlatform, getPoolFilePath } from './runtime';
 
 let assetPoolFetcher: AssetPoolFetcher | null = null;
 
@@ -63,8 +63,64 @@ function readFeedAsContent(dataFeed: DmcDataFeed) {
           const items: DataFeedItem[] = getFeedItems(rawFeed);
           console.log(items);
 
-          convertMRSSFormatToContent(items);
+          const dataFeedContentItems: DataFeedContentItems = convertMRSSFormatToContent(items);
+          
+          const itemUrls = dataFeedContentItems.articles;
+          const fileUrls = dataFeedContentItems.articles;
+          const fileTypes = dataFeedContentItems.articleMediaTypes;
+          
+          let fileKeys: any[] = [];
+          if (dataFeedContentItems.articleTitles.length > 0) {
+            fileKeys = dataFeedContentItems.articleTitles;
+          }
+          else {
+            for (const key of dataFeedContentItems.articlesByTitle) {
+              // find the corresponding url by linearly searching through m.articles
+              let index = 0;
+              const url = dataFeedContentItems.articlesByTitle[key];
+              for (const articleUrl of dataFeedContentItems.articles) {
+                if (articleUrl === url) {
+                  fileKeys[index] = key;
+                }
+                index++;
+              }
+            }
+          }
 
+          const assetList: Asset[] = [];
+          let index = 0;
+          for (const url of fileUrls) {
+            const guid = dataFeedContentItems.guids[index];
+            const asset: Asset = {
+              link: url,
+              name: url,
+              changeHint: guid,
+              hash: {
+                method: 'SHA1',
+                hex: guid,
+              }
+            };
+            assetList.push(asset);
+            index++;
+          }
+
+          // verify that all specified files are actually on the card
+          for (const asset of assetList) {
+            const poolFilePath: string = getFeedPoolFilePath(asset.changeHint);
+            if (poolFilePath === '') {
+              // mark data structures as invalid
+              break;
+            }
+          }
+
+          // post message indicating load complete
+          const event: ArEventType = {
+            EventType: 'CONTENT_DATA_FEED_LOADED',
+            EventData: dataFeed.id,
+          };
+          const action: any = postMessage(event);
+          dispatch(action);
+  
           return Promise.resolve();
         }).catch((err) => {
           debugger;
@@ -77,20 +133,32 @@ function readFeedAsContent(dataFeed: DmcDataFeed) {
   };
 }
 
-function convertMRSSFormatToContent(items: any[]) {
+function convertMRSSFormatToContent(items: DataFeedItem[]): DataFeedContentItems {
   
   // convert to format required for content feed
-  const articles: any[] = [];
-  const articleTitles: any[] = [];
-  const articlesByTitle: any = {}
-  const articleMediaTypes: any[] = [];
+  const articles: string[] = [];
+  const articleTitles: string[] = [];
+  const articlesByTitle: any = {};
+  const articleMediaTypes: string[] = [];
+  const guids: string[] = [];
   
   for (const item of items) {
     articles.push(item.url);
     articleTitles.push(item.title);
     articlesByTitle[item.title] = item.url;
     articleMediaTypes.push(item.medium);
+    guids.push(item.guid);
   }
+
+  const feedContentItems: DataFeedContentItems = {
+    articles,
+    articleTitles,
+    articlesByTitle,
+    articleMediaTypes,
+    guids,
+  };
+
+  return feedContentItems;
 }
 
 

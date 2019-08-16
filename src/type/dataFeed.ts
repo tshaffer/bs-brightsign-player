@@ -28,3 +28,13 @@ export interface DataFeedItem {
 export interface DataFeedMap {
   [dataFeedId: string]: DataFeed;
 }
+
+
+export interface DataFeedContentItems {
+  articles: any[];
+  articleTitles: any[];
+  articlesByTitle: any;
+  articleMediaTypes: any[];
+  guids: string[];
+}
+

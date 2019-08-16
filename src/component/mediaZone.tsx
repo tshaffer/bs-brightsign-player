@@ -16,9 +16,10 @@ import { DmState } from '@brightsign/bsdatamodel';
 import { DmZone } from '@brightsign/bsdatamodel';
 import { DmEvent } from '@brightsign/bsdatamodel';
 
+import { DmMediaContentItem } from '@brightsign/bsdatamodel';
+
 import {
   DmDerivedContentItem,
-  DmMediaContentItem,
   dmGetMediaStateById,
   dmGetEventIdsForMediaState,
   dmGetEventById,
