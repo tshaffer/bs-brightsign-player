@@ -38,7 +38,6 @@ export default class MediaListState extends MediaHState {
   transitionToNextEventList: ArEventType[] = [];
   transitionToPreviousEventList: ArEventType[] = [];
 
-  // advanceOnImageTimeout: boolean = false;
   imageAdvanceTimeout: number | null = null;
   imageRetreatTimeout: number | null = null;
 
@@ -64,10 +63,6 @@ export default class MediaListState extends MediaHState {
     this.mediaListState = dmGetMediaStateById(bsdm, { id: mediaState.id }) as DmcMediaListMediaState;
     this.mediaListContentItem = this.mediaListState.contentItem as DmMediaListContentItem;
 
-    // from SignParams, DmSignPropertyData, DmcSignMetadata
-    // inactivityTimeout?: boolean;
-    // inactivityTime?: number;
-    // TODOML
     const inactivityTimeout = bsdm.sign.properties.inactivityTimeout;
     const inactivityTime = bsdm.sign.properties.inactivityTime;
 
@@ -91,11 +86,6 @@ export default class MediaListState extends MediaHState {
       this.imageRetreatTimeout = (retreatOnImageTimeout.data as DmTimer).interval;
     }
 
-    // this.transitionToNextEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalForwardEventList);
-    // this.transitionToPreviousEventList = this.getTransitionEventList(bsdm, mediaListState.itemGlobalBackwardEventList);
-
-    // mediaListInactivity
-
     const mediaStates: DmMediaStateCollectionState = bsdm.mediaStates;
     const sequencesByParentId: DmMediaStateSequenceMap = mediaStates.sequencesByParentId;
 
@@ -115,33 +105,6 @@ export default class MediaListState extends MediaHState {
     }
 
     this.dataFeedId = BsDmIdNone;
-    
-    // const mlDataFeedId: BsDmId = mediaListContentItem.dataFeedId;
-
-    // const dataFeedId = getUniqueDataFeedId(mlDataFeedId);
-
-
-    // const arMediaListItem: ArMediaListItem = {
-    //   stateName: autorunMediaState.name,
-    //   contentItems,
-    //   playbackType: mediaListContentItem.playbackType,
-    //   startIndex: mediaListContentItem.startIndex,
-    //   shuffle: mediaListContentItem.shuffle,
-    //   support4KImage: mediaListContentItem.support4KImage,
-    //   sendZoneMessage: mediaListContentItem.sendMediaZoneMessage,
-    //   useDataFeed: mediaListContentItem.useDataFeed,
-    //   dataFeedId,
-    //   transitionEffect: {
-    //     transitionType: mediaListContentItem.transition,
-    //     transitionDuration: mediaListContentItem.transitionDuration * 1000,
-    //   },
-    //   transitionToNextEventList,
-    //   transitionToPreviousEventList,
-    //   // BACONTODO - get ordered commands
-    //   transitionToNextCommands: getBsCommands(bsdm, mediaListState.itemGlobalPlayNextCommands),
-    //   transitionToPreviousCommands: getBsCommands(bsdm, mediaListState.itemGlobalPlayPreviousCommands),
-    // };
-
   }
 
   getTransitionOnImageTimeout(eventList: DmcEvent[]): DmcEvent | null {
@@ -165,22 +128,13 @@ export default class MediaListState extends MediaHState {
 
     return (dispatch: BsBspDispatch, getState: any) => {
 
-      // TODO - not sure of the proper approach to perform this check
-      // Make sure we have a valid list
-      // itemIndex = m.playbackIndices[m.playbackIndex%]
       const itemIndex = mySelf.playbackIndices[mySelf.playbackIndex];
 
-      // ' get current media item and launch playback
+      // get current media item and launch playback
       const mediaZoneHSM: MediaZoneHSM = mySelf.stateMachine as MediaZoneHSM;
       const mediaContentItem = mySelf.mediaContentItems[itemIndex];
       dispatch(setActiveMediaListDisplayItem(mediaZoneHSM.zoneId, mediaContentItem));
 
-      // TODOML
-      // if m.sendZoneMessage...
-      //   if executeNextCommands then
-      //   if executePrevCommands then
-
-      // if timeout event is enabled, 
       if (!isNil(mySelf.imageAdvanceTimeout)) {
         dispatch(mySelf.launchAdvanceOnTimeoutTimer());
       }
@@ -197,14 +151,11 @@ export default class MediaListState extends MediaHState {
         clearTimeout(mySelf.advanceOnTimeoutTimer);
       }
 
-      console.log('************ launchAdvanceOnTimeoutTimer');
-
       mySelf.advanceOnTimeoutTimer = setTimeout(mySelf.advanceOnTimeoutHandler, (mySelf.imageAdvanceTimeout as number) * 1000, dispatch, mySelf);
     };
   }
 
   advanceOnTimeoutHandler(dispatch: any, mediaListState: MediaListState) {
-    console.log('************ advanceOnTimeoutHandler');
     dispatch(mediaListState.advanceMediaListPlayback(true, true));
   }
 
@@ -228,38 +179,6 @@ export default class MediaListState extends MediaHState {
         dispatch(this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry));
 
         const bsdm: DmState = getState().bsdm;
-        // const mediaListState = dmGetMediaStateById(bsdm, { id: this.mediaState.id }) as DmcMediaListMediaState;
-        // const mediaListContentItem: DmMediaListContentItem = mediaListState.contentItem as DmMediaListContentItem;
-
-        /* 
-          ' if using a live data feed, populate items here
-          if type(m.liveDataFeed) = "roAssociativeArray" then
-          
-          ' ensure that data feed content has been loaded
-            if type(m.liveDataFeed.assetPoolFiles) = "roAssetPoolFiles" then
-              m.PopulateMediaListFromLiveDataFeed()
-            end if
-          end if
-        */
-
-        /*
-      if type(m.bsp.mediaListInactivity) = "roAssociativeArray" then
-        
-        if type(m.bsp.mediaListInactivity.timer) = "roTimer" then
-          m.bsp.mediaListInactivity.timer.Stop()
-        else
-          m.bsp.mediaListInactivity.timer = CreateObject("roTimer")
-          m.bsp.mediaListInactivity.timer.SetPort(m.bsp.msgPort)
-        end if
-        
-      end if
-        */
-
-        // TODOML
-        /*
-      m.ConfigureIntraStateEventHandlersButton(m.transitionToNextEventList)
-      m.ConfigureIntraStateEventHandlersButton(m.transitionToPreviousEventList)
-        */
 
         this.firstItemDisplayed = false;
 
@@ -341,23 +260,6 @@ export default class MediaListState extends MediaHState {
         // else if m.stateMachine.type$ = "EnhancedAudio" and type(event) = "roAudioEventMx" then
         // else if m.stateMachine.type$ <> "EnhancedAudio" and IsAudioEvent(m.stateMachine, event) then
 
-        /*
-        if m.transitionToNextEventList.count() > 0 then
-          advance = m.HandleIntraStateEvent(event, m.transitionToNextEventList)
-          if advance then
-            m.AdvanceMediaListPlayback(true, true)
-            return "HANDLED"
-          end if
-        end if
-        
-        if m.transitionToPreviousEventList.count() > 0 then
-          retreat = m.HandleIntraStateEvent(event, m.transitionToPreviousEventList)
-          if retreat then
-            m.RetreatMediaListPlayback(true, true)
-            return "HANDLED"
-          end if
-        end if
-        */
         if (this.transitionToNextEventList.length > 0) {
 
         }
@@ -403,21 +305,4 @@ export default class MediaListState extends MediaHState {
   handleIntrastateEvent(event: any, navigationEventList: any): boolean {
     return false;
   }
-  /*
- Function HandleIntraStateEvent(event as object, navigationEventList as object) as boolean
-  
-  MEDIA_END = 8
-  
-  navigationEvent = m.GetMatchingNavigationEvent(navigationEventList, event)
-  if navigationEvent = invalid then
-    return false
-  end if
-  
-  return true
-  
-end function
-
-  */
-
-
 }
