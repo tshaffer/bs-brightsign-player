@@ -34,6 +34,7 @@ import { getActiveMrssDisplayItem } from '../selector/activeMrssDisplayItem';
 import { getActiveMediaListDisplayItem } from '../selector/activeMediaListDisplayItem';
 import { DataFeedItem } from '../type/dataFeed';
 import { isNullOrUndefined } from 'util';
+import { MediaListItem } from '../type/mediaListItem';
 
 // -----------------------------------------------------------------------
 // Types
@@ -48,7 +49,7 @@ export interface MediaZoneProps {
   height: number;
   activeMediaStateId: string;
   activeMrssDisplayItem: DataFeedItem;
-  activeMediaListDisplayItem: DmMediaContentItem;
+  activeMediaListDisplayItem: MediaListItem;
   postBSPMessage: any;
 }
 
@@ -106,39 +107,29 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
   renderMediaListDisplayItem() {
 
     const self = this;
-    
+
     if (!isNil(this.props.activeMediaListDisplayItem)) {
 
-      const mediaContentItem = this.props.activeMediaListDisplayItem;
-      console.log(mediaContentItem);
+      const mediaListItem = this.props.activeMediaListDisplayItem;
+      console.log(mediaListItem);
 
-      let src = '';
+      const src = isomorphicPath.join('file://', mediaListItem.filePath);
+      const mediaType: ContentItemType = mediaListItem.contentItemType;
 
-      if (mediaContentItem.assetId === BsDmIdNone) {
-        src = isomorphicPath.join('file://', mediaContentItem.name);
-      }
-      else {
-        const fileId: string = mediaContentItem.name;
-        const poolFilePath: string = getPoolFilePath(fileId);
-        src = isomorphicPath.join('file://', poolFilePath);
-      }
-  
-      const mediaType: ContentItemType = mediaContentItem.type;
-
-/*
-              width={this.props.width}
-              height={this.props.height}
-
-*/
+      /*
+                    width={this.props.width}
+                    height={this.props.height}
+      
+      */
       switch (mediaType) {
-        case 'Image': {
+        case 'image': {
           return (
             <Image
               src={src}
             />
           );
         }
-        case 'Video': {
+        case 'video': {
           return (
             <Video
               width={this.props.width}
@@ -152,37 +143,27 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
           debugger;
         }
       }
-  
-/*
-assetId:"8ac064b7-f9d2-4010-a856-8cbcdf02c1fc"
-defaultTransition:"No effect"
-name:"Colorado.jpg"
-transitionDuration:1
-type:"Image"
-useImageBuffer:false
-videoPlayerRequired:false
-*/      
     }
     return null;
   }
 
   renderMrssDisplayItem() {
-    
+
     console.log(this.props.activeMrssDisplayItem);
 
     const self = this;
-    
+
     if (!isNil(this.props.activeMrssDisplayItem)) {
       const dataFeedItem: DataFeedItem = this.props.activeMrssDisplayItem;
       const src: string = isomorphicPath.join('file://', dataFeedItem.filePath);
 
       switch (dataFeedItem.medium) {
         case 'image':
-            return (
-              <Image
-                src={src}
-              />
-            );
+          return (
+            <Image
+              src={src}
+            />
+          );
         case 'video':
           return (
             <Video

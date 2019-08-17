@@ -19,6 +19,7 @@ import {
   dataFeedContentExists,
   getFeedPoolFilePath,
 } from '../../selector/dataFeed';
+import { MediaListItem } from '../../type/mediaListItem';
 
 export default class MediaListState extends MediaHState {
 
@@ -41,8 +42,8 @@ export default class MediaListState extends MediaHState {
   imageAdvanceTimeout: number | null = null;
   imageRetreatTimeout: number | null = null;
 
-  mediaContentItems: DmMediaContentItem[] = [];
-
+  // mediaContentItems: DmMediaContentItem[] = [];
+  mediaListItems: MediaListItem[] = [];
   advanceOnTimeoutTimer: any;
 
   dataFeedId: BsDmId;
@@ -94,11 +95,15 @@ export default class MediaListState extends MediaHState {
 
       sequenceByParentId.sequence.forEach((mediaListItemStateId: BsDmId) => {
         const mediaListItemState: DmcMediaListItem = dmGetMediaListItemById(bsdm, { id: mediaListItemStateId }) as DmcMediaListItem;
-        mySelf.mediaContentItems.push(mediaListItemState.contentItem);
+        const mediaListItem: MediaListItem = {
+          filePath: mediaListItemState.contentItem.name,
+          contentItemType: mediaListItemState.contentItem.type,
+        };
+        mySelf.mediaListItems.push(mediaListItem);
       });
     }
 
-    this.numItems = mySelf.mediaContentItems.length;
+    this.numItems = mySelf.mediaListItems.length;
 
     for (let i = 0; i < this.numItems; i++) {
       this.playbackIndices.push(i);
@@ -132,8 +137,8 @@ export default class MediaListState extends MediaHState {
 
       // get current media item and launch playback
       const mediaZoneHSM: MediaZoneHSM = mySelf.stateMachine as MediaZoneHSM;
-      const mediaContentItem = mySelf.mediaContentItems[itemIndex];
-      dispatch(setActiveMediaListDisplayItem(mediaZoneHSM.zoneId, mediaContentItem));
+      const mediaListItem = mySelf.mediaListItems[itemIndex];
+      dispatch(setActiveMediaListDisplayItem(mediaZoneHSM.zoneId, mediaListItem));
 
       if (!isNil(mySelf.imageAdvanceTimeout)) {
         dispatch(mySelf.launchAdvanceOnTimeoutTimer());
@@ -288,13 +293,11 @@ export default class MediaListState extends MediaHState {
 
       const filePath: string = getFeedPoolFilePath(dataFeed.items[i].guid.toLowerCase());
 
-      const mediaContentItem: DmMediaContentItem = {
-        name: filePath,
-        assetId: BsDmIdNone,
-        type: ContentItemType.Image,
+      const mediaListItem: MediaListItem = {
+        filePath,
+        contentItemType: dataFeed.items[i].medium,
       };
-
-      this.mediaContentItems.push(mediaContentItem);
+      this.mediaListItems.push(mediaListItem);
     }
   }
 

@@ -1,5 +1,5 @@
-import { DmMediaContentItem } from '@brightsign/bsdatamodel';
+import { MediaListItem } from './mediaListItem';
 
 export interface MediaListDisplayItemMap {
-  [hsmId: string]: DmMediaContentItem | null;
+  [hsmId: string]: MediaListItem | null;
 }

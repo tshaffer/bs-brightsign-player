@@ -2,7 +2,7 @@ import { ActionWithPayload } from './baseAction';
 import { isObject } from 'lodash';
 import { MediaListDisplayItemMap } from '../type/activeMediaListDisplayItem';
 import { DataFeedItem } from '../type/dataFeed';
-import { DmMediaContentItem } from '@brightsign/bsdatamodel';
+import { MediaListItem } from '../type/mediaListItem';
 
 // ------------------------------------
 // Constants
@@ -12,7 +12,7 @@ export const SET_ACTIVE_MEDIALIST_DISPLAY_ITEM = 'SET_ACTIVE_MEDIALIST_DISPLAY_I
 // ------------------------------------
 // Actions
 // ------------------------------------
-export function setActiveMediaListDisplayItem(zoneId: string, activeMediaListDisplayItem: DmMediaContentItem): ActionWithPayload {
+export function setActiveMediaListDisplayItem(zoneId: string, activeMediaListDisplayItem: MediaListItem): ActionWithPayload {
   return {
     type: SET_ACTIVE_MEDIALIST_DISPLAY_ITEM,
     payload: {
