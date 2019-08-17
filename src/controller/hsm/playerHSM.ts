@@ -134,7 +134,7 @@ class STPlaying extends HState {
       const isMRSSFeed = feedIsMrss(feedAsJson);
 
       if (dataFeed.usage === DataFeedUsageType.Content) {
-        dispatch(downloadFeedContent());
+        // dispatch(downloadFeedContent());
       }
       else if (dataFeed.usage === DataFeedUsageType.Mrss && (dataFeed.parserPlugin !== '' || isMRSSFeed)) {
         dispatch(downloadMRSSContent(bsdm, feedAsJson, dataFeed.id));
@@ -266,7 +266,7 @@ class STPlaying extends HState {
     return (dispatch: any, getState: any) => {
       stateData.nextState = null;
 
-      console.log('***** - STPlayingEventHandler, event type ' + event.EventType)
+      console.log('***** - STPlayingEventHandler, event type ' + event.EventType);
 
       if (event.EventType && event.EventType === 'ENTRY_SIGNAL') {
 

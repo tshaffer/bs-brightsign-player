@@ -37,14 +37,14 @@ function getFeedAssetPool(): AssetPool {
   }
 }
 
-function readFeedAsContent(dataFeed: DmcDataFeed) {
+function readFeedAsContent(bsdmDataFeed: DmcDataFeed) {
   return (dispatch: any, getState: any) => {
-    console.log(dataFeed);
+    console.log(bsdmDataFeed);
 
     // TODOML - currently only implemented for a bsn dynamic playlist
-    const feedFileName: string = getFeedCacheRoot() + dataFeed.id + '.xml';
+    const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
 
-    console.log('Read existing content for feed ' + dataFeed.id);
+    console.log('Read existing content for feed ' + bsdmDataFeed.id);
 
     let xmlFileContents: string;
 
@@ -65,11 +65,11 @@ function readFeedAsContent(dataFeed: DmcDataFeed) {
 
           const dataFeedContentItems: DataFeedContentItems = convertMRSSFormatToContent(items);
           
-          const itemUrls = dataFeedContentItems.articles;
-          const fileUrls = dataFeedContentItems.articles;
-          const fileTypes = dataFeedContentItems.articleMediaTypes;
+          let itemUrls: string[] | null = dataFeedContentItems.articles;
+          let fileUrls: string[] | null = dataFeedContentItems.articles;
+          let fileTypes: string[] | null = dataFeedContentItems.articleMediaTypes;
           
-          let fileKeys: any[] = [];
+          let fileKeys: string[] | null = [];
           if (dataFeedContentItems.articleTitles.length > 0) {
             fileKeys = dataFeedContentItems.articleTitles;
           }
@@ -90,7 +90,7 @@ function readFeedAsContent(dataFeed: DmcDataFeed) {
           const assetList: Asset[] = [];
           let index = 0;
           for (const url of fileUrls) {
-            const guid = dataFeedContentItems.guids[index];
+            const guid = items[index].guid;
             const asset: Asset = {
               link: url,
               name: url,
@@ -109,6 +109,10 @@ function readFeedAsContent(dataFeed: DmcDataFeed) {
             const poolFilePath: string = getFeedPoolFilePath(asset.changeHint);
             if (poolFilePath === '') {
               // mark data structures as invalid
+              itemUrls = null;
+              fileKeys = null;
+              fileUrls = null;
+      
               break;
             }
           }
@@ -116,11 +120,30 @@ function readFeedAsContent(dataFeed: DmcDataFeed) {
           // post message indicating load complete
           const event: ArEventType = {
             EventType: 'CONTENT_DATA_FEED_LOADED',
-            EventData: dataFeed.id,
+            EventData: bsdmDataFeed.id,
           };
           const action: any = postMessage(event);
           dispatch(action);
   
+          const dataFeed: DataFeed = {
+            id: bsdmDataFeed.id,
+            sourceId: bsdmDataFeed.feedSourceId,
+            assetList,
+            items,
+            isMrss: true,
+            articles: dataFeedContentItems.articles,
+            articleTitles: dataFeedContentItems.articleTitles,
+            articlesByTitle: dataFeedContentItems.articlesByTitle,
+            articleMediaTypes: dataFeedContentItems.articleMediaTypes,
+            itemUrls,
+            fileUrls,
+            fileTypes,
+            fileKeys,
+          
+          };
+          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, dataFeed);
+          dispatch(addDataFeedAction);
+
           return Promise.resolve();
         }).catch((err) => {
           debugger;
@@ -140,14 +163,12 @@ function convertMRSSFormatToContent(items: DataFeedItem[]): DataFeedContentItems
   const articleTitles: string[] = [];
   const articlesByTitle: any = {};
   const articleMediaTypes: string[] = [];
-  const guids: string[] = [];
   
   for (const item of items) {
     articles.push(item.url);
     articleTitles.push(item.title);
     articlesByTitle[item.title] = item.url;
     articleMediaTypes.push(item.medium);
-    guids.push(item.guid);
   }
 
   const feedContentItems: DataFeedContentItems = {
@@ -155,7 +176,6 @@ function convertMRSSFormatToContent(items: DataFeedItem[]): DataFeedContentItems
     articleTitles,
     articlesByTitle,
     articleMediaTypes,
-    guids,
   };
 
   return feedContentItems;

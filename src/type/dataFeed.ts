@@ -9,6 +9,14 @@ export interface DataFeed {
   playtime?: string;
   ttl?: string;
   isMrss?: boolean;
+  articles?: string[];
+  articleTitles?: string[];
+  articlesByTitle?: any; // string -> string
+  articleMediaTypes?: string[];
+  itemUrls?: string[] | null;
+  fileUrls?: string[] | null;
+  fileTypes?: string[] | null;
+  fileKeys?: string[] | null;
 }
 
 export interface DataFeedItem {
@@ -35,6 +43,6 @@ export interface DataFeedContentItems {
   articleTitles: any[];
   articlesByTitle: any;
   articleMediaTypes: any[];
-  guids: string[];
+  // guids: string[];
 }
 

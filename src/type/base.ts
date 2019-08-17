@@ -54,4 +54,3 @@ export interface BsBspAction<T> extends BsBspBaseAction {
 }
 
 export type ExitHandlerAction = BsBspAction<void>;
-

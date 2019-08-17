@@ -2,18 +2,28 @@ import { MediaHState } from './mediaHState';
 import { BsBrightSignPlayerState } from '../../type/base';
 import { ZoneHSM } from './zoneHSM';
 import { DmMediaContentItem } from '@brightsign/bsdatamodel';
-import { DmMediaState, dmGetMediaStateById, DmcMediaListMediaState, DmMediaListContentItem, DmState, DmMediaStateContainer, dmGetMediaStateContainerById, DmMediaStateCollectionState, DmMediaStateSequenceMap, DmcMediaStateContainer, DmcMediaListItem, dmGetMediaListItemById, BsDmId, DmImageContentItem, DmVideoContentItem, DmAudioContentItem, dmGetAssetItemById, DmcEvent, DmTimer } from '@brightsign/bsdatamodel';
+import { DmMediaState, dmGetMediaStateById, DmcMediaListMediaState, DmMediaListContentItem, DmState, DmMediaStateContainer, dmGetMediaStateContainerById, DmMediaStateCollectionState, DmMediaStateSequenceMap, DmcMediaStateContainer, DmcMediaListItem, dmGetMediaListItemById, BsDmId, DmImageContentItem, DmVideoContentItem, DmAudioContentItem, dmGetAssetItemById, DmcEvent, DmTimer, BsDmIdNone } from '@brightsign/bsdatamodel';
 import { HState } from './HSM';
 import { BsBspDispatch, BsBspStringThunkAction, BsBspVoidThunkAction } from '../../type/base';
-import { CommandSequenceType, MediaListPlaybackType, EventType } from '@brightsign/bscore';
+import { CommandSequenceType, MediaListPlaybackType, EventType, ContentItemType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
 
 import { isNil, isNumber } from 'lodash';
 import { MediaZoneHSM } from './mediaZoneHSM';
 import { setActiveMediaListDisplayItem } from '../../model/activeMediaListDisplayItem';
 
+import { DataFeed, DataFeedItem } from '../../type/dataFeed';
+import {
+  getDataFeedById,
+  allDataFeedContentExists,
+  dataFeedContentExists,
+  getFeedPoolFilePath,
+} from '../../selector/dataFeed';
+
 export default class MediaListState extends MediaHState {
 
+  mediaListState: DmcMediaListMediaState; 
+  mediaListContentItem: DmMediaListContentItem;
   mediaListInactivityTimer: any;
   firstItemDisplayed: boolean;
 
@@ -36,6 +46,9 @@ export default class MediaListState extends MediaHState {
 
   advanceOnTimeoutTimer: any;
 
+  dataFeedId: BsDmId;
+  dataFeed: DataFeed;
+
   constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState, bsdm: DmState) {
 
     super(zoneHSM, mediaState.id);
@@ -48,9 +61,8 @@ export default class MediaListState extends MediaHState {
 
     this.HStateEventHandler = this.STDisplayingMediaListItemEventHandler;
 
-    const mediaListState = dmGetMediaStateById(bsdm, { id: mediaState.id }) as DmcMediaListMediaState;
-    const mediaListContentItem: DmMediaListContentItem = mediaListState.contentItem as DmMediaListContentItem;
-
+    this.mediaListState = dmGetMediaStateById(bsdm, { id: mediaState.id }) as DmcMediaListMediaState;
+    this.mediaListContentItem = this.mediaListState.contentItem as DmMediaListContentItem;
 
     // from SignParams, DmSignPropertyData, DmcSignMetadata
     // inactivityTimeout?: boolean;
@@ -59,8 +71,8 @@ export default class MediaListState extends MediaHState {
     const inactivityTimeout = bsdm.sign.properties.inactivityTimeout;
     const inactivityTime = bsdm.sign.properties.inactivityTime;
 
-    if (mediaListContentItem.startIndex > 0) {
-      this.specifiedStartIndex = mediaListContentItem.startIndex - 1;
+    if (this.mediaListContentItem.startIndex > 0) {
+      this.specifiedStartIndex = this.mediaListContentItem.startIndex - 1;
     }
     else {
       this.specifiedStartIndex = 0;
@@ -68,13 +80,13 @@ export default class MediaListState extends MediaHState {
     this.startIndex = this.specifiedStartIndex;
 
     this.imageAdvanceTimeout = null;
-    const advanceOnImageTimeout = this.getTransitionOnImageTimeout(mediaListState.itemGlobalForwardEventList);
+    const advanceOnImageTimeout = this.getTransitionOnImageTimeout(this.mediaListState.itemGlobalForwardEventList);
     if (advanceOnImageTimeout) {
       this.imageAdvanceTimeout = (advanceOnImageTimeout.data as DmTimer).interval;
     }
 
     this.imageRetreatTimeout = null;
-    const retreatOnImageTimeout = this.getTransitionOnImageTimeout(mediaListState.itemGlobalBackwardEventList);
+    const retreatOnImageTimeout = this.getTransitionOnImageTimeout(this.mediaListState.itemGlobalBackwardEventList);
     if (retreatOnImageTimeout) {
       this.imageRetreatTimeout = (retreatOnImageTimeout.data as DmTimer).interval;
     }
@@ -87,8 +99,8 @@ export default class MediaListState extends MediaHState {
     const mediaStates: DmMediaStateCollectionState = bsdm.mediaStates;
     const sequencesByParentId: DmMediaStateSequenceMap = mediaStates.sequencesByParentId;
 
-    if (sequencesByParentId.hasOwnProperty(mediaListState.id)) {
-      const sequenceByParentId: any = (sequencesByParentId as any)[mediaListState.id];
+    if (sequencesByParentId.hasOwnProperty(this.mediaListState.id)) {
+      const sequenceByParentId: any = (sequencesByParentId as any)[this.mediaListState.id];
 
       sequenceByParentId.sequence.forEach((mediaListItemStateId: BsDmId) => {
         const mediaListItemState: DmcMediaListItem = dmGetMediaListItemById(bsdm, { id: mediaListItemStateId }) as DmcMediaListItem;
@@ -102,6 +114,8 @@ export default class MediaListState extends MediaHState {
       this.playbackIndices.push(i);
     }
 
+    this.dataFeedId = BsDmIdNone;
+    
     // const mlDataFeedId: BsDmId = mediaListContentItem.dataFeedId;
 
     // const dataFeedId = getUniqueDataFeedId(mlDataFeedId);
@@ -214,8 +228,8 @@ export default class MediaListState extends MediaHState {
         dispatch(this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry));
 
         const bsdm: DmState = getState().bsdm;
-        const mediaListState = dmGetMediaStateById(bsdm, { id: this.mediaState.id }) as DmcMediaListMediaState;
-        const mediaListContentItem: DmMediaListContentItem = mediaListState.contentItem as DmMediaListContentItem;
+        // const mediaListState = dmGetMediaStateById(bsdm, { id: this.mediaState.id }) as DmcMediaListMediaState;
+        // const mediaListContentItem: DmMediaListContentItem = mediaListState.contentItem as DmMediaListContentItem;
 
         /* 
           ' if using a live data feed, populate items here
@@ -255,7 +269,7 @@ export default class MediaListState extends MediaHState {
         }
 
         // reset playback index if appropriate
-        if (mediaListContentItem.playbackType === MediaListPlaybackType.FromBeginning) {
+        if (this.mediaListContentItem.playbackType === MediaListPlaybackType.FromBeginning) {
           this.playbackIndex = this.startIndex;
         }
 
@@ -264,7 +278,7 @@ export default class MediaListState extends MediaHState {
           this.playbackActive = true;
 
           // prevent start index from pointing beyond the number of items
-          if (mediaListContentItem.playbackType === MediaListPlaybackType.FromBeginning) {
+          if (this.mediaListContentItem.playbackType === MediaListPlaybackType.FromBeginning) {
             if (this.specifiedStartIndex >= this.numItems) {
               this.startIndex = 0;
             }
@@ -274,7 +288,7 @@ export default class MediaListState extends MediaHState {
           }
 
           //  reshuffle media list if appropriate
-          if ((this.playbackIndex === this.startIndex) && mediaListContentItem.shuffle) {
+          if ((this.playbackIndex === this.startIndex) && this.mediaListContentItem.shuffle) {
             this.shuffleMediaListContent();
           }
 
@@ -289,6 +303,36 @@ export default class MediaListState extends MediaHState {
 
       } else if (event.EventType === 'EXIT_SIGNAL') {
       } else if (event.EventType === 'CONTENT_DATA_FEED_LOADED') {
+        // not right - see below
+        this.dataFeedId = event.EventData;
+        // this compares a dataFeedId to a sourceDataFeed.id - need to figure this out!!
+        // if (dataFeedId === this.mediaListState.sourceDataFeed.id) {
+        this.dataFeed = getDataFeedById(getState(), this.dataFeedId) as DataFeed;
+        this.PopulateMediaListFromLiveDataFeed();
+
+        // reset the playback index to the start point
+        if (this.specifiedStartIndex >= this.numItems) {
+          this.startIndex = 0;
+        }
+        else {
+          this.startIndex = this.specifiedStartIndex;
+        }
+
+        this.playbackIndex = this.startIndex;
+        
+        if (this.numItems > 0) {
+          //  reshuffle media list if appropriate
+          if ((this.playbackIndex === this.startIndex) && this.mediaListContentItem.shuffle) {
+            this.shuffleMediaListContent();
+          }
+        }
+        
+        if (!this.playbackActive) {
+          this.playbackActive = true;
+          dispatch(this.advanceMediaListPlayback(true, false));
+        }
+        
+        return 'HANDLED';
 
       } else {
         // else if event['EventType'] = 'AudioPlaybackFailureEvent' then
@@ -328,6 +372,30 @@ export default class MediaListState extends MediaHState {
 
       return 'HANDLED';
     };
+  }
+
+  PopulateMediaListFromLiveDataFeed()
+  {
+    // debugger;
+
+    const dataFeed: DataFeed = this.dataFeed as DataFeed;
+    const itemUrls: string[] = dataFeed.itemUrls as string[];
+
+    this.numItems = itemUrls.length;
+
+    for (let i = 0; i < this.numItems; i++) {
+      this.playbackIndices.push(i);
+
+      const filePath: string = getFeedPoolFilePath(dataFeed.items[i].guid.toLowerCase());
+
+      const mediaContentItem: DmMediaContentItem = {
+        name: filePath,
+        assetId: BsDmIdNone,
+        type: ContentItemType.Image,
+      };
+
+      this.mediaContentItems.push(mediaContentItem);
+    }
   }
 
   getMatchingNavigationEvent() {

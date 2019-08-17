@@ -24,6 +24,7 @@ import {
   dmGetEventIdsForMediaState,
   dmGetEventById,
   DmcEvent,
+  BsDmIdNone,
 } from '@brightsign/bsdatamodel';
 import { getPoolFilePath, tmpSetVideoElementRef } from '../index';
 import { connect } from 'react-redux';
@@ -111,9 +112,16 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
       const mediaContentItem = this.props.activeMediaListDisplayItem;
       console.log(mediaContentItem);
 
-      const fileId: string = mediaContentItem.name;
-      const poolFilePath: string = getPoolFilePath(fileId);
-      const src: string = isomorphicPath.join('file://', poolFilePath);
+      let src = '';
+
+      if (mediaContentItem.assetId === BsDmIdNone) {
+        src = mediaContentItem.name;
+      }
+      else {
+        const fileId: string = mediaContentItem.name;
+        const poolFilePath: string = getPoolFilePath(fileId);
+        src = isomorphicPath.join('file://', poolFilePath);
+      }
   
       const mediaType: ContentItemType = mediaContentItem.type;
 
