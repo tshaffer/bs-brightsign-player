@@ -1,3 +1,4 @@
+import { Asset } from '@brightsign/assetpool';
 import { MediaHState } from './mediaHState';
 import { BsBrightSignPlayerState } from '../../type/base';
 import { ZoneHSM } from './zoneHSM';
@@ -291,11 +292,12 @@ export default class MediaListState extends MediaHState {
     for (let i = 0; i < this.numItems; i++) {
       this.playbackIndices.push(i);
 
-      const filePath: string = getFeedPoolFilePath(dataFeed.items[i].guid.toLowerCase());
+      const dataFeedItems = dataFeed.items as DataFeedItem[];
+      const filePath: string = getFeedPoolFilePath(dataFeedItems[i].guid.toLowerCase());
 
       const mediaListItem: MediaListItem = {
         filePath,
-        contentItemType: dataFeed.items[i].medium,
+        contentItemType: dataFeedItems[i].medium,
       };
       this.mediaListItems.push(mediaListItem);
     }

@@ -2,7 +2,7 @@ import * as fs from 'fs-extra';
 import axios from 'axios';
 
 import { DataFeed, DataFeedItem, DataFeedContentItems } from '../type/dataFeed';
-import { DmState, BsDmId, DmcDataFeed, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedSourceForFeedId } from '@brightsign/bsdatamodel';
+import { DmState, BsDmId, DmcDataFeed, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedSourceForFeedId, dmGetDataFeedById } from '@brightsign/bsdatamodel';
 import { isNil, isObject } from 'lodash';
 import { DataFeedUsageType } from '@brightsign/bscore';
 import AssetPool, { Asset } from '@brightsign/assetpool';
@@ -181,7 +181,6 @@ function convertMRSSFormatToContent(items: DataFeedItem[]): DataFeedContentItems
   return feedContentItems;
 }
 
-
 function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
 
   return (dispatch: any, getState: any) => {
@@ -253,8 +252,7 @@ export function readDataFeedContentSync(dataFeed: DmcDataFeed) {
         return dispatch(readFeedAsContent(dataFeed));
       }
       default:
-        debugger;
-        break;
+        return Promise.resolve();
     }
   };
 }
@@ -265,7 +263,6 @@ function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<vo
   console.log(fullPath);
   return fs.writeFile(fullPath, jsonString);
 }
-
 
 export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<any> {
 
@@ -304,7 +301,6 @@ export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<
   }
   return Promise.reject('dataFeedSources url is null');
 }
-
 
 export function downloadFeedContent() {
   return (dispatch: any, getState: any) => {
@@ -451,7 +447,6 @@ function handleProgressEvent(progressEvent: any) {
   console.log(progressEvent);
 }
 
-
 export function feedIsMrss(feed: any): boolean {
 
   if (isObject(feed) && isObject(feed.rss) && isObject(feed.rss.$)) {
@@ -466,30 +461,30 @@ export function feedIsMrss(feed: any): boolean {
   return false;
 }
 
-// function feedIsMRSS(feedFileName: string): boolean {
+export function parseSimpleRSSFeed(bsdm: DmState, rawFeed: any, dataFeedId: BsDmId) {
+  
+  const articles: string[] = [];
+  const articleTitles: string[] = [];
+  const articlesByTitle: any = {};
 
-//   let fileContents: string;
+  for (const feedItem of rawFeed.rss.channel.item) {
+    const title: string = feedItem.title;
+    const description: string = feedItem.description;
 
-//   try {
-//     fileContents = fs.readFileSync(feedFileName, 'utf8');
-//   } catch (err) {
-//     return false;
-//   }
+    articles.push(description);
+    articleTitles.push(title);
+    articlesByTitle[title] = description;
+  }
 
-//   return true;
+  const dmDataFeed: DmcDataFeed = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
+  const dataFeed: DataFeed = {
+    id: dataFeedId,
+    sourceId: dmDataFeed.feedSourceId,
+    isMrss: true,
+    articles,
+    articleTitles,
+    articlesByTitle,
+  };
 
-//   // feedXML = CreateObject("roXMLElement")
-//   // if not feedXML.Parse(xml) then
-//   //   return false
-//   //   end if
-
-//   // if feedXML.HasAttribute("xmlns:media") then
-//   //   attrs = feedXML.GetAttributes()
-//   //   if attrs["xmlns:media"] = "http://search.yahoo.com/mrss/" then
-//   //   return true
-//   //   end if
-//   // end if
-
-//   // return false
-// }
-
+  debugger;
+}

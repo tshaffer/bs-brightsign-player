@@ -58,6 +58,21 @@ export interface MediaZoneProps {
 // -----------------------------------------------------------------------
 export default class MediaZoneComponent extends React.Component<MediaZoneProps> {
 
+  // bsTicker: BSTicker;
+
+  constructor(props: MediaZoneProps) {
+    super(props);
+
+    // this.bsTicker = new BSTicker(10, 700, 1200, 30, 0);
+    // this.bsTicker.AddString("addText1");
+    // this.bsTicker.AddString("addText2");
+    // this.bsTicker.AddString("addText3");
+    // this.bsTicker.SetBackgroundColor(0xFFFF0000);
+    // this.bsTicker.SetForegroundColor(0xFF007700);
+    // this.bsTicker.SetSeparatorString(" ### ");
+  }
+
+
   videoRefRetrieved(videoElementRef: any) {
     console.log('mediaZone.tsx#videoRefRetrieved');
     tmpSetVideoElementRef(videoElementRef);
@@ -126,6 +141,9 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
           return (
             <Image
               src={src}
+              width={1920}
+              height={300}
+
             />
           );
         }

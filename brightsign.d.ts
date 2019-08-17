@@ -624,5 +624,13 @@ declare module '@brightsign' {
       SetPinValue(button: number, output: number): void;
       oncontroldown(event: any): void;
     }
+
+    export class BSTicker {
+      constructor(x: number, y: number, w: number, h: number, r: number);
+      AddString(s: string): void;
+      SetBackgroundColor(argb: number): void;
+      SetForegroundColor(argb: number): void;
+      SetSeparatorString(setSeparatorString: string): void;
+    }
   }
 }

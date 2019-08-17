@@ -41,7 +41,7 @@ export function getFeedItems(feed: any): DataFeedItem[] {
 }
 
 export function allDataFeedContentExists(dataFeed: DataFeed): boolean {
-  for (const asset of dataFeed.assetList) {
+  for (const asset of dataFeed.assetList as Asset[]) {
     const filePath = getFeedPoolFilePathFromAsset(asset);
     if (filePath === '' || !fs.existsSync(filePath)) {
       return false;
@@ -51,7 +51,7 @@ export function allDataFeedContentExists(dataFeed: DataFeed): boolean {
 }
 
 export function dataFeedContentExists(dataFeed: DataFeed): boolean {
-  for (const asset of dataFeed.assetList) {
+  for (const asset of dataFeed.assetList as Asset[]) {
     const filePath = getFeedPoolFilePathFromAsset(asset);
     if (filePath !== '' && fs.existsSync(filePath)) {
       return true;

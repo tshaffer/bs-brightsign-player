@@ -86,7 +86,8 @@ export default class MrssState extends MediaHState {
           this.displayIndex = 0;
 
           // distinguish between a feed that has no content and a feed in which no content has been downloaded
-          if (dataFeed.items.length === 0 || (!allDataFeedContentExists(dataFeed))) {
+          const dataFeedItems = dataFeed.items as DataFeedItem[];
+          if (dataFeedItems.length === 0 || (!allDataFeedContentExists(dataFeed))) {
 
             console.log('******* - cc1');
 
@@ -183,7 +184,9 @@ export default class MrssState extends MediaHState {
 
             // feed may have been downloaded but it might not have content yet (empty mrss feed)
             // or feed has been downloaded but not all of its content has been downloaded yet - in this case, move on to the next item if possible
-            if ((this.currentFeed.items.length === 0) || !allDataFeedContentExists(this.currentFeed)) {
+            const dataFeedItems = this.currentFeed.items as DataFeedItem[];
+
+            if ((dataFeedItems.length === 0) || !allDataFeedContentExists(this.currentFeed)) {
               if (!isNil(this.currentFeed) && (!dataFeedContentExists(this.currentFeed))) {
                 console.log('******* - cc12');
                 this.advanceToNextMRSSItem();
@@ -260,24 +263,23 @@ export default class MrssState extends MediaHState {
           // console.log('this.currentFeed not nil, length = ' + this.currentFeed.items.length);
           // console.log('this.displayIndex: ' + this.displayIndex);
 
-          if (this.displayIndex >= this.currentFeed.items.length) {
+          let dataFeedItems = this.currentFeed.items as DataFeedItem[];
+
+          if (this.displayIndex >= dataFeedItems.length) {
             this.displayIndex = 0;
             if (!isNil(this.pendingFeed)) {
               console.log('******* - cc18');
 
               console.log('***** - AdvanceToNextMRSSItem switch to pending feed');
 
-              console.log('***** - before switch, number of items is: ' + this.currentFeed.items.length.toString());
 
               this.currentFeed = this.pendingFeed;
               this.pendingFeed = null;
 
-              console.log('***** - after switch, number of items is: ' + this.currentFeed.items.length.toString());
-
               // protect the feed that we're switching to (see autorun.brs)
 
               // check to see if the feed it switched to is empty OR doesn't have all its content
-              if (this.currentFeed.items.length === 0 || (!allDataFeedContentExists(this.currentFeed))) {
+              if (dataFeedItems.length === 0 || (!allDataFeedContentExists(this.currentFeed))) {
                 // if true, if it has some content, play it.
                 if (dataFeedContentExists(this.currentFeed)) {
                   console.log('******* - cc19');
@@ -301,7 +303,8 @@ export default class MrssState extends MediaHState {
           //     if isHtml(displayItem) then
           // else ...
 
-          const displayItem: DataFeedItem = this.currentFeed.items[this.displayIndex];
+          dataFeedItems = this.currentFeed.items as DataFeedItem[];
+          const displayItem: DataFeedItem = dataFeedItems[this.displayIndex];
           const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
 
           console.log('displayItem.guid: ' + displayItem.guid);
@@ -354,30 +357,35 @@ export default class MrssState extends MediaHState {
   }
 
   waitForContentTimeoutHandler(dispatch: any, mrssState: MrssState) {
-    console.log('************ waitForContentTimeoutHandler');
-    if (!isNil(mrssState.currentFeed) && (mrssState.currentFeed.items.length === 0 || (!allDataFeedContentExists(mrssState.currentFeed)))) {
-      console.log('******* - cc23');
-      if (dataFeedContentExists(mrssState.currentFeed)) {
-        if (isNil(mrssState.displayIndex)) {
-          console.log('******* - cc24');
 
-          mrssState.displayIndex = 0;
+    console.log('************ waitForContentTimeoutHandler');
+
+    if (!isNil(mrssState.currentFeed)) {
+      const dataFeedItems = mrssState.currentFeed.items as DataFeedItem[];
+      if ((dataFeedItems.length === 0 || (!allDataFeedContentExists(mrssState.currentFeed)))) {
+        console.log('******* - cc23');
+        if (dataFeedContentExists(mrssState.currentFeed)) {
+          if (isNil(mrssState.displayIndex)) {
+            console.log('******* - cc24');
+
+            mrssState.displayIndex = 0;
+          }
+          dispatch(mrssState.advanceToNextMRSSItem());
         }
-        dispatch(mrssState.advanceToNextMRSSItem());
+        else {
+          console.log('******* - cc25');
+          dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
+        }
       }
-      else {
-        console.log('******* - cc25');
+      else if (!isNil(mrssState.currentFeed) && !isNil(mrssState.currentFeed.items) && mrssState.currentFeed.items.length === 0) {
+        console.log('******* - cc26');
         dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
       }
-    }
-    else if (!isNil(mrssState.currentFeed) && !isNil(mrssState.currentFeed.items) && mrssState.currentFeed.items.length === 0) {
-      console.log('******* - cc26');
-      dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
-    }
-    else {
-      console.log('******* - cc27');
-      mrssState.displayIndex = 0;
-      dispatch(mrssState.advanceToNextMRSSItem());
+      else {
+        console.log('******* - cc27');
+        mrssState.displayIndex = 0;
+        dispatch(mrssState.advanceToNextMRSSItem());
+      }
     }
 
     // return HANDLED
@@ -421,6 +429,7 @@ export default class MrssState extends MediaHState {
 
   //  need to also consider the case where it's not at the end but there's no more content.
   atEndOfFeed(): boolean {
-    return this.displayIndex >= (this.currentFeed as DataFeed).items.length;
+    const dataFeedItems = (this.currentFeed as DataFeed).items as DataFeedItem[];
+    return this.displayIndex >= dataFeedItems.length;
   }
 }

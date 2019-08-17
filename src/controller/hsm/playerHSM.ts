@@ -4,7 +4,7 @@ import { Action } from 'redux';
 import { DmState, BsDmId, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById, dmGetDataFeedSourceForFeedId } from '@brightsign/bsdatamodel';
 import { isNil, isString } from 'lodash';
 
-import { downloadMRSSContent, retrieveDataFeed, readDataFeedContentSync, feedIsMrss, downloadFeedContent } from '../dataFeed';
+import { downloadMRSSContent, retrieveDataFeed, readDataFeedContentSync, feedIsMrss, downloadFeedContent, parseSimpleRSSFeed } from '../dataFeed';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
 
 export class PlayerHSM extends HSM {
@@ -92,8 +92,6 @@ class STPlaying extends HState {
   // see PlayingEventUrlHandler in autorun for reference
   processRetrievedDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed) {
 
-    // TODODF - headRequest
-
     return (dispatch: any, getState: any) => {
       console.log('promise resolved from retrieveLiveDataFeed');
       console.log(feedAsJson);
@@ -115,9 +113,7 @@ class STPlaying extends HState {
         }
         else
         {
-          /*
-            liveDataFeed.ParseSimpleRSSFeed(liveDataFeed.rssFileName$)
-          */
+         parseSimpleRSSFeed(bsdm, feedAsJson, dataFeed.id);
         }
 
         // TODODF autoGenerateUserVariables
@@ -134,7 +130,7 @@ class STPlaying extends HState {
       const isMRSSFeed = feedIsMrss(feedAsJson);
 
       if (dataFeed.usage === DataFeedUsageType.Content) {
-        // dispatch(downloadFeedContent());
+        dispatch(downloadFeedContent());
       }
       else if (dataFeed.usage === DataFeedUsageType.Mrss && (dataFeed.parserPlugin !== '' || isMRSSFeed)) {
         dispatch(downloadMRSSContent(bsdm, feedAsJson, dataFeed.id));
@@ -188,6 +184,14 @@ class STPlaying extends HState {
         if (dataFeed.usage === DataFeedUsageType.Text) {
           // download feeds that are neither MRSS nor content immediately (simple RSS)
           // TODODF - m.RetrieveLiveDataFeed(liveDataFeeds, liveDataFeed)
+          //     m.RetrieveLiveDataFeed(liveDataFeeds, liveDataFeed)
+          const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, { id: dataFeed.feedSourceId });
+          if (!isNil(dataFeedSource)) {
+            retrieveDataFeed(bsdm, dataFeed)
+              .then((feedAsJson) => {
+                dispatch(this.processRetrievedDataFeed(feedAsJson, bsdm, dataFeed));
+              });
+          }
         }
         else {
           this.dataFeedIdsToDownload.push(dataFeedId);
