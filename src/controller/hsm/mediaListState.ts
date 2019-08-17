@@ -376,8 +376,6 @@ export default class MediaListState extends MediaHState {
 
   PopulateMediaListFromLiveDataFeed()
   {
-    // debugger;
-
     const dataFeed: DataFeed = this.dataFeed as DataFeed;
     const itemUrls: string[] = dataFeed.itemUrls as string[];
 
