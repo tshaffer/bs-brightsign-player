@@ -115,7 +115,7 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
       let src = '';
 
       if (mediaContentItem.assetId === BsDmIdNone) {
-        src = mediaContentItem.name;
+        src = isomorphicPath.join('file://', mediaContentItem.name);
       }
       else {
         const fileId: string = mediaContentItem.name;
@@ -125,12 +125,15 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
   
       const mediaType: ContentItemType = mediaContentItem.type;
 
+/*
+              width={this.props.width}
+              height={this.props.height}
+
+*/
       switch (mediaType) {
         case 'Image': {
           return (
             <Image
-              width={this.props.width}
-              height={this.props.height}
               src={src}
             />
           );
@@ -172,6 +175,7 @@ videoPlayerRequired:false
     if (!isNil(this.props.activeMrssDisplayItem)) {
       const dataFeedItem: DataFeedItem = this.props.activeMrssDisplayItem;
       const src: string = isomorphicPath.join('file://', dataFeedItem.filePath);
+
       switch (dataFeedItem.medium) {
         case 'image':
             return (
