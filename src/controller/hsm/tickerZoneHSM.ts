@@ -1,11 +1,12 @@
 import { ZoneHSM, } from './zoneHSM';
 import { DmState, dmGetZoneById, DmZone } from '@brightsign/bsdatamodel';
-import { DmTickerZoneProperties, BsDmId, dmGetInitialMediaStateIdForZone, DmMediaState, dmGetMediaStateById, dmGetMediaStateIdsForZone, DmContentItem, DmDataFeedContentItem } from '@brightsign/bsdatamodel';
-import { isNil } from 'lodash';
+import { DmTickerZoneProperties, BsDmId, dmGetInitialMediaStateIdForZone, DmMediaState, dmGetMediaStateById, dmGetMediaStateIdsForZone, DmContentItem, DmDataFeedContentItem, DmcDataFeed } from '@brightsign/bsdatamodel';
+import { isNil, isObject } from 'lodash';
 import { HState, STTopEventHandler } from './HSM';
 import { ContentItemType } from '@brightsign/bscore';
-import RssState from './rssState';
 import { ArEventType, HSMStateData } from '../../type/runtime';
+import { DataFeed } from '../../type/dataFeed';
+import { getDataFeedById } from '../../selector/dataFeed';
 
 export class TickerZoneHSM extends ZoneHSM {
 
@@ -66,13 +67,6 @@ export class TickerZoneHSM extends ZoneHSM {
   }
 
   tickerZoneConstructor() {
-
-    console.log(this.bsdmZone);
-    const zoneProperties: DmTickerZoneProperties = this.bsdmZone.properties as DmTickerZoneProperties;
-    const scrollSpeed = zoneProperties.scrollSpeed;
-    const textWidget = zoneProperties.textWidget;
-    const widget = zoneProperties.widget;
-
     const initialMediaStateId: BsDmId | null = dmGetInitialMediaStateIdForZone(this.bsdm, { id: this.zoneId });
     if (!isNil(initialMediaStateId)) {
       const initialMediaState: DmMediaState = dmGetMediaStateById(this.bsdm, { id: initialMediaStateId }) as DmMediaState;
@@ -127,10 +121,13 @@ class STRSSDataFeedInitialLoad extends HState {
       return 'SUPER';
     }
   }
-
 }
 
 class STRSSDataFeedPlaying extends HState {
+
+  bsTicker: BSTicker;
+
+
   constructor(stateMachine: TickerZoneHSM, id: string) {
     super(stateMachine, id);
 
@@ -142,13 +139,61 @@ class STRSSDataFeedPlaying extends HState {
     return (dispatch: any, getState: any) => {
 
       if (event.EventType === 'ENTRY_SIGNAL') {
-        debugger;
         console.log('RSSDataFeedPlaying ' + this.id + ': entry signal');
+        dispatch(this.populateRSSDataFeedWidget());
         return 'HANDLED';
       }
 
       stateData.nextState = this.superState;
       return 'SUPER';
+    }
+  }
+
+  populateRSSDataFeedWidget() {
+
+    return (dispatch: any, getState: any) => {
+
+      const tickerZoneHSM: TickerZoneHSM = this.stateMachine as TickerZoneHSM;
+      const tickerZoneProperties: DmTickerZoneProperties = tickerZoneHSM.bsdmZone.properties as DmTickerZoneProperties;
+
+      debugger;
+
+      // only support 1 for now
+      let dataFeed: DataFeed | null = null;
+      for (const rssDataFeedItem of tickerZoneHSM.rssDataFeedItems) {
+        const dataFeedId: BsDmId = rssDataFeedItem.dataFeedId;
+        dataFeed = getDataFeedById(getState(), dataFeedId) as DataFeed;
+      }
+
+      try {
+        if (!isObject(this.bsTicker)) {
+
+          const { x, y, width, height } = tickerZoneHSM.bsdmZone.position;
+          const { scrollSpeed, textWidget, widget } = tickerZoneProperties;
+
+          // should use a value derived from textWidget.rotation instead of 0.
+          this.bsTicker = new BSTicker(x, y, width, height, 0);
+          // set other bsTicker parameters here
+          // this.bsTicker = new BSTicker(10, 700, 1200, 30, 0);
+          // this.bsTicker.AddString("addText1");
+          // this.bsTicker.AddString("addText2");
+          // this.bsTicker.AddString("addText3");
+          // this.bsTicker.SetBackgroundColor(0xFFFF0000);
+          // this.bsTicker.SetForegroundColor(0xFF007700);
+          // this.bsTicker.SetSeparatorString(" ### ");
+
+          if (!isNil(dataFeed)) {
+            const articles: string[] = dataFeed.articles as string[];
+            for (const article of articles) {
+              this.bsTicker.AddString(article);
+            }
+          }
+        }
+      }
+      catch (e) {
+        console.log('failed to create bsTicker: ');
+        return;
+      }
     }
   }
 

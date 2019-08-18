@@ -113,7 +113,7 @@ class STPlaying extends HState {
         }
         else
         {
-         parseSimpleRSSFeed(bsdm, feedAsJson, dataFeed.id);
+         dispatch(parseSimpleRSSFeed(bsdm, feedAsJson, dataFeed.id));
         }
 
         // TODODF autoGenerateUserVariables

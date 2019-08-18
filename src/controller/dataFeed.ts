@@ -64,11 +64,11 @@ function readFeedAsContent(bsdmDataFeed: DmcDataFeed) {
           console.log(items);
 
           const dataFeedContentItems: DataFeedContentItems = convertMRSSFormatToContent(items);
-          
+
           let itemUrls: string[] | null = dataFeedContentItems.articles;
           let fileUrls: string[] | null = dataFeedContentItems.articles;
           let fileTypes: string[] | null = dataFeedContentItems.articleMediaTypes;
-          
+
           let fileKeys: string[] | null = [];
           if (dataFeedContentItems.articleTitles.length > 0) {
             fileKeys = dataFeedContentItems.articleTitles;
@@ -112,7 +112,7 @@ function readFeedAsContent(bsdmDataFeed: DmcDataFeed) {
               itemUrls = null;
               fileKeys = null;
               fileUrls = null;
-      
+
               break;
             }
           }
@@ -124,7 +124,7 @@ function readFeedAsContent(bsdmDataFeed: DmcDataFeed) {
           };
           const action: any = postMessage(event);
           dispatch(action);
-  
+
           const dataFeed: DataFeed = {
             id: bsdmDataFeed.id,
             sourceId: bsdmDataFeed.feedSourceId,
@@ -139,7 +139,7 @@ function readFeedAsContent(bsdmDataFeed: DmcDataFeed) {
             fileUrls,
             fileTypes,
             fileKeys,
-          
+
           };
           const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, dataFeed);
           dispatch(addDataFeedAction);
@@ -157,13 +157,13 @@ function readFeedAsContent(bsdmDataFeed: DmcDataFeed) {
 }
 
 function convertMRSSFormatToContent(items: DataFeedItem[]): DataFeedContentItems {
-  
+
   // convert to format required for content feed
   const articles: string[] = [];
   const articleTitles: string[] = [];
   const articlesByTitle: any = {};
   const articleMediaTypes: string[] = [];
-  
+
   for (const item of items) {
     articles.push(item.url);
     articleTitles.push(item.title);
@@ -462,27 +462,33 @@ export function feedIsMrss(feed: any): boolean {
 }
 
 export function parseSimpleRSSFeed(bsdm: DmState, rawFeed: any, dataFeedId: BsDmId) {
-  
-  const articles: string[] = [];
-  const articleTitles: string[] = [];
-  const articlesByTitle: any = {};
 
-  for (const feedItem of rawFeed.rss.channel.item) {
-    const title: string = feedItem.title;
-    const description: string = feedItem.description;
+  return (dispatch: any, getState: any) => {
 
-    articles.push(description);
-    articleTitles.push(title);
-    articlesByTitle[title] = description;
+    const articles: string[] = [];
+    const articleTitles: string[] = [];
+    const articlesByTitle: any = {};
+
+    for (const feedItem of rawFeed.rss.channel.item) {
+      const title: string = feedItem.title;
+      const description: string = feedItem.description;
+
+      articles.push(description);
+      articleTitles.push(title);
+      articlesByTitle[title] = description;
+    }
+
+    const dmDataFeed: DmcDataFeed = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
+    const dataFeed: DataFeed = {
+      id: dataFeedId,
+      sourceId: dmDataFeed.feedSourceId,
+      isMrss: true,
+      articles,
+      articleTitles,
+      articlesByTitle,
+    };
+
+    const addDataFeedAction: any = addDataFeed(dataFeedId, dataFeed);
+    dispatch(addDataFeedAction);
   }
-
-  const dmDataFeed: DmcDataFeed = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
-  const dataFeed: DataFeed = {
-    id: dataFeedId,
-    sourceId: dmDataFeed.feedSourceId,
-    isMrss: true,
-    articles,
-    articleTitles,
-    articlesByTitle,
-  };
 }
