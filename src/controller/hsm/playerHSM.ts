@@ -4,7 +4,7 @@ import { Action } from 'redux';
 import { DmState, BsDmId, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById, dmGetDataFeedSourceForFeedId } from '@brightsign/bsdatamodel';
 import { isNil, isString } from 'lodash';
 
-import { downloadMRSSContent, retrieveDataFeed, readDataFeedContentSync, feedIsMrss, downloadFeedContent, parseSimpleRSSFeed } from '../dataFeed';
+import { downloadMRSSContent, retrieveDataFeed, readStoredDataFeed, feedIsMrss, downloadFeedContent, parseSimpleRSSFeed } from '../dataFeed';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
 
 export class PlayerHSM extends HSM {
@@ -80,7 +80,7 @@ class STPlayer extends HState {
 class STPlaying extends HState {
 
   // ids of dataFeeds to download
-  dataFeedIdsToDownload: string[] = [];
+  bsdmDataFeedIdsToDownload: string[] = [];
 
   constructor(stateMachine: PlayerHSM, id: string, superState: HState) {
     super(stateMachine, id);
@@ -89,43 +89,25 @@ class STPlaying extends HState {
     this.superState = superState;
   }
 
-  // see PlayingEventUrlHandler in autorun for reference
-  processRetrievedDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed) {
-
+  processTextDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed) {
     return (dispatch: any, getState: any) => {
-      console.log('promise resolved from retrieveLiveDataFeed');
-      console.log(feedAsJson);
 
-      if (dataFeed.usage !== DataFeedUsageType.Mrss) {
+      dispatch(parseSimpleRSSFeed(bsdm, feedAsJson, dataFeed.id));
 
-        if (dataFeed.usage === DataFeedUsageType.Content) {
-          if (dataFeed.type === DataFeedType.BSNDynamicPlaylist || dataFeed.type === DataFeedType.BSNMediaFeed) {
-            /*
-              liveDataFeed.ParseMRSSFeed(liveDataFeed.rssFileName$)
-              liveDataFeed.ConvertMRSSFormatToContent()
-            */
-          }
-          else {
-            /*
-              liveDataFeed.ParseCustomContentFormat(liveDataFeed.rssFileName$)
-            */
-          }
-        }
-        else
-        {
-         dispatch(parseSimpleRSSFeed(bsdm, feedAsJson, dataFeed.id));
-        }
+      const event: ArEventType = {
+        EventType: 'LIVE_DATA_FEED_UPDATE',
+        EventData: dataFeed.id,
+      };
+      const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
+      dispatch(action);
 
-        // TODODF autoGenerateUserVariables
-      }
-      else {
-        /*
-          ' These must be valid objects even for MRSS feeds (at least for now)
-          liveDataFeed.articles = CreateObject("roArray", 1, true)
-          liveDataFeed.articleTitles = CreateObject("roArray", 1, true)
-          liveDataFeed.articlesByTitle = { }
-        */
-      }
+      // set timer to check for feed update
+      dispatch(this.launchRetrieveFeedTimer(dataFeed.id, bsdm).bind(this));
+    };
+  }
+
+  processMediaDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed) {
+    return (dispatch: any, getState: any) => {
 
       const isMRSSFeed = feedIsMrss(feedAsJson);
 
@@ -135,77 +117,62 @@ class STPlaying extends HState {
       else if (dataFeed.usage === DataFeedUsageType.Mrss && (dataFeed.parserPlugin !== '' || isMRSSFeed)) {
         dispatch(downloadMRSSContent(bsdm, feedAsJson, dataFeed.id));
       }
+      else {
+        debugger;
+      }
 
-      // TODODF autoGenerateUserVariables
-
-      // TODODF update user variables
-
-      // send internal message indicating that the data feed has been updated
       const event: ArEventType = {
         EventType: 'LIVE_DATA_FEED_UPDATE',
         EventData: dataFeed.id,
       };
       const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
       dispatch(action);
-      
-      // TODODF - headRequest
 
-      // set timer to check for feed update
       dispatch(this.launchRetrieveFeedTimer(dataFeed.id, bsdm).bind(this));
     };
   }
 
-  advanceToNextLiveDataFeedInQueue(bsdm: DmState) {
-
+  advanceToNextDataFeedInQueue(bsdm: DmState) {
     return (dispatch: any, getState: any) => {
-      this.dataFeedIdsToDownload.shift();
+      this.bsdmDataFeedIdsToDownload.shift();
 
-      if (this.dataFeedIdsToDownload.length > 0) {
-        const dataFeedId = this.dataFeedIdsToDownload[0];
-        const dataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
-        const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, { id: dataFeed.feedSourceId });
-        if (!isNil(dataFeedSource)) {
-          retrieveDataFeed(bsdm, dataFeed)
-            .then((feedAsJson) => {
-              dispatch(this.processRetrievedDataFeed(feedAsJson, bsdm, dataFeed));
-            });
+      if (this.bsdmDataFeedIdsToDownload.length > 0) {
+        const bsdmDataFeedId = this.bsdmDataFeedIdsToDownload[0];
+        dispatch(this.retrieveAndProcessDataFeed(bsdm, bsdmDataFeedId));
+      }
+    };
+  }
+
+  queueRetrieveDataFeed(bsdm: DmState, bsdmDataFeedId: BsDmId) {
+    return (dispatch: any, getState: any) => {
+      const bsdmDataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: bsdmDataFeedId }) as DmcDataFeed;
+      if (!isNil(bsdmDataFeed)) {
+        if (bsdmDataFeed.usage === DataFeedUsageType.Text) {
+          dispatch(this.retrieveAndProcessDataFeed(bsdm, bsdmDataFeedId));
+        }
+        else {
+          this.bsdmDataFeedIdsToDownload.push(bsdmDataFeedId);
+          if (this.bsdmDataFeedIdsToDownload.length === 1) {
+            dispatch(this.retrieveAndProcessDataFeed(bsdm, bsdmDataFeedId));
+          }
         }
       }
     };
   }
 
-  queueRetrieveLiveDataFeed(bsdm: DmState, dataFeedId: BsDmId) {
+  retrieveAndProcessDataFeed(bsdm: DmState, bsdmDataFeedId: BsDmId) {
 
     return (dispatch: any, getState: any) => {
-
-      const dataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId });
-
-      if (!isNil(dataFeed)) {
-        if (dataFeed.usage === DataFeedUsageType.Text) {
-          // download feeds that are neither MRSS nor content immediately (simple RSS)
-          // TODODF - m.RetrieveLiveDataFeed(liveDataFeeds, liveDataFeed)
-          //     m.RetrieveLiveDataFeed(liveDataFeeds, liveDataFeed)
-          const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, { id: dataFeed.feedSourceId });
-          if (!isNil(dataFeedSource)) {
-            retrieveDataFeed(bsdm, dataFeed)
-              .then((feedAsJson) => {
-                dispatch(this.processRetrievedDataFeed(feedAsJson, bsdm, dataFeed));
-              });
+      const bsdmDataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: bsdmDataFeedId }) as DmcDataFeed;
+      retrieveDataFeed(bsdm, bsdmDataFeed)
+        .then((feedAsJson) => {
+          if (bsdmDataFeed.usage === DataFeedUsageType.Text) {
+            dispatch(this.processTextDataFeed(feedAsJson, bsdm, bsdmDataFeed));
           }
-        }
-        else {
-          this.dataFeedIdsToDownload.push(dataFeedId);
-          if (this.dataFeedIdsToDownload.length === 1) {
-            const dataFeedSource: DmDataFeedSource | null = dmGetDataFeedSourceForFeedSourceId(bsdm, { id: dataFeed.feedSourceId });
-            if (!isNil(dataFeedSource)) {
-              retrieveDataFeed(bsdm, dataFeed)
-                .then((feedAsJson) => {
-                  dispatch(this.processRetrievedDataFeed(feedAsJson, bsdm, dataFeed));
-                });
-            }
+          else {
+            dispatch(this.processMediaDataFeed(feedAsJson, bsdm, bsdmDataFeed));
           }
-        }
-      }
+        });
     };
   }
 
@@ -223,44 +190,40 @@ class STPlaying extends HState {
   }
 
   retrieveFeedTimeoutHandler(dispatch: any, playerHSM: PlayerHSM, dataFeedId: BsDmId, bsdm: DmState): any {
-    console.log('retrieveFeedTimeoutHandler invoked');
-    dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedId));
+    dispatch(this.queueRetrieveDataFeed(bsdm, dataFeedId));
   }
 
-  readDataFeeds(bsdm: DmState) {
-
+  readStoredDataFeeds(bsdm: DmState) {
     return (dispatch: any) => {
 
-      const dataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
+      const bsdmDataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
 
-      const readNextFile = (index: number): Promise<void> => {
+      const readNextStoredDataFeed = (index: number): Promise<void> => {
 
-        if (index >= dataFeedIds.length) {
+        if (index >= bsdmDataFeedIds.length) {
           return Promise.resolve();
         }
 
-        const dataFeedId = dataFeedIds[index];
-        const maybeDataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: dataFeedId });
-        // TODODF
-        const dataFeed: DmcDataFeed = maybeDataFeed as DmcDataFeed;
-        return dispatch(readDataFeedContentSync(dataFeed))
+        const bsdmDataFeedId = bsdmDataFeedIds[index];
+        const bsdmDataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: bsdmDataFeedId }) as DmcDataFeed;
+        return dispatch(readStoredDataFeed(bsdmDataFeed))
           .then(() => {
-            return readNextFile(index + 1);
+            return readNextStoredDataFeed(index + 1);
           }).catch((error: Error) => {
             console.log(error);
             debugger;
           });
       };
 
-      return readNextFile(0);
+      return readNextStoredDataFeed(0);
     };
   }
 
   fetchDataFeeds(bsdm: DmState) {
     return (dispatch: any, getState: any) => {
-      const dataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
-      for (const dataFeedId of dataFeedIds) {
-        dispatch(this.queueRetrieveLiveDataFeed(bsdm, dataFeedId));
+      const bsdmDataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
+      for (const bsdmDataFeedId of bsdmDataFeedIds) {
+        dispatch(this.queueRetrieveDataFeed(bsdm, bsdmDataFeedId));
       }
     };
   }
@@ -276,12 +239,12 @@ class STPlaying extends HState {
 
         console.log(this.id + ': entry signal');
 
-        // read existing data feeds
-        const readDataFeedsAction: any = this.readDataFeeds(getState().bsdm);
-        dispatch(readDataFeedsAction)
+        // read stored data feeds
+        const readStoredDataFeedsAction: any = this.readStoredDataFeeds(getState().bsdm);
+        dispatch(readStoredDataFeedsAction)
           .then(() => {
 
-            // initiate data feed downloads (performed asynchronously)
+            // then initiate data feed downloads
             dispatch(this.fetchDataFeeds(getState().bsdm));
 
             // launch playback
@@ -293,8 +256,7 @@ class STPlaying extends HState {
 
       } else if (isString(event.EventType) && (event.EventType === 'MRSS_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_UNCHANGED')) {
         console.log('******* - cc30');
-        console.log(this.id + ': MRSS_DATA_FEED_LOADED event received in playerHSM');
-        dispatch(this.advanceToNextLiveDataFeedInQueue(getState().bsdm).bind(this));
+        dispatch(this.advanceToNextDataFeedInQueue(getState().bsdm).bind(this));
         return 'HANDLED';
       }
 

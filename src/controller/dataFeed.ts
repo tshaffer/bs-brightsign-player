@@ -37,7 +37,7 @@ function getFeedAssetPool(): AssetPool {
   }
 }
 
-function readFeedAsContent(bsdmDataFeed: DmcDataFeed) {
+function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
   return (dispatch: any, getState: any) => {
     console.log(bsdmDataFeed);
 
@@ -181,7 +181,7 @@ function convertMRSSFormatToContent(items: DataFeedItem[]): DataFeedContentItems
   return feedContentItems;
 }
 
-function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
+function readStoredMrssFeed(bsdmDataFeed: DmcDataFeed) {
 
   return (dispatch: any, getState: any) => {
 
@@ -242,14 +242,14 @@ function readMrssContentSync(bsdmDataFeed: DmcDataFeed) {
   };
 }
 
-export function readDataFeedContentSync(dataFeed: DmcDataFeed) {
+export function readStoredDataFeed(bsdmDataFeed: DmcDataFeed) {
   return (dispatch: any, getState: any) => {
-    switch (dataFeed.usage) {
+    switch (bsdmDataFeed.usage) {
       case DataFeedUsageType.Mrss: {
-        return dispatch(readMrssContentSync(dataFeed));
+        return dispatch(readStoredMrssFeed(bsdmDataFeed));
       }
       case DataFeedUsageType.Content: {
-        return dispatch(readFeedAsContent(dataFeed));
+        return dispatch(readStoredContentFeed(bsdmDataFeed));
       }
       default:
         return Promise.resolve();
@@ -482,7 +482,7 @@ export function parseSimpleRSSFeed(bsdm: DmState, rawFeed: any, dataFeedId: BsDm
     const dataFeed: DataFeed = {
       id: dataFeedId,
       sourceId: dmDataFeed.feedSourceId,
-      isMrss: true,
+      isMrss: false,
       articles,
       articleTitles,
       articlesByTitle,
