@@ -14,7 +14,7 @@ Sub RunApp()
   app.eventLoop = EventLoop
   app.processHtmlWidgetEvent = processHtmlWidgetEvent
 
-  app.htmlRect = CreateObject("roRectangle", 0, 0, 1000, 1080)
+  app.htmlRect = CreateObject("roRectangle", 0, 0, 1920, 1080)
   is = {
       port: 2999
   }
