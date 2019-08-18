@@ -612,6 +612,7 @@ declare module '@brightsign/videooutput' {
   }
 }
 declare module '@brightsign' {
+  
   global {
 
     export class BSMessagePort {
