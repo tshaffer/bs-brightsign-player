@@ -485,6 +485,4 @@ export function parseSimpleRSSFeed(bsdm: DmState, rawFeed: any, dataFeedId: BsDm
     articleTitles,
     articlesByTitle,
   };
-
-  debugger;
 }

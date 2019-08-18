@@ -54,6 +54,8 @@ else {
 }
 
 import Registry from '@brightsign/registry';
+import { ZoneType } from '@brightsign/bscore';
+import { TickerZoneHSM } from './hsm/tickerZoneHSM';
 const registry: Registry = new Registry();
 registry.read('networking', 'ru')
   .then((keyValue) => {
@@ -378,6 +380,10 @@ function startPlayback() {
       let zoneHSM: ZoneHSM;
 
       switch (bsdmZone.type) {
+        case ZoneType.Ticker: {
+          zoneHSM = new TickerZoneHSM(zoneId + '-' + bsdmZone.type, zoneId, queueHsmEvent, bsdm);
+          break;
+        }
         default: {
           zoneHSM = new MediaZoneHSM(zoneId + '-' + bsdmZone.type, zoneId, queueHsmEvent, bsdm);
           break;
@@ -391,14 +397,12 @@ function startPlayback() {
 
     zoneHSMs.forEach((zoneHSM: ZoneHSM) => {
       zoneHSM.constructorFunction();
-      console.log('runtime.ts#startPlayback - invoke zoneHSM.initialize()');
       const action = zoneHSM.hsmInitialize().bind(zoneHSM);
       promises.push(dispatch(action));
     });
 
     Promise.all(promises).then(() => {
       const hsmInitializationComplete = hsmInitialized();
-      console.log('69696969 - end of startPlayback, hsmInitializationComplete: ' + hsmInitializationComplete);
       if (hsmInitializationComplete) {
         const event: ArEventType = {
           EventType: 'NOP',
