@@ -5,8 +5,8 @@ import { isNil, isObject } from 'lodash';
 import { HState, STTopEventHandler } from './HSM';
 import { ContentItemType } from '@brightsign/bscore';
 import { ArEventType, HSMStateData } from '../../type/runtime';
-import { DataFeed } from '../../type/dataFeed';
 import { getDataFeedById } from '../../selector/dataFeed';
+import { ArTextFeed, ArTextItem } from '../../type/dataFeed';
 
 export class TickerZoneHSM extends ZoneHSM {
 
@@ -159,10 +159,10 @@ class STRSSDataFeedPlaying extends HState {
       debugger;
 
       // only support 1 for now
-      let dataFeed: DataFeed | null = null;
+      let dataFeed: ArTextFeed | null = null;
       for (const rssDataFeedItem of tickerZoneHSM.rssDataFeedItems) {
         const dataFeedId: BsDmId = rssDataFeedItem.dataFeedId;
-        dataFeed = getDataFeedById(getState(), dataFeedId) as DataFeed;
+        dataFeed = getDataFeedById(getState(), dataFeedId) as ArTextFeed;
       }
 
       try {
@@ -183,9 +183,9 @@ class STRSSDataFeedPlaying extends HState {
           // this.bsTicker.SetSeparatorString(" ### ");
 
           if (!isNil(dataFeed)) {
-            const articles: string[] = dataFeed.articles as string[];
-            for (const article of articles) {
-              this.bsTicker.AddString(article);
+            const textItems: ArTextItem[] = dataFeed.textItems;
+            for (const textItem of textItems) {
+              this.bsTicker.AddString(textItem.articleDescription);
             }
           }
         }

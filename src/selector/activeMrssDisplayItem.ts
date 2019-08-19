@@ -1,13 +1,13 @@
 import { BsBrightSignPlayerState } from '../type';
-import { DataFeedItem } from '../type/dataFeed';
 import { BsDmId } from '@brightsign/bsdatamodel';
+import { ArMrssItem } from '../type/dataFeed';
 
 // ------------------------------------
 // Selectors
 // ------------------------------------
 // TEDTODO - create selector?
-export function getActiveMrssDisplayItem(state: BsBrightSignPlayerState, zoneId: string): DataFeedItem | null {
+export function getActiveMrssDisplayItem(state: BsBrightSignPlayerState, zoneId: string): ArMrssItem | null {
   const activeMrssDisplayItemIdByZone = state.bsPlayer.activeMrssDisplayItems;
-  const activeMrssDisplayItem: DataFeedItem | null = activeMrssDisplayItemIdByZone[zoneId];
+  const activeMrssDisplayItem: ArMrssItem | null = activeMrssDisplayItemIdByZone[zoneId];
   return activeMrssDisplayItem;
 }

@@ -1,5 +1,5 @@
-import { DataFeedItem } from './dataFeed';
+import { ArMrssItem } from './dataFeed';
 
 export interface MrssDisplayItemMap {
-  [hsmId: string]: DataFeedItem | null;
+  [hsmId: string]: ArMrssItem | null;
 }

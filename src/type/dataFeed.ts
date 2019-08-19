@@ -42,6 +42,9 @@ export interface ArMrssFeedProperties {
 
 export interface ArContentItem {
   filePath: string;
+  itemUrl: string;
+  guid: string;
+  medium: string;
 }
 
 export interface ArContentFeedProperties {

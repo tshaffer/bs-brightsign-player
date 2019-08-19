@@ -13,7 +13,7 @@ import { isNil, isNumber } from 'lodash';
 import { MediaZoneHSM } from './mediaZoneHSM';
 import { setActiveMediaListDisplayItem } from '../../model/activeMediaListDisplayItem';
 
-import { DataFeed, DataFeedItem } from '../../type/dataFeed';
+import { ArContentFeed, ArContentItem } from '../../type/dataFeed';
 import {
   getDataFeedById,
   allDataFeedContentExists,
@@ -48,7 +48,7 @@ export default class MediaListState extends MediaHState {
   advanceOnTimeoutTimer: any;
 
   dataFeedId: BsDmId;
-  dataFeed: DataFeed;
+  dataFeed: ArContentFeed;
 
   constructor(zoneHSM: ZoneHSM, mediaState: DmMediaState, superState: HState, bsdm: DmState) {
 
@@ -232,7 +232,7 @@ export default class MediaListState extends MediaHState {
         this.dataFeedId = event.EventData;
         // this compares a dataFeedId to a sourceDataFeed.id - need to figure this out!!
         // if (dataFeedId === this.mediaListState.sourceDataFeed.id) {
-        this.dataFeed = getDataFeedById(getState(), this.dataFeedId) as DataFeed;
+        this.dataFeed = getDataFeedById(getState(), this.dataFeedId) as ArContentFeed;
         this.PopulateMediaListFromLiveDataFeed();
 
         // reset the playback index to the start point
@@ -284,20 +284,20 @@ export default class MediaListState extends MediaHState {
 
   PopulateMediaListFromLiveDataFeed()
   {
-    const dataFeed: DataFeed = this.dataFeed as DataFeed;
-    const itemUrls: string[] = dataFeed.itemUrls as string[];
+    const dataFeed: ArContentFeed = this.dataFeed as ArContentFeed;
+    const contentItems: ArContentItem[] = dataFeed.contentItems;
+    // const itemUrls: string[] = dataFeed.itemUrls as string[];
 
-    this.numItems = itemUrls.length;
+    this.numItems = contentItems.length;
 
     for (let i = 0; i < this.numItems; i++) {
       this.playbackIndices.push(i);
 
-      const dataFeedItems = dataFeed.items as DataFeedItem[];
-      const filePath: string = getFeedPoolFilePath(dataFeedItems[i].guid.toLowerCase());
+      const filePath: string = getFeedPoolFilePath(contentItems[i].guid.toLowerCase());
 
       const mediaListItem: MediaListItem = {
         filePath,
-        contentItemType: dataFeedItems[i].medium,
+        contentItemType: contentItems[i].medium,
       };
       this.mediaListItems.push(mediaListItem);
     }

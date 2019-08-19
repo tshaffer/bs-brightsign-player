@@ -1,7 +1,7 @@
 import { ActionWithPayload } from './baseAction';
 import { isObject } from 'lodash';
 import { MrssDisplayItemMap } from '../type/activeMrssDisplayItem';
-import { DataFeedItem } from '../type/dataFeed';
+import { ArMrssItem } from '../type/dataFeed';
 
 // ------------------------------------
 // Constants
@@ -11,7 +11,7 @@ export const SET_ACTIVE_MRSS_DISPLAY_ITEM = 'SET_ACTIVE_MRSS_DISPLAY_ITEM';
 // ------------------------------------
 // Actions
 // ------------------------------------
-export function setActiveMrssDisplayItem(zoneId: string, activeMrssDisplayItem: DataFeedItem): ActionWithPayload {
+export function setActiveMrssDisplayItem(zoneId: string, activeMrssDisplayItem: ArMrssItem): ActionWithPayload {
   return {
     type: SET_ACTIVE_MRSS_DISPLAY_ITEM,
     payload: {

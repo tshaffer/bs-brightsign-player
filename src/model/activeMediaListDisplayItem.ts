@@ -1,7 +1,6 @@
 import { ActionWithPayload } from './baseAction';
 import { isObject } from 'lodash';
 import { MediaListDisplayItemMap } from '../type/activeMediaListDisplayItem';
-import { DataFeedItem } from '../type/dataFeed';
 import { MediaListItem } from '../type/mediaListItem';
 
 // ------------------------------------
