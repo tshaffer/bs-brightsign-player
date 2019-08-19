@@ -1,4 +1,4 @@
-import { DataFeedMap, DataFeed } from '../type/dataFeed';
+import { ArDataFeedMap, ArDataFeed } from '../type/dataFeed';
 import { ActionWithPayload } from './baseAction';
 import { isObject } from 'lodash';
 
@@ -10,7 +10,7 @@ export const ADD_DATA_FEED = 'ADD_DATA_FEED';
 // ------------------------------------
 // Actions
 // ------------------------------------
-export function addDataFeed(dataFeedId: string, dataFeed: DataFeed) {
+export function addDataFeed(dataFeedId: string, dataFeed: ArDataFeed) {
   
   return {
     type: ADD_DATA_FEED,
@@ -25,14 +25,14 @@ export function addDataFeed(dataFeedId: string, dataFeed: DataFeed) {
 // Reducer
 // ------------------------------------
 
-const initialState: DataFeedMap = {};
+const initialState: ArDataFeedMap = {};
 
 export const dataFeedReducer = (
-  state: DataFeedMap = initialState,
+  state: ArDataFeedMap = initialState,
   action: ActionWithPayload) => {
   switch (action.type) {
     case ADD_DATA_FEED: {
-      const newState: DataFeedMap = Object.assign({}, state);
+      const newState: ArDataFeedMap = Object.assign({}, state);
       const { dataFeedId, dataFeed } = action.payload;
       newState[dataFeedId] = dataFeed;
       return newState;

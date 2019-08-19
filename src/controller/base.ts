@@ -20,7 +20,7 @@ const fetchModelAsync = (): Promise<BsBrightSignPlayerModelState> => {
       activeMrssDisplayItems: {},
       activeMediaListDisplayItems: {},
       hsms: [],
-      dataFeeds: {},
+      arDataFeeds: {},
       userVariables: {},
     };
     resolve(model);

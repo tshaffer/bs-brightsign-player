@@ -4,7 +4,7 @@ import { DmState } from '@brightsign/bsdatamodel';
 import { HStateMap } from './activeHState';
 import { HSM } from '../controller/hsm/HSM';
 import { UserVariableMap } from './userVariable';
-import { DataFeedMap } from './dataFeed';
+import { ArDataFeedMap } from './dataFeed';
 import { MrssDisplayItemMap } from './activeMrssDisplayItem';
 import { MediaListDisplayItemMap } from './activeMediaListDisplayItem';
 import { Dispatch } from 'redux';
@@ -29,7 +29,7 @@ export interface BsBrightSignPlayerModelState {
   activeMrssDisplayItems: MrssDisplayItemMap;
   activeMediaListDisplayItems: MediaListDisplayItemMap;
   userVariables: UserVariableMap;
-  dataFeeds: DataFeedMap;
+  arDataFeeds: ArDataFeedMap;
 }
 
 // BsBrightSignPlayerState: 

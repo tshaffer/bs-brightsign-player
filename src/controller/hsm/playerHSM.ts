@@ -89,20 +89,20 @@ class STPlaying extends HState {
     this.superState = superState;
   }
 
-  processTextDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed) {
+  processTextDataFeed(feedAsJson: any, bsdm: DmState, bsdmDataFeed: DmcDataFeed) {
     return (dispatch: any, getState: any) => {
 
-      dispatch(parseSimpleRSSFeed(bsdm, feedAsJson, dataFeed.id));
+      dispatch(parseSimpleRSSFeed(bsdm, feedAsJson, bsdmDataFeed.id));
 
       const event: ArEventType = {
         EventType: 'LIVE_DATA_FEED_UPDATE',
-        EventData: dataFeed.id,
+        EventData: bsdmDataFeed.id,
       };
       const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
       dispatch(action);
 
       // set timer to check for feed update
-      dispatch(this.launchRetrieveFeedTimer(dataFeed.id, bsdm).bind(this));
+      dispatch(this.launchRetrieveFeedTimer(bsdmDataFeed.id, bsdm).bind(this));
     };
   }
 

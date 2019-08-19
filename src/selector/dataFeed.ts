@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import isomorphicPath from 'isomorphic-path';
 import { BsBrightSignPlayerState } from '../type';
-import { DataFeed, DataFeedItem } from '../type/dataFeed';
+import { ArDataFeed, ArMrssItem, ArMediaFeed } from '../type/dataFeed';
 import { Hash, Asset } from '@brightsign/assetpool';
 import { getFeedDirectory as getFeedPoolDirectory } from '../controller';
 
@@ -9,25 +9,23 @@ import { getFeedDirectory as getFeedPoolDirectory } from '../controller';
 // Selectors
 // ------------------------------------
 // TEDTODO - create selector?
-export function getDataFeedById(state: BsBrightSignPlayerState, dataFeedId: string): DataFeed | null {
-  const dataFeedsById = state.bsPlayer.dataFeeds;
+export function getDataFeedById(state: BsBrightSignPlayerState, dataFeedId: string): ArDataFeed | null {
+  const dataFeedsById = state.bsPlayer.arDataFeeds;
   return dataFeedsById[dataFeedId];
 }
 
-export function getFeedItems(feed: any): DataFeedItem[] {
+export function getMrssFeedItems(feed: any): ArMrssItem[] {
 
-  const feedItems: DataFeedItem[] = [];
+  const feedItems: ArMrssItem[] = [];
 
   const items: any = feed.rss.channel.item;
   for (const item of items) {
     const mediaContent: any = item['media:content'].$;
-    const feedItem: DataFeedItem = {
-      description: item.description,
+    const feedItem: ArMrssItem = {
       guid: item.guid,
       link: item.link,
       title: item.title,
       pubDate: item.pubDate,
-
       duration: mediaContent.duration,
       fileSize: mediaContent.fileSize,
       medium: mediaContent.medium,
@@ -40,7 +38,7 @@ export function getFeedItems(feed: any): DataFeedItem[] {
   return feedItems;
 }
 
-export function allDataFeedContentExists(dataFeed: DataFeed): boolean {
+export function allDataFeedContentExists(dataFeed: ArMediaFeed): boolean {
   for (const asset of dataFeed.assetList as Asset[]) {
     const filePath = getFeedPoolFilePathFromAsset(asset);
     if (filePath === '' || !fs.existsSync(filePath)) {

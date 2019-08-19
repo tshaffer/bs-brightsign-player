@@ -7,7 +7,7 @@ import { MediaZoneHSM } from './mediaZoneHSM';
 import { CommandSequenceType, EventType } from '@brightsign/bscore';
 import { HState } from './HSM';
 import { BsBrightSignPlayerState, BsBrightSignPlayerModelState } from '../../type/base';
-import { DataFeed, DataFeedItem } from '../../type/dataFeed';
+import { ArMrssFeed, ArMrssItem, ArDataFeed } from '../../type/dataFeed';
 import {
   getDataFeedById,
   allDataFeedContentExists,
@@ -23,9 +23,9 @@ export default class MrssState extends MediaHState {
 
   dataFeedId: BsDmId;
 
-  liveDataFeed: DataFeed;
-  currentFeed: DataFeed | null;
-  pendingFeed: DataFeed | null;
+  liveDataFeed: ArMrssFeed;
+  currentFeed: ArMrssFeed | null;
+  pendingFeed: ArMrssFeed | null;
   displayIndex: number;
   firstItemDisplayed: boolean;
 
@@ -69,7 +69,7 @@ export default class MrssState extends MediaHState {
         console.log('mrssState.ts#STDisplayingMrssStateEventHandler, entry signal - invoke getDataFeedById: ' + this.dataFeedId);
 
         // get the data feed associated with the state
-        const dataFeed: DataFeed | null = getDataFeedById(getState(), this.dataFeedId);
+        const dataFeed: ArDataFeed | null = getDataFeedById(getState(), this.dataFeedId) as ArMrssFeed;
 
         if (!isNil(dataFeed)) {
 
@@ -86,7 +86,7 @@ export default class MrssState extends MediaHState {
           this.displayIndex = 0;
 
           // distinguish between a feed that has no content and a feed in which no content has been downloaded
-          const dataFeedItems = dataFeed.items as DataFeedItem[];
+          const dataFeedItems = dataFeed.mrssItems as ArMrssItem[];
           if (dataFeedItems.length === 0 || (!allDataFeedContentExists(dataFeed))) {
 
             console.log('******* - cc1');
@@ -167,7 +167,7 @@ export default class MrssState extends MediaHState {
           console.log('******* - cc10');
 
           console.log('mrssState.ts#STDisplayingMrssStateEventHandler, MRSS_SPEC_UPDATED signal - invoke getDataFeedById: ' + this.dataFeedId);
-          const dataFeed: DataFeed | null = getDataFeedById(getState(), dataFeedId) as DataFeed;
+          const dataFeed: ArMrssFeed | null = getDataFeedById(getState(), dataFeedId) as ArMrssFeed;
           // **** dataFeed is the updated data feed
           // **** currentFeed is the feed that the state is currently displaying
           // ******** are these really two separate objects? or do they point to the same thing?
@@ -184,7 +184,7 @@ export default class MrssState extends MediaHState {
 
             // feed may have been downloaded but it might not have content yet (empty mrss feed)
             // or feed has been downloaded but not all of its content has been downloaded yet - in this case, move on to the next item if possible
-            const dataFeedItems = this.currentFeed.items as DataFeedItem[];
+            const dataFeedItems = this.currentFeed.mrssItems as ArMrssItem[];
 
             if ((dataFeedItems.length === 0) || !allDataFeedContentExists(this.currentFeed)) {
               if (!isNil(this.currentFeed) && (!dataFeedContentExists(this.currentFeed))) {
@@ -263,7 +263,7 @@ export default class MrssState extends MediaHState {
           // console.log('this.currentFeed not nil, length = ' + this.currentFeed.items.length);
           // console.log('this.displayIndex: ' + this.displayIndex);
 
-          let dataFeedItems = this.currentFeed.items as DataFeedItem[];
+          let dataFeedItems = this.currentFeed.mrssItems as ArMrssItem[];
 
           if (this.displayIndex >= dataFeedItems.length) {
             this.displayIndex = 0;
@@ -303,8 +303,8 @@ export default class MrssState extends MediaHState {
           //     if isHtml(displayItem) then
           // else ...
 
-          dataFeedItems = this.currentFeed.items as DataFeedItem[];
-          const displayItem: DataFeedItem = dataFeedItems[this.displayIndex];
+          dataFeedItems = this.currentFeed.mrssItems as ArMrssItem[];
+          const displayItem: ArMrssItem = dataFeedItems[this.displayIndex];
           const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
 
           console.log('displayItem.guid: ' + displayItem.guid);
@@ -327,7 +327,7 @@ export default class MrssState extends MediaHState {
     };
   }
 
-  displayMRSSSItem(displayItem: DataFeedItem) {
+  displayMRSSSItem(displayItem: ArMrssItem) {
 
     return (dispatch: any, getState: any) => {
 
@@ -361,7 +361,7 @@ export default class MrssState extends MediaHState {
     console.log('************ waitForContentTimeoutHandler');
 
     if (!isNil(mrssState.currentFeed)) {
-      const dataFeedItems = mrssState.currentFeed.items as DataFeedItem[];
+      const dataFeedItems = mrssState.currentFeed.mrssItems as ArMrssItem[];
       if ((dataFeedItems.length === 0 || (!allDataFeedContentExists(mrssState.currentFeed)))) {
         console.log('******* - cc23');
         if (dataFeedContentExists(mrssState.currentFeed)) {
@@ -377,7 +377,7 @@ export default class MrssState extends MediaHState {
           dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
         }
       }
-      else if (!isNil(mrssState.currentFeed) && !isNil(mrssState.currentFeed.items) && mrssState.currentFeed.items.length === 0) {
+      else if (!isNil(mrssState.currentFeed) && !isNil(mrssState.currentFeed.mrssItems) && mrssState.currentFeed.mrssItems.length === 0) {
         console.log('******* - cc26');
         dispatch(mrssState.launchWaitForContentTimer().bind(mrssState));
       }
@@ -429,7 +429,7 @@ export default class MrssState extends MediaHState {
 
   //  need to also consider the case where it's not at the end but there's no more content.
   atEndOfFeed(): boolean {
-    const dataFeedItems = (this.currentFeed as DataFeed).items as DataFeedItem[];
+    const dataFeedItems = (this.currentFeed as ArMrssFeed).mrssItems as ArMrssItem[];
     return this.displayIndex >= dataFeedItems.length;
   }
 }

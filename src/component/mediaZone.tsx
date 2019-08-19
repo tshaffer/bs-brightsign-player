@@ -32,7 +32,7 @@ import { getActiveMediaStateId } from '../selector/hsm';
 import { isString } from 'lodash';
 import { getActiveMrssDisplayItem } from '../selector/activeMrssDisplayItem';
 import { getActiveMediaListDisplayItem } from '../selector/activeMediaListDisplayItem';
-import { DataFeedItem } from '../type/dataFeed';
+import { ArMediaFeedItem } from '../type/dataFeed';
 import { isNullOrUndefined } from 'util';
 import { MediaListItem } from '../type/mediaListItem';
 
@@ -48,7 +48,7 @@ export interface MediaZoneProps {
   width: number;
   height: number;
   activeMediaStateId: string;
-  activeMrssDisplayItem: DataFeedItem;
+  activeMrssDisplayItem: ArMediaFeedItem;
   activeMediaListDisplayItem: MediaListItem;
   postBSPMessage: any;
 }
@@ -161,7 +161,7 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
     const self = this;
 
     if (!isNil(this.props.activeMrssDisplayItem)) {
-      const dataFeedItem: DataFeedItem = this.props.activeMrssDisplayItem;
+      const dataFeedItem: ArMediaFeedItem = this.props.activeMrssDisplayItem;
       const src: string = isomorphicPath.join('file://', dataFeedItem.filePath);
 
       switch (dataFeedItem.medium) {
