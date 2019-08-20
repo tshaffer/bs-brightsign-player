@@ -4,7 +4,7 @@ import { Action } from 'redux';
 import { DmState, BsDmId, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById, dmGetDataFeedSourceForFeedId } from '@brightsign/bsdatamodel';
 import { isNil, isString } from 'lodash';
 
-import { downloadMRSSContent, retrieveDataFeed, readStoredDataFeed, feedIsMrss, downloadFeedContent, parseSimpleRSSFeed } from '../dataFeed';
+import { downloadMRSSFeedContent, retrieveDataFeed, readStoredDataFeed, feedIsMrss, downloadContentFeedContent, parseSimpleRSSFeed } from '../dataFeed';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
 
 export class PlayerHSM extends HSM {
@@ -112,10 +112,10 @@ class STPlaying extends HState {
       const isMRSSFeed = feedIsMrss(feedAsJson);
 
       if (dataFeed.usage === DataFeedUsageType.Content) {
-        dispatch(downloadFeedContent());
+        dispatch(downloadContentFeedContent(bsdm, feedAsJson, dataFeed.id));
       }
       else if (dataFeed.usage === DataFeedUsageType.Mrss && (dataFeed.parserPlugin !== '' || isMRSSFeed)) {
-        dispatch(downloadMRSSContent(bsdm, feedAsJson, dataFeed.id));
+        dispatch(downloadMRSSFeedContent(bsdm, feedAsJson, dataFeed.id));
       }
       else {
         debugger;

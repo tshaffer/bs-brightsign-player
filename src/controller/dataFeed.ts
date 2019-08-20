@@ -62,30 +62,7 @@ function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
           const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
           console.log(items);
 
-          const contentItems: ArContentFeedItem[] = [];
-          for (const item of items) {
-
-            const article: string = item.url;
-            const articleTitle = item.title;
-            const medium: string = item.medium;
-            const guid: string = item.guid;
-
-            const arContentItem: ArContentFeedItem = {
-              article,
-              articleTitle,
-              medium,
-              guid,
-            }
-
-            contentItems.push(arContentItem);
-          }
-
-          const arContentFeed: ArContentFeed = {
-            id: bsdmDataFeed.id,
-            sourceId: bsdmDataFeed.feedSourceId,
-            usage: DataFeedUsageType.Content,
-            contentItems,
-          };
+          const arContentFeed: ArContentFeed = getArContentFeedFromRawFeedItems(bsdmDataFeed, items);
 
           const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
           dispatch(addDataFeedAction);
@@ -100,6 +77,34 @@ function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
       return Promise.resolve();
     }
   }
+}
+
+function getArContentFeedFromRawFeedItems(bsdmDataFeed: DmcDataFeed, items: ArMrssItem[]) {
+  const contentItems: ArContentFeedItem[] = [];
+  for (const item of items) {
+
+    const article: string = item.url;
+    const articleTitle = item.title;
+    const medium: string = item.medium;
+    const guid: string = item.guid;
+
+    const arContentItem: ArContentFeedItem = {
+      article,
+      articleTitle,
+      medium,
+      guid,
+    }
+    contentItems.push(arContentItem);
+  }
+
+  const arContentFeed: ArContentFeed = {
+    id: bsdmDataFeed.id,
+    sourceId: bsdmDataFeed.feedSourceId,
+    usage: DataFeedUsageType.Content,
+    contentItems,
+  };
+
+  return arContentFeed;
 }
 
 //           const dataFeedContentItems: DataFeedContentItems = convertMRSSFormatToContent(items);
@@ -319,13 +324,71 @@ export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<
   return Promise.reject('dataFeedSources url is null');
 }
 
-export function downloadFeedContent() {
+export function downloadContentFeedContent(bsdm: DmState, rawFeed: any, dataFeedId: BsDmId) {
+  // feed should already exist at this point and be on the card
   return (dispatch: any, getState: any) => {
-    debugger;
+
+    const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeedId }) as DmDataFeedSource;
+
+    const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+
+    const bsdmDataFeed: DmcDataFeed = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
+    const arContentFeed: ArContentFeed = getArContentFeedFromRawFeedItems(bsdmDataFeed, items);
+    const addDataFeedAction: any = addDataFeed(dataFeedId, arContentFeed);
+    dispatch(addDataFeedAction);
+
+    const assetList: Asset[] = [];
+    for (const feedItem of items) {
+
+      const asset: Asset = {
+        link: feedItem.url,
+        name: feedItem.url,
+        changeHint: feedItem.guid,
+        hash: {
+          method: 'SHA1',
+          hex: feedItem.guid,
+        }
+      };
+      assetList.push(asset);
+    }
+
+    console.log('assetList created');
+    console.log(assetList);
+
+    const feedAssetPool: AssetPool = getFeedAssetPool();
+    assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
+
+    assetPoolFetcher.addEventListener('progressevent', (data: any) => {
+      console.log('progressEvent:');
+      console.log(data.detail.fileName);
+      console.log(data.detail.index);
+      console.log(data.detail.total);
+      console.log(data.detail.currentFileTransferred);
+      console.log(data.detail.currentFileTotal);
+    });
+
+    assetPoolFetcher.addEventListener('fileevent', (data: any) => {
+      // FileEvent is at data.detail
+      // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
+      console.log('fileEvent:');
+      console.log(data.detail.fileName);
+      console.log(data.detail.index);
+      console.log(data.detail.responseCode);
+    });
+
+    console.log('assetPoolFetcher.start');
+    assetPoolFetcher.start(assetList)
+      .then(() => {
+        console.log('assetPoolFetcher promise resolved');
+      })
+      .catch((err) => {
+        console.log('err caught in assetPoolFetcher.start');
+        console.log(err);
+      });
   };
 }
 
-export function downloadMRSSContent(bsdm: DmState, rawFeed: any, dataFeedId: BsDmId) {
+export function downloadMRSSFeedContent(bsdm: DmState, rawFeed: any, dataFeedId: BsDmId) {
 
   return (dispatch: any, getState: any) => {
 
