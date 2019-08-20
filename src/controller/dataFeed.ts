@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import axios from 'axios';
 
-import { ArTextItem, ArTextFeed, ArMrssItem, ArMrssFeed } from '../type/dataFeed';
+import { ArTextItem, ArTextFeed, ArMrssItem, ArMrssFeed, ArContentFeedItem, ArContentFeed } from '../type/dataFeed';
 import { DmState, BsDmId, DmcDataFeed, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedSourceForFeedId, dmGetDataFeedById } from '@brightsign/bsdatamodel';
 import { isNil, isObject } from 'lodash';
 import { DataFeedUsageType } from '@brightsign/bscore';
@@ -37,31 +37,70 @@ function getFeedAssetPool(): AssetPool {
   }
 }
 
-// function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
-//   return (dispatch: any, getState: any) => {
-//     console.log(bsdmDataFeed);
+function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
 
-//     // TODOML - currently only implemented for a bsn dynamic playlist
-//     const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
+  return (dispatch: any, getState: any) => {
 
-//     console.log('Read existing content for feed ' + bsdmDataFeed.id);
+    console.log('Read existing content for feed ' + bsdmDataFeed.id);
 
-//     let xmlFileContents: string;
+    const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
 
-//     try {
+    let xmlFileContents: string;
 
-//       xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+    try {
 
-//       return xmlStringToJson(xmlFileContents)
-//         .then((rawFeed) => {
+      xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
 
-//           const isMrssFeed: boolean = feedIsMrss(rawFeed);
-//           if (!isMrssFeed) {
-//             return Promise.resolve();
-//           }
+      return xmlStringToJson(xmlFileContents)
+        .then((rawFeed) => {
 
-//           const items: DataFeedItem[] = getMrssFeedItems(rawFeed);
-//           console.log(items);
+          const isMrssFeed: boolean = feedIsMrss(rawFeed);
+          if (!isMrssFeed) {
+            return Promise.resolve();
+          }
+
+          const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+          console.log(items);
+
+          const contentItems: ArContentFeedItem[] = [];
+          for (const item of items) {
+
+            const article: string = item.url;
+            const articleTitle = item.title;
+            const medium: string = item.medium;
+            const guid: string = item.guid;
+
+            const arContentItem: ArContentFeedItem = {
+              article,
+              articleTitle,
+              medium,
+              guid,
+            }
+
+            contentItems.push(arContentItem);
+          }
+
+          const arContentFeed: ArContentFeed = {
+            id: bsdmDataFeed.id,
+            sourceId: bsdmDataFeed.feedSourceId,
+            usage: DataFeedUsageType.Content,
+            contentItems,
+          };
+
+          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
+          dispatch(addDataFeedAction);
+          return Promise.resolve();
+        }).catch((err) => {
+          // TODODF - if err is for file not found
+          return Promise.resolve();
+        });
+    } catch (err) {
+      // return Promise.reject(err);
+      // TODODF
+      return Promise.resolve();
+    }
+  }
+}
 
 //           const dataFeedContentItems: DataFeedContentItems = convertMRSSFormatToContent(items);
 
@@ -156,31 +195,6 @@ function getFeedAssetPool(): AssetPool {
 //   };
 // }
 
-// function convertMRSSFormatToContent(items: DataFeedItem[]): DataFeedContentItems {
-
-//   // convert to format required for content feed
-//   const articles: string[] = [];
-//   const articleTitles: string[] = [];
-//   const articlesByTitle: any = {};
-//   const articleMediaTypes: string[] = [];
-
-//   for (const item of items) {
-//     articles.push(item.url);
-//     articleTitles.push(item.title);
-//     articlesByTitle[item.title] = item.url;
-//     articleMediaTypes.push(item.medium);
-//   }
-
-//   const feedContentItems: DataFeedContentItems = {
-//     articles,
-//     articleTitles,
-//     articlesByTitle,
-//     articleMediaTypes,
-//   };
-
-//   return feedContentItems;
-// }
-
 function readStoredMrssFeed(bsdmDataFeed: DmcDataFeed) {
 
   return (dispatch: any, getState: any) => {
@@ -251,9 +265,9 @@ export function readStoredDataFeed(bsdmDataFeed: DmcDataFeed) {
       case DataFeedUsageType.Mrss: {
         return dispatch(readStoredMrssFeed(bsdmDataFeed));
       }
-      // case DataFeedUsageType.Content: {
-      //   return dispatch(readStoredContentFeed(bsdmDataFeed));
-      // }
+      case DataFeedUsageType.Content: {
+        return dispatch(readStoredContentFeed(bsdmDataFeed));
+      }
       default:
         return Promise.resolve();
     }
