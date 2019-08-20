@@ -75,3 +75,18 @@ export function getFeedPoolFilePath(hashValue: string): string {
   const feedFileName = 'sha1-' + hashValue;
   return isomorphicPath.join(feedPoolDirectory, dir1, dir2, feedFileName);
 }
+
+export function feedPoolFileExists(hashValue: string): string {
+  const feedPoolDirectory = getFeedPoolDirectory();
+  const hashValueLength = hashValue.length;
+  const dir1 = hashValue.substring(hashValueLength - 2, hashValueLength - 1);
+  const dir2 = hashValue.substring(hashValueLength - 1, hashValueLength);
+  const feedFileName = 'sha1-' + hashValue;
+  const feedPoolPath: string = isomorphicPath.join(feedPoolDirectory, dir1, dir2, feedFileName);
+  if (feedPoolPath !== '' && fs.existsSync(feedPoolPath)) {
+    return feedPoolPath;
+  }
+  return '';
+}
+
+

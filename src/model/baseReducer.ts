@@ -46,7 +46,7 @@ export const bsBrightSignPlayerReducer: BsBrightSignPlayerReducer = enableBatchi
   activeMediaListDisplayItems: activeMediaListDisplayItemReducer,
   hsms: hsmReducer,
   userVariables: userVariableReducer,
-  dataFeeds: dataFeedReducer,
+  arDataFeeds: dataFeedReducer,
 }));
 
 // -----------------------------------------------------------------------
@@ -58,7 +58,7 @@ export const isValidBsBrightSignPlayerModelState = (state: any): boolean => {
     && state.hasOwnProperty('activeHStates') && isValidActiveHStates(state.activeHStates)
     && state.hasOwnProperty('activeMrssDisplayItems') && isValidActiveMrssDisplayItems(state.activeMrssDisplayItems)
     && state.hasOwnProperty('activeMediaListDisplayItems') && isValidActiveMediaListDisplayItems(state.activeMediaListDisplayItems)
-    && state.hasOwnProperty('dataFeeds') && isValidDataFeedState(state.dataFeeds)
+    && state.hasOwnProperty('arDataFeeds') && isValidDataFeedState(state.arDataFeeds)
     && state.hasOwnProperty('hsms') && isValidHSMs(state.hsms)
     && state.hasOwnProperty('userVariables') && isValidUserVariableState(state.userVariables);
 };
@@ -68,7 +68,7 @@ export const isValidBsBrightSignPlayerModelStateShallow = (state: any): boolean 
   && state.hasOwnProperty('activeHStates') 
   && state.hasOwnProperty('activeMrssDisplayItems') 
   && state.hasOwnProperty('activeMediaListDisplayItems') 
-  && state.hasOwnProperty('dataFeeds') 
+  && state.hasOwnProperty('arDataFeeds') 
   && state.hasOwnProperty('hsms')
   && state.hasOwnProperty('userVariables');
 };

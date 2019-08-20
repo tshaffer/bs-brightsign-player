@@ -10,13 +10,13 @@ export const ADD_DATA_FEED = 'ADD_DATA_FEED';
 // ------------------------------------
 // Actions
 // ------------------------------------
-export function addDataFeed(dataFeedId: string, dataFeed: ArDataFeed) {
+export function addDataFeed(dataFeedId: string, arDataFeed: ArDataFeed) {
   
   return {
     type: ADD_DATA_FEED,
     payload: {
       dataFeedId,
-      dataFeed,
+      arDataFeed,
     },
   };
 }
@@ -33,8 +33,8 @@ export const dataFeedReducer = (
   switch (action.type) {
     case ADD_DATA_FEED: {
       const newState: ArDataFeedMap = Object.assign({}, state);
-      const { dataFeedId, dataFeed } = action.payload;
-      newState[dataFeedId] = dataFeed;
+      const { dataFeedId, arDataFeed } = action.payload;
+      newState[dataFeedId] = arDataFeed;
       return newState;
     }
     default:

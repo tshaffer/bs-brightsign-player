@@ -13,6 +13,7 @@ import {
   allDataFeedContentExists,
   dataFeedContentExists,
   getFeedPoolFilePath,
+  feedPoolFileExists,
 } from '../../selector/dataFeed';
 
 import { postMessage, getReduxStore } from '../runtime';
@@ -305,7 +306,8 @@ export default class MrssState extends MediaHState {
 
           dataFeedItems = this.currentFeed.mrssItems as ArMrssItem[];
           const displayItem: ArMrssItem = dataFeedItems[this.displayIndex];
-          const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
+          // const filePath: string = getFeedPoolFilePath(displayItem.guid.toLowerCase());
+          const filePath: string = feedPoolFileExists(displayItem.guid.toLowerCase());
 
           console.log('displayItem.guid: ' + displayItem.guid);
           console.log('filePath: ' + filePath);
@@ -317,7 +319,7 @@ export default class MrssState extends MediaHState {
             console.log('******* - cc21');
 
             displayItem.filePath = filePath;
-            dispatch(this.displayMRSSSItem(displayItem));
+            dispatch(this.displayMRSSSItem(displayItem).bind(this));
             displayedItem = true;
           }
 
@@ -370,7 +372,7 @@ export default class MrssState extends MediaHState {
 
             mrssState.displayIndex = 0;
           }
-          dispatch(mrssState.advanceToNextMRSSItem());
+          dispatch(mrssState.advanceToNextMRSSItem().bind(mrssState));
         }
         else {
           console.log('******* - cc25');
@@ -384,7 +386,7 @@ export default class MrssState extends MediaHState {
       else {
         console.log('******* - cc27');
         mrssState.displayIndex = 0;
-        dispatch(mrssState.advanceToNextMRSSItem());
+        dispatch(mrssState.advanceToNextMRSSItem().bind(mrssState));
       }
     }
 
