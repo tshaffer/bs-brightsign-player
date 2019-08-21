@@ -8,7 +8,7 @@ import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
 import AssetPool, { Asset } from '@brightsign/assetpool';
 import { xmlStringToJson } from '../utility/helpers';
 import { addDataFeed } from '../model/dataFeed';
-import { getMrssFeedItems, getFeedPoolFilePath } from '../selector/dataFeed';
+import { getMrssFeedItems, getFeedPoolFilePath, getDataFeedById, allDataFeedContentExists } from '../selector/dataFeed';
 
 import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
 import { ArEventType } from '../type/runtime';
@@ -88,53 +88,42 @@ export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): any {
 }
 
 export function parseCustomContentFormat(bsdmDataFeed: DmcDataFeed, feedFileName: string) {
-  let xmlFileContents: string;
-  try {
-    xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-    return xmlStringToJson(xmlFileContents)
-      .then((rawFeed) => {
 
-        const contentItems: ArContentFeedItem[] = [];
+  return (dispatch: any, getState: any) => {
+    let xmlFileContents: string;
+    try {
+      xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+      return xmlStringToJson(xmlFileContents)
+        .then((rawFeed) => {
 
-        const articles = [];
-        const articleTitles = [];
-        const articlesByTitle = {};
-        const articleMediaTypes = [];
-        
-        for (const item of rawFeed.rss.channel.item) {
-          articles.push(item.description);
-          articleTitles.push(item.title);
-          articlesByTitle[item.title] = item.description;
-          articleMediaTypes.push(item.medium);
+          const contentItems: ArContentFeedItem[] = [];
 
-          const arContentItem: ArContentFeedItem = {
-            article: item.description,
-            articleTitle: item.title,
-            medium: item.medium,
-            guid: '',
+          for (const item of rawFeed.rss.channel.item) {
+            const arContentItem: ArContentFeedItem = {
+              article: item.description,
+              articleTitle: item.title,
+              medium: item.medium,
+              guid: '',
+            }
+            contentItems.push(arContentItem);
           }
-          contentItems.push(arContentItem);
-        }
 
-        const arContentFeed: ArContentFeed = {
-          id: bsdmDataFeed.id,
-          sourceId: bsdmDataFeed.feedSourceId,
-          usage: DataFeedUsageType.Content,
-          contentItems,
-        };
-      
-        const feedItems: any = {
-          articles,
-          articleTitles,
-          articlesByTitle,
-          articleMediaTypes
-        };
-        return Promise.resolve(feedItems);
-      })
+          const arContentFeed: ArContentFeed = {
+            id: bsdmDataFeed.id,
+            sourceId: bsdmDataFeed.feedSourceId,
+            usage: DataFeedUsageType.Content,
+            contentItems,
+          };
+          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
+          dispatch(addDataFeedAction);
+
+          return Promise.resolve();
+        })
     }
-  catch {
-    return Promise.reject(null);
-  };
+    catch {
+      return Promise.reject(null);
+    };
+  }
 }
 
 function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
@@ -152,7 +141,7 @@ function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
       });
     }
     else {
-      return parseCustomContentFormat(bsdmDataFeed, feedFileName);
+      return dispatch(parseCustomContentFormat(bsdmDataFeed, feedFileName));
     }
 
 
@@ -383,12 +372,58 @@ export function readStoredDataFeed(bsdmDataFeed: DmcDataFeed) {
         return dispatch(readStoredMrssFeed(bsdmDataFeed));
       }
       case DataFeedUsageType.Content: {
-        return dispatch(readStoredContentFeed(bsdmDataFeed));
+        const readStoredContentFeedAction = readStoredContentFeed(bsdmDataFeed);
+        const readStoredContentFeedPromise = dispatch(readStoredContentFeedAction);
+        readStoredContentFeedPromise.then(() => {
+          const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id);
+          dispatch(massageStoredContentFeed(arDataFeed as ArContentFeed));
+        });
       }
       default:
         return Promise.resolve();
     }
   };
+}
+
+function massageStoredContentFeed(arDataFeed: ArContentFeed) {
+
+  return (dispatch: any, getState: any) => {
+
+    const assetList: Asset[] = [];
+
+    let index = 0;
+    for (const contentItem of arDataFeed.contentItems) {
+      const { article, articleTitle, medium, guid } = contentItem;
+      const itemUrl = article;
+      const fileUrl = article;
+      const fileType = medium;
+      const fileKey = articleTitle;
+
+      const asset: Asset = {
+        link: itemUrl,
+        name: itemUrl,
+        changeHint: guid,
+        hash: {
+          method: 'SHA1',
+          hex: guid,
+        }
+      };
+      assetList.push(asset);
+      index++;
+    }
+
+    arDataFeed.assetList = assetList;
+
+    if (allDataFeedContentExists(arDataFeed)) {
+      // post message indicating load complete
+      const event: ArEventType = {
+        EventType: 'CONTENT_DATA_FEED_LOADED',
+        EventData: arDataFeed.id,
+      };
+      const action: any = postMessage(event);
+      dispatch(action);
+    }
+  }
 }
 
 function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<void> {

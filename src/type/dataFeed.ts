@@ -47,7 +47,7 @@ export interface ArContentItem {
   medium: string;
 }
 
-export interface ArContentFeedItem {
+export interface  ArContentFeedItem {
   article: string;
   articleTitle: string;
   guid: string;
@@ -56,6 +56,7 @@ export interface ArContentFeedItem {
 
 export interface ArContentFeedProperties {
   contentItems: ArContentFeedItem[];
+  assetList?: Asset[];
 }
 
 export interface ArMediaFeedItem {

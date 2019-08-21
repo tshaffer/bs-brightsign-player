@@ -176,8 +176,7 @@ class STPlaying extends HState {
                 });
               }
               else {
-                debugger;
-                const promise = parseCustomContentFormat(feedFileName);
+                const promise = parseCustomContentFormat(bsdmDataFeed, feedFileName);
               }
             }
           }

@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import isomorphicPath from 'isomorphic-path';
 import { BsBrightSignPlayerState } from '../type';
-import { ArDataFeed, ArMrssItem, ArMediaFeed, ArMrssFeed } from '../type/dataFeed';
+import { ArDataFeed, ArMrssItem, ArMediaFeed, ArMrssFeed, ArContentFeed } from '../type/dataFeed';
 import { Hash, Asset } from '@brightsign/assetpool';
 import { getFeedDirectory as getFeedPoolDirectory } from '../controller';
 
@@ -38,7 +38,7 @@ export function getMrssFeedItems(feed: any): ArMrssItem[] {
   return feedItems;
 }
 
-export function allDataFeedContentExists(dataFeed: ArMrssFeed): boolean {
+export function allDataFeedContentExists(dataFeed: ArMrssFeed | ArContentFeed): boolean {
   for (const asset of dataFeed.assetList as Asset[]) {
     const filePath = getFeedPoolFilePathFromAsset(asset);
     if (filePath === '' || !fs.existsSync(filePath)) {
