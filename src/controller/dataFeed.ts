@@ -4,7 +4,7 @@ import axios from 'axios';
 import { ArTextItem, ArTextFeed, ArMrssItem, ArMrssFeed, ArContentFeedItem, ArContentFeed } from '../type/dataFeed';
 import { DmState, BsDmId, DmcDataFeed, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedSourceForFeedId, dmGetDataFeedById } from '@brightsign/bsdatamodel';
 import { isNil, isObject } from 'lodash';
-import { DataFeedUsageType } from '@brightsign/bscore';
+import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
 import AssetPool, { Asset } from '@brightsign/assetpool';
 import { xmlStringToJson } from '../utility/helpers';
 import { addDataFeed } from '../model/dataFeed';
@@ -17,7 +17,7 @@ import { postMessage, getPlatform, getPoolFilePath } from './runtime';
 
 let assetPoolFetcher: AssetPoolFetcher | null = null;
 
-function getFeedCacheRoot(): string {
+export function getFeedCacheRoot(): string {
   switch (getPlatform()) {
     case 'Desktop':
     default:
@@ -37,6 +37,88 @@ function getFeedAssetPool(): AssetPool {
   }
 }
 
+function populateFeedItems(feedFileName: string): any {
+
+  let xmlFileContents: string;
+  try {
+    xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+    return xmlStringToJson(xmlFileContents)
+      .then((rawFeed) => {
+        const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+        console.log(items);
+        return Promise.resolve(items);
+      })
+      .catch((err) => {
+        debugger;
+      });
+  } catch (err) {
+    // return Promise.reject(err);
+    // TODODF
+    return Promise.resolve(null);
+  };
+}
+
+// TODO - looks admittedly bogus right now
+export function parseMrssFeed(feedFileName: string) {
+  return populateFeedItems(feedFileName).then((mrssItems: ArMrssItem[]) => {
+    Promise.resolve(mrssItems);
+  });
+}
+
+// convert to format required for content feed
+export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): any {
+  const articles = []
+  const articleTitles = []
+  const articlesByTitle = {}
+  const articleMediaTypes = []
+
+  for (const mrssItem of mrssItems) {
+    articles.push(mrssItem.url)
+    articleTitles.push(mrssItem.title)
+    articlesByTitle[mrssItem.title] = mrssItem.url;
+    articleMediaTypes.push(mrssItem.medium)
+  }
+
+  return {
+    articles,
+    articleTitles,
+    articlesByTitle,
+    articleMediaTypes
+  };
+}
+
+export function parseCustomContentFormat(feedFileName: string) {
+  let xmlFileContents: string;
+  try {
+    xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+    return xmlStringToJson(xmlFileContents)
+      .then((rawFeed) => {
+
+        const articles = [];
+        const articleTitles = [];
+        const articlesByTitle = {};
+        const articleMediaTypes = [];
+        
+        for (const item of rawFeed.rss.channel.item) {
+          articles.push(item.description);
+          articleTitles.push(item.title);
+          articlesByTitle[item.title] = item.description;
+          articleMediaTypes.push(item.medium);
+        }
+        const feedItems: any = {
+          articles,
+          articleTitles,
+          articlesByTitle,
+          articleMediaTypes
+        };
+        return Promise.resolve(feedItems);
+      })
+    }
+  catch {
+    return Promise.reject(null);
+  };
+}
+
 function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
 
   return (dispatch: any, getState: any) => {
@@ -45,37 +127,50 @@ function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
 
     const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
 
-    let xmlFileContents: string;
-
-    try {
-
-      xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-
-      return xmlStringToJson(xmlFileContents)
-        .then((rawFeed) => {
-
-          const isMrssFeed: boolean = feedIsMrss(rawFeed);
-          if (!isMrssFeed) {
-            return Promise.resolve();
-          }
-
-          const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
-          console.log(items);
-
-          const arContentFeed: ArContentFeed = getArContentFeedFromRawFeedItems(bsdmDataFeed, items);
-
-          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
-          dispatch(addDataFeedAction);
-          return Promise.resolve();
-        }).catch((err) => {
-          // TODODF - if err is for file not found
-          return Promise.resolve();
-        });
-    } catch (err) {
-      // return Promise.reject(err);
-      // TODODF
+    if (bsdmDataFeed.isBsnDataFeed && (bsdmDataFeed.type === DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed)) {
+      console.log('bsdm feed');
+      return parseMrssFeed(feedFileName).then((mrssItems: ArMrssItem[]) => {
+        const convertedItems: any[] = convertMrssFormatToContentFormat(mrssItems);
+      });
+    }
+    else {
+      // const promise = parseCustomContentFormat(feedFileName);
       return Promise.resolve();
     }
+
+
+
+    // let xmlFileContents: string;
+
+    // try {
+
+    //   xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+
+    //   return xmlStringToJson(xmlFileContents)
+    //     .then((rawFeed) => {
+
+    //       const isMrssFeed: boolean = feedIsMrss(rawFeed);
+    //       if (!isMrssFeed) {
+    //         return Promise.resolve();
+    //       }
+
+    //       const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+    //       console.log(items);
+
+    //       const arContentFeed: ArContentFeed = getArContentFeedFromRawFeedItems(bsdmDataFeed, items);
+
+    //       const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
+    //       dispatch(addDataFeedAction);
+    //       return Promise.resolve();
+    //     }).catch((err) => {
+    //       // TODODF - if err is for file not found
+    //       return Promise.resolve();
+    //     });
+    // } catch (err) {
+    //   // return Promise.reject(err);
+    //   // TODODF
+    //   return Promise.resolve();
+    // }
   }
 }
 
@@ -379,7 +474,16 @@ export function downloadContentFeedContent(bsdm: DmState, rawFeed: any, dataFeed
     console.log('assetPoolFetcher.start');
     assetPoolFetcher.start(assetList)
       .then(() => {
+
         console.log('assetPoolFetcher promise resolved');
+
+        // post message indicating load complete
+        const event: ArEventType = {
+          EventType: 'CONTENT_DATA_FEED_LOADED',
+          EventData: dataFeedId,
+        };
+        const action: any = postMessage(event);
+        dispatch(action);
       })
       .catch((err) => {
         console.log('err caught in assetPoolFetcher.start');

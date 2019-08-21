@@ -4,8 +4,9 @@ import { Action } from 'redux';
 import { DmState, BsDmId, dmGetDataFeedSourceForFeedSourceId, DmDataFeedSource, dmGetDataFeedIdsForSign, DmcDataFeed, dmGetDataFeedById, dmGetDataFeedSourceForFeedId } from '@brightsign/bsdatamodel';
 import { isNil, isString } from 'lodash';
 
-import { downloadMRSSFeedContent, retrieveDataFeed, readStoredDataFeed, feedIsMrss, downloadContentFeedContent, parseSimpleRSSFeed } from '../dataFeed';
+import { downloadMRSSFeedContent, retrieveDataFeed, readStoredDataFeed, feedIsMrss, downloadContentFeedContent, parseSimpleRSSFeed, parseMrssFeed, convertMrssFormatToContentFormat, parseCustomContentFormat, getFeedCacheRoot } from '../dataFeed';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
+import { ArMrssItem } from '../../type/dataFeed';
 
 export class PlayerHSM extends HSM {
 
@@ -161,17 +162,33 @@ class STPlaying extends HState {
   }
 
   retrieveAndProcessDataFeed(bsdm: DmState, bsdmDataFeedId: BsDmId) {
-
     return (dispatch: any, getState: any) => {
       const bsdmDataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: bsdmDataFeedId }) as DmcDataFeed;
+      const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
       retrieveDataFeed(bsdm, bsdmDataFeed)
         .then((feedAsJson) => {
-          if (bsdmDataFeed.usage === DataFeedUsageType.Text) {
-            dispatch(this.processTextDataFeed(feedAsJson, bsdm, bsdmDataFeed));
+          if (bsdmDataFeed.usage !== DataFeedUsageType.Mrss) {
+            // simple RSS or content
+            if (bsdmDataFeed.usage === DataFeedUsageType.Content) {
+              if (bsdmDataFeed.type == DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed) {
+                parseMrssFeed(feedFileName).then((mrssItems: ArMrssItem[]) => {
+                  const convertedItems: any[] = convertMrssFormatToContentFormat(mrssItems);
+                });
+              }
+              else {
+                debugger;
+                const promise = parseCustomContentFormat(feedFileName);
+              }
+            }
           }
-          else {
-            dispatch(this.processMediaDataFeed(feedAsJson, bsdm, bsdmDataFeed));
-          }
+
+
+          // if (bsdmDataFeed.usage === DataFeedUsageType.Text) {
+          //   dispatch(this.processTextDataFeed(feedAsJson, bsdm, bsdmDataFeed));
+          // }
+          // else {
+          //   dispatch(this.processMediaDataFeed(feedAsJson, bsdm, bsdmDataFeed));
+          // }
         });
     };
   }
