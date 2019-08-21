@@ -87,12 +87,14 @@ export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): any {
   };
 }
 
-export function parseCustomContentFormat(feedFileName: string) {
+export function parseCustomContentFormat(bsdmDataFeed: DmcDataFeed, feedFileName: string) {
   let xmlFileContents: string;
   try {
     xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
     return xmlStringToJson(xmlFileContents)
       .then((rawFeed) => {
+
+        const contentItems: ArContentFeedItem[] = [];
 
         const articles = [];
         const articleTitles = [];
@@ -104,7 +106,23 @@ export function parseCustomContentFormat(feedFileName: string) {
           articleTitles.push(item.title);
           articlesByTitle[item.title] = item.description;
           articleMediaTypes.push(item.medium);
+
+          const arContentItem: ArContentFeedItem = {
+            article: item.description,
+            articleTitle: item.title,
+            medium: item.medium,
+            guid: '',
+          }
+          contentItems.push(arContentItem);
         }
+
+        const arContentFeed: ArContentFeed = {
+          id: bsdmDataFeed.id,
+          sourceId: bsdmDataFeed.feedSourceId,
+          usage: DataFeedUsageType.Content,
+          contentItems,
+        };
+      
         const feedItems: any = {
           articles,
           articleTitles,
@@ -134,8 +152,7 @@ function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
       });
     }
     else {
-      // const promise = parseCustomContentFormat(feedFileName);
-      return Promise.resolve();
+      return parseCustomContentFormat(bsdmDataFeed, feedFileName);
     }
 
 
