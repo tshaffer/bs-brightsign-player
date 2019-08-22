@@ -40,18 +40,25 @@ export interface ArMrssFeedProperties {
   ttl: string;
 }
 
-export interface ArContentItem {
-  filePath: string;
-  itemUrl: string;
-  guid: string;
-  medium: string;
-}
+// export interface ArContentItem {
+//   filePath: string;
+//   itemUrl: string;
+//   guid: string;
+//   medium: string;
+// }
 
-export interface  ArContentFeedItem {
-  article: string;
-  articleTitle: string;
-  guid: string;
+// export interface  ArContentFeedItem {
+//   article: string;
+//   articleTitle: string;
+//   guid: string;
+//   medium: string;
+// }
+
+export interface ArContentFeedItem {
+  name: string;
+  url: string;
   medium: string;
+  hash: string;
 }
 
 export interface ArContentFeedProperties {

@@ -13,7 +13,7 @@ import { isNil, isNumber } from 'lodash';
 import { MediaZoneHSM } from './mediaZoneHSM';
 import { setActiveMediaListDisplayItem } from '../../model/activeMediaListDisplayItem';
 
-import { ArContentFeed, ArContentItem, ArContentFeedItem } from '../../type/dataFeed';
+import { ArContentFeed, ArContentFeedItem } from '../../type/dataFeed';
 import {
   getDataFeedById,
   allDataFeedContentExists,
@@ -293,7 +293,7 @@ export default class MediaListState extends MediaHState {
     for (let i = 0; i < this.numItems; i++) {
       this.playbackIndices.push(i);
 
-      const filePath: string = getFeedPoolFilePath(contentItems[i].guid.toLowerCase());
+      const filePath: string = getFeedPoolFilePath(contentItems[i].hash.toLowerCase());
 
       const mediaListItem: MediaListItem = {
         filePath,

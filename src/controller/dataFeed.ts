@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import axios from 'axios';
 
-import { ArTextItem, ArTextFeed, ArMrssItem, ArMrssFeed, ArContentFeedItem, ArContentFeed } from '../type/dataFeed';
+import { ArTextItem, ArTextFeed, ArMrssItem, ArMrssFeed, ArContentFeedItem, ArContentFeed, ArDataFeed } from '../type/dataFeed';
 import { DmState, BsDmId, DmcDataFeed, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedSourceForFeedId, dmGetDataFeedById } from '@brightsign/bsdatamodel';
 import { isNil, isObject } from 'lodash';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
@@ -99,10 +99,10 @@ export function parseCustomContentFormat(bsdmDataFeed: DmcDataFeed, feedFileName
           const contentItems: ArContentFeedItem[] = [];
           for (const item of rawFeed.rss.channel.item) {
             const arContentItem: ArContentFeedItem = {
-              article: item.description,
-              articleTitle: item.title,
+              name: item.title,
+              url: item.description,
               medium: item.medium,
-              guid: item.guid,
+              hash: item.guid,
             }
             contentItems.push(arContentItem);
           }
@@ -142,70 +142,36 @@ function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
     else {
       return dispatch(parseCustomContentFormat(bsdmDataFeed, feedFileName));
     }
-
-
-
-    // let xmlFileContents: string;
-
-    // try {
-
-    //   xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-
-    //   return xmlStringToJson(xmlFileContents)
-    //     .then((rawFeed) => {
-
-    //       const isMrssFeed: boolean = feedIsMrss(rawFeed);
-    //       if (!isMrssFeed) {
-    //         return Promise.resolve();
-    //       }
-
-    //       const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
-    //       console.log(items);
-
-    //       const arContentFeed: ArContentFeed = getArContentFeedFromRawFeedItems(bsdmDataFeed, items);
-
-    //       const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
-    //       dispatch(addDataFeedAction);
-    //       return Promise.resolve();
-    //     }).catch((err) => {
-    //       // TODODF - if err is for file not found
-    //       return Promise.resolve();
-    //     });
-    // } catch (err) {
-    //   // return Promise.reject(err);
-    //   // TODODF
-    //   return Promise.resolve();
-    // }
   }
 }
 
-function getArContentFeedFromRawFeedItems(bsdmDataFeed: DmcDataFeed, items: ArMrssItem[]) {
-  const contentItems: ArContentFeedItem[] = [];
-  for (const item of items) {
+// function getArContentFeedFromRawFeedItems(bsdmDataFeed: DmcDataFeed, items: ArMrssItem[]) {
+//   const contentItems: ArContentFeedItem[] = [];
+//   for (const item of items) {
 
-    const article: string = item.url;
-    const articleTitle = item.title;
-    const medium: string = item.medium;
-    const guid: string = item.guid;
+//     const article: string = item.url;
+//     const articleTitle = item.title;
+//     const medium: string = item.medium;
+//     const guid: string = item.guid;
 
-    const arContentItem: ArContentFeedItem = {
-      article,
-      articleTitle,
-      medium,
-      guid,
-    }
-    contentItems.push(arContentItem);
-  }
+//     const arContentItem: ArContentFeedItem = {
+//       article,
+//       articleTitle,
+//       medium,
+//       guid,
+//     }
+//     contentItems.push(arContentItem);
+//   }
 
-  const arContentFeed: ArContentFeed = {
-    id: bsdmDataFeed.id,
-    sourceId: bsdmDataFeed.feedSourceId,
-    usage: DataFeedUsageType.Content,
-    contentItems,
-  };
+//   const arContentFeed: ArContentFeed = {
+//     id: bsdmDataFeed.id,
+//     sourceId: bsdmDataFeed.feedSourceId,
+//     usage: DataFeedUsageType.Content,
+//     contentItems,
+//   };
 
-  return arContentFeed;
-}
+//   return arContentFeed;
+// }
 
 //           const dataFeedContentItems: DataFeedContentItems = convertMRSSFormatToContent(items);
 
@@ -395,19 +361,19 @@ function massageStoredContentFeed(arDataFeed: ArContentFeed) {
 
     let index = 0;
     for (const contentItem of arDataFeed.contentItems) {
-      const { article, articleTitle, medium, guid } = contentItem;
-      const itemUrl = article;
-      const fileUrl = article;
-      const fileType = medium;
-      const fileKey = articleTitle;
+      // const { article, articleTitle, medium, guid } = contentItem;
+      // const itemUrl = article;
+      // const fileUrl = article;
+      // const fileType = medium;
+      // const fileKey = articleTitle;
 
       const asset: Asset = {
-        link: itemUrl,
-        name: itemUrl,
-        changeHint: guid,
+        link: contentItem.url,
+        name: contentItem.name,
+        changeHint: contentItem.hash,
         hash: {
           method: 'SHA1',
-          hex: guid,
+          hex: contentItem.hash,
         }
       };
       assetList.push(asset);
@@ -479,13 +445,13 @@ export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<
   return Promise.reject('dataFeedSources url is null');
 }
 
-export function downloadContentFeedContent(bsdm: DmState, rawFeed: any, dataFeedId: BsDmId) {
+export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
   // feed should already exist at this point and be on the card
   return (dispatch: any, getState: any) => {
 
     console.log('downloadContentFeedContent - entry');
 
-    const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeedId }) as DmDataFeedSource;
+    // const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: arDataFeed.id }) as DmDataFeedSource;
 
     // directly from retrieved content feed file (not dynamic playlist)
     // title - file name
@@ -510,27 +476,40 @@ export function downloadContentFeedContent(bsdm: DmState, rawFeed: any, dataFeed
 
     const assetList: Asset[] = [];
 
-    const items: any = rawFeed.rss.channel.item;
-    for (const item of items) {
-
-console.log('add item to assetList:');
-console.log('title' + item.title);
-// console.log('link: ' + item.description);
-console.log('link: ' + item.link);
-console.log('guid: ' + item.guid);
-
+    const its = arDataFeed.contentItems;
+    for (const contentFeedItem of its) {
       const asset: Asset = {
-        name: item.title, // or should it be item.description?
-        // link: item.description, // for custom url
-        link: item.link, // for dynamic playlist item url
-        changeHint: item.guid,
+        name: contentFeedItem.name,
+        link: contentFeedItem.url,
+        changeHint: contentFeedItem.hash,
         hash: {
           method: 'SHA1',
-          hex: item.guid,
+          hex: contentFeedItem.hash,
         }
-      };
+      }
       assetList.push(asset);
     }
+//     const items: any = rawFeed.rss.channel.item;
+//     for (const item of items) {
+
+// // console.log('add item to assetList:');
+// // console.log('title' + item.title);
+// // // console.log('link: ' + item.description);
+// // console.log('link: ' + item.link);
+// // console.log('guid: ' + item.guid);
+
+//       const asset: Asset = {
+//         name: item.title, // or should it be item.description?
+//         // link: item.description, // for custom url
+//         link: item.link, // for dynamic playlist item url
+//         changeHint: item.guid,
+//         hash: {
+//           method: 'SHA1',
+//           hex: item.guid,
+//         }
+//       };
+//       assetList.push(asset);
+//     }
 
     // for (const feedItem of items) {
 
@@ -579,8 +558,9 @@ console.log('guid: ' + item.guid);
         // post message indicating load complete
         const event: ArEventType = {
           EventType: 'CONTENT_DATA_FEED_LOADED',
-          EventData: dataFeedId,
+          EventData: arDataFeed.id,
         };
+        console.log('POST CONTENT_DATA_FEED_LOADED');
         const action: any = postMessage(event);
         dispatch(action);
       })

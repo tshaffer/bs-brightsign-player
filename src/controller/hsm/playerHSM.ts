@@ -6,7 +6,9 @@ import { isNil, isString } from 'lodash';
 
 import { downloadMRSSFeedContent, retrieveDataFeed, readStoredDataFeed, feedIsMrss, downloadContentFeedContent, parseSimpleRSSFeed, parseMrssFeed, convertMrssFormatToContentFormat, parseCustomContentFormat, getFeedCacheRoot } from '../dataFeed';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
-import { ArMrssItem } from '../../type/dataFeed';
+import { ArMrssItem, ArContentFeed } from '../../type/dataFeed';
+import { getDataFeedById } from '../../selector/dataFeed';
+import { ArDataFeed } from '../../../index';
 
 export class PlayerHSM extends HSM {
 
@@ -114,8 +116,10 @@ class STPlaying extends HState {
       
       const isMRSSFeed = feedIsMrss(feedAsJson);
 
+      const arDataFeed: ArContentFeed = getDataFeedById(getState(), dataFeed.id) as ArContentFeed;
+      
       if (dataFeed.usage === DataFeedUsageType.Content) {
-        dispatch(downloadContentFeedContent(bsdm, feedAsJson, dataFeed.id));
+        dispatch(downloadContentFeedContent(arDataFeed));
       }
       else if (dataFeed.usage === DataFeedUsageType.Mrss && (dataFeed.parserPlugin !== '' || isMRSSFeed)) {
         dispatch(downloadMRSSFeedContent(bsdm, feedAsJson, dataFeed.id));

@@ -116,10 +116,10 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
 
       const mediaListItem = this.props.activeMediaListDisplayItem;
       console.log(mediaListItem);
-
-      const poolFilePath: string = getPoolFilePath(mediaListItem.filePath);
-      const src = isomorphicPath.join('file://', poolFilePath);
-      // const src = isomorphicPath.join('file://', mediaListItem.filePath);
+      
+      // const poolFilePath: string = getPoolFilePath(mediaListItem.filePath);
+      // const src = isomorphicPath.join('file://', poolFilePath);
+      const src = isomorphicPath.join('file://', mediaListItem.filePath);
       const mediaType: ContentItemType = mediaListItem.contentItemType;
 
       /*
