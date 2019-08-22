@@ -80,7 +80,7 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
 
     const mediaType: ContentItemType = mediaContentItem.type;
 
-    switch (mediaType) {
+    switch (mediaType.toString().toLowerCase()) {
       case 'Image': {
         return (
           <Image
@@ -117,7 +117,9 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
       const mediaListItem = this.props.activeMediaListDisplayItem;
       console.log(mediaListItem);
 
-      const src = isomorphicPath.join('file://', mediaListItem.filePath);
+      const poolFilePath: string = getPoolFilePath(mediaListItem.filePath);
+      const src = isomorphicPath.join('file://', poolFilePath);
+      // const src = isomorphicPath.join('file://', mediaListItem.filePath);
       const mediaType: ContentItemType = mediaListItem.contentItemType;
 
       /*
@@ -125,7 +127,7 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
                     height={this.props.height}
       
       */
-      switch (mediaType) {
+      switch (mediaType.toString().toLowerCase()) {
         case 'image': {
           return (
             <Image

@@ -493,6 +493,13 @@ export function downloadContentFeedContent(bsdm: DmState, rawFeed: any, dataFeed
     // description - file url
     // guid
 
+    // however, from a dynamic playlist, it's different
+    // title - file name
+    // media:content - contains medium...
+    // description - file name
+    // guid
+    // link - url
+
     // temporarily comment out this block
     // const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
 
@@ -505,9 +512,17 @@ export function downloadContentFeedContent(bsdm: DmState, rawFeed: any, dataFeed
 
     const items: any = rawFeed.rss.channel.item;
     for (const item of items) {
+
+console.log('add item to assetList:');
+console.log('title' + item.title);
+// console.log('link: ' + item.description);
+console.log('link: ' + item.link);
+console.log('guid: ' + item.guid);
+
       const asset: Asset = {
         name: item.title, // or should it be item.description?
-        link: item.description,
+        // link: item.description, // for custom url
+        link: item.link, // for dynamic playlist item url
         changeHint: item.guid,
         hash: {
           method: 'SHA1',
