@@ -181,7 +181,7 @@ export default class MediaListState extends MediaHState {
     return (dispatch: BsBspDispatch, getState) => {
       if (event.EventType === 'ENTRY_SIGNAL') {
 
-        console.log('mrssState ' + this.id + ': entry signal');
+        console.log('mediaListState ' + this.id + ': entry signal');
         dispatch(this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry));
 
         const bsdm: DmState = getState().bsdm;

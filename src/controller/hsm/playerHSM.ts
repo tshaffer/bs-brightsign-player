@@ -110,6 +110,8 @@ class STPlaying extends HState {
   processMediaDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed) {
     return (dispatch: any, getState: any) => {
 
+      console.log('processMediaFeed - entry');
+      
       const isMRSSFeed = feedIsMrss(feedAsJson);
 
       if (dataFeed.usage === DataFeedUsageType.Content) {
@@ -176,7 +178,10 @@ class STPlaying extends HState {
                 });
               }
               else {
-                const promise = parseCustomContentFormat(bsdmDataFeed, feedFileName);
+                const promise = dispatch(parseCustomContentFormat(bsdmDataFeed, feedFileName));
+                promise.then( () => {
+                  dispatch(this.processMediaDataFeed(feedAsJson, bsdm, bsdmDataFeed));
+                })
               }
             }
           }

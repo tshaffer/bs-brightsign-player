@@ -97,13 +97,12 @@ export function parseCustomContentFormat(bsdmDataFeed: DmcDataFeed, feedFileName
         .then((rawFeed) => {
 
           const contentItems: ArContentFeedItem[] = [];
-
           for (const item of rawFeed.rss.channel.item) {
             const arContentItem: ArContentFeedItem = {
               article: item.description,
               articleTitle: item.title,
               medium: item.medium,
-              guid: '',
+              guid: item.guid,
             }
             contentItems.push(arContentItem);
           }
@@ -121,7 +120,7 @@ export function parseCustomContentFormat(bsdmDataFeed: DmcDataFeed, feedFileName
         })
     }
     catch {
-      return Promise.reject(null);
+      return Promise.resolve();
     };
   }
 }
@@ -319,6 +318,7 @@ function readStoredMrssFeed(bsdmDataFeed: DmcDataFeed) {
         .then((rawFeed) => {
 
           const isMrssFeed: boolean = feedIsMrss(rawFeed);
+          // const isMrssFeed = true;
           if (!isMrssFeed) {
             return Promise.resolve();
           }
@@ -376,7 +376,9 @@ export function readStoredDataFeed(bsdmDataFeed: DmcDataFeed) {
         const readStoredContentFeedPromise = dispatch(readStoredContentFeedAction);
         readStoredContentFeedPromise.then(() => {
           const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id);
-          dispatch(massageStoredContentFeed(arDataFeed as ArContentFeed));
+          if (!isNil(arDataFeed)) {
+            dispatch(massageStoredContentFeed(arDataFeed as ArContentFeed));
+          }
         });
       }
       default:
@@ -414,7 +416,10 @@ function massageStoredContentFeed(arDataFeed: ArContentFeed) {
 
     arDataFeed.assetList = assetList;
 
+    console.log('end of massageStoredContentFeed');
+
     if (allDataFeedContentExists(arDataFeed)) {
+      console.log('allDataFeedContentExists returned true');
       // post message indicating load complete
       const event: ArEventType = {
         EventType: 'CONTENT_DATA_FEED_LOADED',
@@ -422,6 +427,9 @@ function massageStoredContentFeed(arDataFeed: ArContentFeed) {
       };
       const action: any = postMessage(event);
       dispatch(action);
+    }
+    else {
+      console.log('allDataFeedContentExists returned false');
     }
   }
 }
@@ -475,29 +483,53 @@ export function downloadContentFeedContent(bsdm: DmState, rawFeed: any, dataFeed
   // feed should already exist at this point and be on the card
   return (dispatch: any, getState: any) => {
 
+    console.log('downloadContentFeedContent - entry');
+
     const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeedId }) as DmDataFeedSource;
 
-    const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+    // directly from retrieved content feed file (not dynamic playlist)
+    // title - file name
+    // medium
+    // description - file url
+    // guid
 
-    const bsdmDataFeed: DmcDataFeed = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
-    const arContentFeed: ArContentFeed = getArContentFeedFromRawFeedItems(bsdmDataFeed, items);
-    const addDataFeedAction: any = addDataFeed(dataFeedId, arContentFeed);
-    dispatch(addDataFeedAction);
+    // temporarily comment out this block
+    // const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+
+    // const bsdmDataFeed: DmcDataFeed = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
+    // const arContentFeed: ArContentFeed = getArContentFeedFromRawFeedItems(bsdmDataFeed, items);
+    // const addDataFeedAction: any = addDataFeed(dataFeedId, arContentFeed);
+    // dispatch(addDataFeedAction);
 
     const assetList: Asset[] = [];
-    for (const feedItem of items) {
 
+    const items: any = rawFeed.rss.channel.item;
+    for (const item of items) {
       const asset: Asset = {
-        link: feedItem.url,
-        name: feedItem.url,
-        changeHint: feedItem.guid,
+        name: item.title, // or should it be item.description?
+        link: item.description,
+        changeHint: item.guid,
         hash: {
           method: 'SHA1',
-          hex: feedItem.guid,
+          hex: item.guid,
         }
       };
       assetList.push(asset);
     }
+
+    // for (const feedItem of items) {
+
+    //   const asset: Asset = {
+    //     link: feedItem.url,
+    //     name: feedItem.url,
+    //     changeHint: feedItem.guid,
+    //     hash: {
+    //       method: 'SHA1',
+    //       hex: feedItem.guid,
+    //     }
+    //   };
+    //   assetList.push(asset);
+    // }
 
     console.log('assetList created');
     console.log(assetList);
