@@ -60,31 +60,29 @@ function populateFeedItems(feedFileName: string): any {
 
 // TODO - looks admittedly bogus right now
 export function parseMrssFeed(feedFileName: string) {
-  return populateFeedItems(feedFileName).then((mrssItems: ArMrssItem[]) => {
-    Promise.resolve(mrssItems);
+  const promise = populateFeedItems(feedFileName);
+  return promise.then((mrssItems: ArMrssItem[]) => {
+    return Promise.resolve(mrssItems);
   });
 }
 
 // convert to format required for content feed
-export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): any {
-  const articles = []
-  const articleTitles = []
-  const articlesByTitle = {}
-  const articleMediaTypes = []
-
+export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArContentFeedItem[] {
+  const contentItems: ArContentFeedItem[] = [];
   for (const mrssItem of mrssItems) {
-    articles.push(mrssItem.url)
-    articleTitles.push(mrssItem.title)
-    articlesByTitle[mrssItem.title] = mrssItem.url;
-    articleMediaTypes.push(mrssItem.medium)
+    console.log('create ArContentFeed');
+    console.log(mrssItem.url);
+    console.log(mrssItem.filePath);
+    console.log(mrssItem.link);
+    const arContentItem: ArContentFeedItem = {
+      name: mrssItem.title,
+      url: mrssItem.url,
+      medium: mrssItem.medium,
+      hash: mrssItem.guid,
+    }
+    contentItems.push(arContentItem);
   }
-
-  return {
-    articles,
-    articleTitles,
-    articlesByTitle,
-    articleMediaTypes
-  };
+  return contentItems;
 }
 
 export function parseCustomContentFormat(bsdmDataFeed: DmcDataFeed, feedFileName: string) {
@@ -133,138 +131,35 @@ function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
 
     const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
 
-    if (bsdmDataFeed.isBsnDataFeed && (bsdmDataFeed.type === DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed)) {
-      console.log('bsdm feed');
-      return parseMrssFeed(feedFileName).then((mrssItems: ArMrssItem[]) => {
-        const convertedItems: any[] = convertMrssFormatToContentFormat(mrssItems);
-      });
-    }
-    else {
-      return dispatch(parseCustomContentFormat(bsdmDataFeed, feedFileName));
-    }
+    // return dispatch(parseCustomContentFormat(bsdmDataFeed, feedFileName));
+    // temporary, as I have no way to get a bsn feed
+    const promise = parseMrssFeed(feedFileName);
+    return promise.then((mrssItems: ArMrssItem[]) => {
+      console.log(mrssItems);
+      const contentItems: ArContentFeedItem[] = convertMrssFormatToContentFormat(mrssItems);
+      const arContentFeed: ArContentFeed = {
+        id: bsdmDataFeed.id,
+        sourceId: bsdmDataFeed.feedSourceId,
+        usage: DataFeedUsageType.Content,
+        contentItems,
+      };
+      const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
+      dispatch(addDataFeedAction);
+      return Promise.resolve();
+    });
+
+    // the following is the 'correct code'
+    // if (bsdmDataFeed.isBsnDataFeed && (bsdmDataFeed.type === DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed)) {
+    //   console.log('bsdm feed');
+    //   return parseMrssFeed(feedFileName).then((mrssItems: ArMrssItem[]) => {
+    //     const convertedItems: any[] = convertMrssFormatToContentFormat(mrssItems);
+    //   });
+    // }
+    // else {
+    //   return dispatch(parseCustomContentFormat(bsdmDataFeed, feedFileName));
+    // }
   }
 }
-
-// function getArContentFeedFromRawFeedItems(bsdmDataFeed: DmcDataFeed, items: ArMrssItem[]) {
-//   const contentItems: ArContentFeedItem[] = [];
-//   for (const item of items) {
-
-//     const article: string = item.url;
-//     const articleTitle = item.title;
-//     const medium: string = item.medium;
-//     const guid: string = item.guid;
-
-//     const arContentItem: ArContentFeedItem = {
-//       article,
-//       articleTitle,
-//       medium,
-//       guid,
-//     }
-//     contentItems.push(arContentItem);
-//   }
-
-//   const arContentFeed: ArContentFeed = {
-//     id: bsdmDataFeed.id,
-//     sourceId: bsdmDataFeed.feedSourceId,
-//     usage: DataFeedUsageType.Content,
-//     contentItems,
-//   };
-
-//   return arContentFeed;
-// }
-
-//           const dataFeedContentItems: DataFeedContentItems = convertMRSSFormatToContent(items);
-
-//           let itemUrls: string[] | null = dataFeedContentItems.articles;
-//           let fileUrls: string[] | null = dataFeedContentItems.articles;
-//           let fileTypes: string[] | null = dataFeedContentItems.articleMediaTypes;
-
-//           let fileKeys: string[] | null = [];
-//           if (dataFeedContentItems.articleTitles.length > 0) {
-//             fileKeys = dataFeedContentItems.articleTitles;
-//           }
-//           else {
-//             for (const key of dataFeedContentItems.articlesByTitle) {
-//               // find the corresponding url by linearly searching through m.articles
-//               let index = 0;
-//               const url = dataFeedContentItems.articlesByTitle[key];
-//               for (const articleUrl of dataFeedContentItems.articles) {
-//                 if (articleUrl === url) {
-//                   fileKeys[index] = key;
-//                 }
-//                 index++;
-//               }
-//             }
-//           }
-
-//           const assetList: Asset[] = [];
-//           let index = 0;
-//           for (const url of fileUrls) {
-//             const guid = items[index].guid;
-//             const asset: Asset = {
-//               link: url,
-//               name: url,
-//               changeHint: guid,
-//               hash: {
-//                 method: 'SHA1',
-//                 hex: guid,
-//               }
-//             };
-//             assetList.push(asset);
-//             index++;
-//           }
-
-//           // verify that all specified files are actually on the card
-//           for (const asset of assetList) {
-//             const poolFilePath: string = getFeedPoolFilePath(asset.changeHint);
-//             if (poolFilePath === '') {
-//               // mark data structures as invalid
-//               itemUrls = null;
-//               fileKeys = null;
-//               fileUrls = null;
-
-//               break;
-//             }
-//           }
-
-//           // post message indicating load complete
-//           const event: ArEventType = {
-//             EventType: 'CONTENT_DATA_FEED_LOADED',
-//             EventData: bsdmDataFeed.id,
-//           };
-//           const action: any = postMessage(event);
-//           dispatch(action);
-
-//           const dataFeed: DataFeed = {
-//             id: bsdmDataFeed.id,
-//             sourceId: bsdmDataFeed.feedSourceId,
-//             assetList,
-//             items,
-//             isMrss: true,
-//             articles: dataFeedContentItems.articles,
-//             articleTitles: dataFeedContentItems.articleTitles,
-//             articlesByTitle: dataFeedContentItems.articlesByTitle,
-//             articleMediaTypes: dataFeedContentItems.articleMediaTypes,
-//             itemUrls,
-//             fileUrls,
-//             fileTypes,
-//             fileKeys,
-
-//           };
-//           const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, dataFeed);
-//           dispatch(addDataFeedAction);
-
-//           return Promise.resolve();
-//         }).catch((err) => {
-//           debugger;
-//         });
-//     } catch (err) {
-//       // return Promise.reject(err);
-//       // TODODF
-//       return Promise.resolve();
-//     }
-//   };
-// }
 
 function readStoredMrssFeed(bsdmDataFeed: DmcDataFeed) {
 
@@ -361,11 +256,11 @@ function massageStoredContentFeed(arDataFeed: ArContentFeed) {
 
     let index = 0;
     for (const contentItem of arDataFeed.contentItems) {
-      // const { article, articleTitle, medium, guid } = contentItem;
-      // const itemUrl = article;
-      // const fileUrl = article;
-      // const fileType = medium;
-      // const fileKey = articleTitle;
+
+      // console.log('create Asset');
+      // console.log(contentItem.name);
+      // console.log(contentItem.url);
+      // console.log(contentItem.hash);
 
       const asset: Asset = {
         link: contentItem.url,
@@ -376,6 +271,7 @@ function massageStoredContentFeed(arDataFeed: ArContentFeed) {
           hex: contentItem.hash,
         }
       };
+
       assetList.push(asset);
       index++;
     }
@@ -451,33 +347,16 @@ export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
 
     console.log('downloadContentFeedContent - entry');
 
-    // const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: arDataFeed.id }) as DmDataFeedSource;
-
-    // directly from retrieved content feed file (not dynamic playlist)
-    // title - file name
-    // medium
-    // description - file url
-    // guid
-
-    // however, from a dynamic playlist, it's different
-    // title - file name
-    // media:content - contains medium...
-    // description - file name
-    // guid
-    // link - url
-
-    // temporarily comment out this block
-    // const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
-
-    // const bsdmDataFeed: DmcDataFeed = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
-    // const arContentFeed: ArContentFeed = getArContentFeedFromRawFeedItems(bsdmDataFeed, items);
-    // const addDataFeedAction: any = addDataFeed(dataFeedId, arContentFeed);
-    // dispatch(addDataFeedAction);
-
     const assetList: Asset[] = [];
 
     const its = arDataFeed.contentItems;
     for (const contentFeedItem of its) {
+
+      console.log('create Asset');
+      console.log(contentFeedItem.name);
+      console.log(contentFeedItem.url);
+      console.log(contentFeedItem.hash);
+
       const asset: Asset = {
         name: contentFeedItem.name,
         link: contentFeedItem.url,
@@ -489,42 +368,6 @@ export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
       }
       assetList.push(asset);
     }
-//     const items: any = rawFeed.rss.channel.item;
-//     for (const item of items) {
-
-// // console.log('add item to assetList:');
-// // console.log('title' + item.title);
-// // // console.log('link: ' + item.description);
-// // console.log('link: ' + item.link);
-// // console.log('guid: ' + item.guid);
-
-//       const asset: Asset = {
-//         name: item.title, // or should it be item.description?
-//         // link: item.description, // for custom url
-//         link: item.link, // for dynamic playlist item url
-//         changeHint: item.guid,
-//         hash: {
-//           method: 'SHA1',
-//           hex: item.guid,
-//         }
-//       };
-//       assetList.push(asset);
-//     }
-
-    // for (const feedItem of items) {
-
-    //   const asset: Asset = {
-    //     link: feedItem.url,
-    //     name: feedItem.url,
-    //     changeHint: feedItem.guid,
-    //     hash: {
-    //       method: 'SHA1',
-    //       hex: feedItem.guid,
-    //     }
-    //   };
-    //   assetList.push(asset);
-    // }
-
     console.log('assetList created');
     console.log(assetList);
 
@@ -697,14 +540,6 @@ export function downloadMRSSFeedContent(bsdm: DmState, rawFeed: any, dataFeedId:
 function handleFileEvent(fileEvent: any) {
   console.log('handleFileEvent');
   console.log(fileEvent);
-
-  // after all files complete
-  // const event = {
-  //   EventType: 'MRSS_DATA_FEED_LOADED',
-  //   Name: 'TBD' // m.sourceId$ - HandleLiveDataFeedContentDownloadAssetFetcherEvent
-  // };
-  // dispatch(this.postMessage(event));
-
 }
 
 function handleProgressEvent(progressEvent: any) {

@@ -9,6 +9,7 @@ import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
 import { ArMrssItem, ArContentFeed } from '../../type/dataFeed';
 import { getDataFeedById } from '../../selector/dataFeed';
 import { ArDataFeed } from '../../../index';
+import { addDataFeed } from '../../model/dataFeed';
 
 export class PlayerHSM extends HSM {
 
@@ -113,11 +114,11 @@ class STPlaying extends HState {
     return (dispatch: any, getState: any) => {
 
       console.log('processMediaFeed - entry');
-      
+
       const isMRSSFeed = feedIsMrss(feedAsJson);
 
       const arDataFeed: ArContentFeed = getDataFeedById(getState(), dataFeed.id) as ArContentFeed;
-      
+
       if (dataFeed.usage === DataFeedUsageType.Content) {
         dispatch(downloadContentFeedContent(arDataFeed));
       }
@@ -175,15 +176,28 @@ class STPlaying extends HState {
         .then((feedAsJson) => {
           if (bsdmDataFeed.usage !== DataFeedUsageType.Mrss) {
             // simple RSS or content
+            // HACK to force my test to work
             if (bsdmDataFeed.usage === DataFeedUsageType.Content) {
-              if (bsdmDataFeed.type == DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed) {
+              // if (bsdmDataFeed.type == DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed ) {
+              const doIt = true;
+              if (doIt) {
                 parseMrssFeed(feedFileName).then((mrssItems: ArMrssItem[]) => {
-                  const convertedItems: any[] = convertMrssFormatToContentFormat(mrssItems);
+                  const contentItems: any[] = convertMrssFormatToContentFormat(mrssItems);
+                  const arContentFeed: ArContentFeed = {
+                    id: bsdmDataFeed.id,
+                    sourceId: bsdmDataFeed.feedSourceId,
+                    usage: DataFeedUsageType.Content,
+                    contentItems,
+                  };
+                  const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
+                  dispatch(addDataFeedAction);
+                  const arDataFeed: ArContentFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArContentFeed;
+                  dispatch(downloadContentFeedContent(arDataFeed));
                 });
               }
               else {
                 const promise = dispatch(parseCustomContentFormat(bsdmDataFeed, feedFileName));
-                promise.then( () => {
+                promise.then(() => {
                   dispatch(this.processMediaDataFeed(feedAsJson, bsdm, bsdmDataFeed));
                 })
               }
