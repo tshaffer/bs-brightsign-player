@@ -50,43 +50,28 @@ export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<
   return Promise.reject('dataFeedSources url is null');
 }
 
+export function readCachedFeed(bsdmDataFeed: DmcDataFeed) {
+
+}
+
 export function processFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
-
-}
-
-export function processCachedFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any): any {
   return (dispatch: any, getState: any) => {
     switch (bsdmDataFeed.usage) {
       case DataFeedUsageType.Mrss: {
-        return dispatch(readCachedMrssFeed(bsdmDataFeed));
+        return dispatch(processCachedMrssFeed(bsdmDataFeed, rawFeed));
       }
       case DataFeedUsageType.Content: {
-        return dispatch(readCachedContentFeed(bsdmDataFeed));
+        return dispatch(processCachedContentFeed(bsdmDataFeed, rawFeed));
       }
       default:
         return Promise.resolve();
     }
   };
+
 }
 
 // return a promise
-export function readCachedFeed(bsdmDataFeed: DmcDataFeed): any {
-  return (dispatch: any, getState: any) => {
-    switch (bsdmDataFeed.usage) {
-      case DataFeedUsageType.Mrss: {
-        return dispatch(readCachedMrssFeed(bsdmDataFeed));
-      }
-      case DataFeedUsageType.Content: {
-        return dispatch(readCachedContentFeed(bsdmDataFeed));
-      }
-      default:
-        return Promise.resolve();
-    }
-  };
-}
-
-// return a promise
-function readCachedMrssFeed(bsdmDataFeed: DmcDataFeed) {
+function processCachedMrssFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
 
   return (dispatch: any, getState: any) => {
 
@@ -152,9 +137,9 @@ function readCachedMrssFeed(bsdmDataFeed: DmcDataFeed) {
 }
 
 // return a promise
-function readCachedContentFeed(bsdmDataFeed: DmcDataFeed) {
+function processCachedContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
   return (dispatch: any, getState: any) => {
-    dispatch(loadContentFeed(bsdmDataFeed))
+    dispatch(loadContentFeed(bsdmDataFeed, rawFeed))
       .then(() => {
         const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id);
         if (!isNil(arDataFeed)) {
@@ -165,19 +150,15 @@ function readCachedContentFeed(bsdmDataFeed: DmcDataFeed) {
 }
 
 // returns a promise - verify
-function loadContentFeed(bsdmDataFeed: DmcDataFeed) {
+function loadContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
 
   return (dispatch: any, getState: any) => {
 
-    console.log('Read existing content for feed ' + bsdmDataFeed.id);
-
-    const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
-
     if (isBsnFeed(bsdmDataFeed)) {
-      return dispatch(processBsnContentFeed(bsdmDataFeed, feedFileName));
+      return dispatch(processBsnContentFeed(bsdmDataFeed, rawFeed));
     }
     else {
-      return dispatch(processBSContentFeed(bsdmDataFeed, feedFileName));
+      return dispatch(processBSContentFeed(bsdmDataFeed, rawFeed));
     }
   }
 }
@@ -300,9 +281,9 @@ export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
 // ******************** BSN CONTENT FEED ********************/
 
 // returns a promise
-function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, feedFileName: string) {
+function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
   return (dispatch: any, getState: any) => {
-    return parseMrssFeed(feedFileName)
+    return parseMrssFeed(rawFeed)
       .then((mrssItems: ArMrssItem[]) => {
         const contentItems: ArContentFeedItem[] = convertMrssFormatToContentFormat(mrssItems);
         const arContentFeed: ArContentFeed = {
@@ -318,32 +299,16 @@ function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, feedFileName: string) 
   }
 }
 
-export function parseMrssFeed(feedFileName: string) {
-  const promise = populateFeedItems(feedFileName);
+export function parseMrssFeed(rawFeed: any) {
+  const promise = populateFeedItems(rawFeed);
   return promise.then((mrssItems: ArMrssItem[]) => {
     return Promise.resolve(mrssItems);
   });
 }
 
-function populateFeedItems(feedFileName: string): any {
-
-  let xmlFileContents: string;
-  try {
-    xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-    return xmlStringToJson(xmlFileContents)
-      .then((rawFeed) => {
-        const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
-        console.log(items);
-        return Promise.resolve(items);
-      })
-      .catch((err) => {
-        debugger;
-      });
-  } catch (err) {
-    // return Promise.reject(err);
-    // TODODF
-    return Promise.resolve(null);
-  };
+function populateFeedItems(rawFeed: any): any {
+  const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+  return Promise.resolve(items);
 }
 
 // convert to format required for content feed
@@ -369,41 +334,29 @@ export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArCon
 // ******************** URL CONTENT FEED ********************/
 
 // returns a promise
-export function processBSContentFeed(bsdmDataFeed: DmcDataFeed, feedFileName: string) {
+export function processBSContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
 
   return (dispatch: any, getState: any) => {
-    let xmlFileContents: string;
-    try {
-      xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-      return xmlStringToJson(xmlFileContents)
-        .then((rawFeed) => {
 
-          const contentItems: ArContentFeedItem[] = [];
-          for (const item of rawFeed.rss.channel.item) {
-            const arContentItem: ArContentFeedItem = {
-              name: item.title,
-              url: item.description,
-              medium: item.medium,
-              hash: item.guid,
-            }
-            contentItems.push(arContentItem);
-          }
-
-          const arContentFeed: ArContentFeed = {
-            id: bsdmDataFeed.id,
-            sourceId: bsdmDataFeed.feedSourceId,
-            usage: DataFeedUsageType.Content,
-            contentItems,
-          };
-          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
-          dispatch(addDataFeedAction);
-
-          return Promise.resolve();
-        })
+    const contentItems: ArContentFeedItem[] = [];
+    for (const item of rawFeed.rss.channel.item) {
+      const arContentItem: ArContentFeedItem = {
+        name: item.title,
+        url: item.description,
+        medium: item.medium,
+        hash: item.guid,
+      }
+      contentItems.push(arContentItem);
     }
-    catch {
-      return Promise.resolve();
+
+    const arContentFeed: ArContentFeed = {
+      id: bsdmDataFeed.id,
+      sourceId: bsdmDataFeed.feedSourceId,
+      usage: DataFeedUsageType.Content,
+      contentItems,
     };
+    const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
+    dispatch(addDataFeedAction);
   }
 }
 
