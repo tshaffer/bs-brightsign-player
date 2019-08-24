@@ -17,151 +17,76 @@ import { postMessage, getPlatform, getPoolFilePath } from './runtime';
 
 let assetPoolFetcher: AssetPoolFetcher | null = null;
 
-export function getFeedCacheRoot(): string {
-  switch (getPlatform()) {
-    case 'Desktop':
-    default:
-      return '/Users/tedshaffer/Desktop/autotron/feed_cache/';
-    case 'BrightSign':
-      return 'feed_cache/';
+// ******************** CONTENT FEEDS: BSN & BS  ********************/
+
+// Promise is resolved with the raw data feed (xml converted to json)
+export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<any> {
+
+  const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeed.id });
+  if (isNil(dataFeedSource)) {
+    console.log('******** retrieveDataFeed - dataFeedSource not found.');
+    // debugger;
   }
+
+  const remoteDataFeedSource: DmRemoteDataFeedSource = dataFeedSource as DmRemoteDataFeedSource;
+  const urlPS: DmParameterizedString = remoteDataFeedSource.url;
+  const url: string | null = dmGetSimpleStringFromParameterizedString(urlPS);
+  if (!isNil(url)) {
+    return axios({
+      method: 'get',
+      url,
+      responseType: 'text',
+    }).then((response: any) => {
+      fs.writeFileSync(getFeedCacheRoot() + dataFeed.id + '.xml', response.data);
+      return xmlStringToJson(response.data);
+    }).then((feedAsJson) => {
+      console.log(feedAsJson);
+      return Promise.resolve(feedAsJson);
+    }).catch((err) => {
+      console.log(err);
+      return Promise.reject(err);
+    });
+  }
+  return Promise.reject('dataFeedSources url is null');
 }
 
-function getFeedAssetPool(): AssetPool {
-  switch (getPlatform()) {
-    case 'Desktop':
-    default:
-      return new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
-    case 'BrightSign':
-      return new AssetPool('SD:/feedPool');
-  }
+export function processFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
+
 }
 
-function populateFeedItems(feedFileName: string): any {
-
-  let xmlFileContents: string;
-  try {
-    xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-    return xmlStringToJson(xmlFileContents)
-      .then((rawFeed) => {
-        const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
-        console.log(items);
-        return Promise.resolve(items);
-      })
-      .catch((err) => {
-        debugger;
-      });
-  } catch (err) {
-    // return Promise.reject(err);
-    // TODODF
-    return Promise.resolve(null);
+export function processCachedFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any): any {
+  return (dispatch: any, getState: any) => {
+    switch (bsdmDataFeed.usage) {
+      case DataFeedUsageType.Mrss: {
+        return dispatch(readCachedMrssFeed(bsdmDataFeed));
+      }
+      case DataFeedUsageType.Content: {
+        return dispatch(readCachedContentFeed(bsdmDataFeed));
+      }
+      default:
+        return Promise.resolve();
+    }
   };
 }
 
-// TODO - looks admittedly bogus right now
-export function parseMrssFeed(feedFileName: string) {
-  const promise = populateFeedItems(feedFileName);
-  return promise.then((mrssItems: ArMrssItem[]) => {
-    return Promise.resolve(mrssItems);
-  });
-}
-
-// convert to format required for content feed
-export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArContentFeedItem[] {
-  const contentItems: ArContentFeedItem[] = [];
-  for (const mrssItem of mrssItems) {
-    console.log('create ArContentFeed');
-    console.log(mrssItem.url);
-    console.log(mrssItem.filePath);
-    console.log(mrssItem.link);
-    const arContentItem: ArContentFeedItem = {
-      name: mrssItem.title,
-      url: mrssItem.url,
-      medium: mrssItem.medium,
-      hash: mrssItem.guid,
-    }
-    contentItems.push(arContentItem);
-  }
-  return contentItems;
-}
-
-export function parseCustomContentFormat(bsdmDataFeed: DmcDataFeed, feedFileName: string) {
-
+// return a promise
+export function readCachedFeed(bsdmDataFeed: DmcDataFeed): any {
   return (dispatch: any, getState: any) => {
-    let xmlFileContents: string;
-    try {
-      xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-      return xmlStringToJson(xmlFileContents)
-        .then((rawFeed) => {
-
-          const contentItems: ArContentFeedItem[] = [];
-          for (const item of rawFeed.rss.channel.item) {
-            const arContentItem: ArContentFeedItem = {
-              name: item.title,
-              url: item.description,
-              medium: item.medium,
-              hash: item.guid,
-            }
-            contentItems.push(arContentItem);
-          }
-
-          const arContentFeed: ArContentFeed = {
-            id: bsdmDataFeed.id,
-            sourceId: bsdmDataFeed.feedSourceId,
-            usage: DataFeedUsageType.Content,
-            contentItems,
-          };
-          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
-          dispatch(addDataFeedAction);
-
-          return Promise.resolve();
-        })
+    switch (bsdmDataFeed.usage) {
+      case DataFeedUsageType.Mrss: {
+        return dispatch(readCachedMrssFeed(bsdmDataFeed));
+      }
+      case DataFeedUsageType.Content: {
+        return dispatch(readCachedContentFeed(bsdmDataFeed));
+      }
+      default:
+        return Promise.resolve();
     }
-    catch {
-      return Promise.resolve();
-    };
-  }
+  };
 }
 
-function readStoredContentFeed(bsdmDataFeed: DmcDataFeed) {
-
-  return (dispatch: any, getState: any) => {
-
-    console.log('Read existing content for feed ' + bsdmDataFeed.id);
-
-    const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
-
-    // return dispatch(parseCustomContentFormat(bsdmDataFeed, feedFileName));
-    // temporary, as I have no way to get a bsn feed
-    const promise = parseMrssFeed(feedFileName);
-    return promise.then((mrssItems: ArMrssItem[]) => {
-      console.log(mrssItems);
-      const contentItems: ArContentFeedItem[] = convertMrssFormatToContentFormat(mrssItems);
-      const arContentFeed: ArContentFeed = {
-        id: bsdmDataFeed.id,
-        sourceId: bsdmDataFeed.feedSourceId,
-        usage: DataFeedUsageType.Content,
-        contentItems,
-      };
-      const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
-      dispatch(addDataFeedAction);
-      return Promise.resolve();
-    });
-
-    // the following is the 'correct code'
-    // if (bsdmDataFeed.isBsnDataFeed && (bsdmDataFeed.type === DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed)) {
-    //   console.log('bsdm feed');
-    //   return parseMrssFeed(feedFileName).then((mrssItems: ArMrssItem[]) => {
-    //     const convertedItems: any[] = convertMrssFormatToContentFormat(mrssItems);
-    //   });
-    // }
-    // else {
-    //   return dispatch(parseCustomContentFormat(bsdmDataFeed, feedFileName));
-    // }
-  }
-}
-
-function readStoredMrssFeed(bsdmDataFeed: DmcDataFeed) {
+// return a promise
+function readCachedMrssFeed(bsdmDataFeed: DmcDataFeed) {
 
   return (dispatch: any, getState: any) => {
 
@@ -226,26 +151,35 @@ function readStoredMrssFeed(bsdmDataFeed: DmcDataFeed) {
   };
 }
 
-export function readStoredDataFeed(bsdmDataFeed: DmcDataFeed) {
+// return a promise
+function readCachedContentFeed(bsdmDataFeed: DmcDataFeed) {
   return (dispatch: any, getState: any) => {
-    switch (bsdmDataFeed.usage) {
-      case DataFeedUsageType.Mrss: {
-        return dispatch(readStoredMrssFeed(bsdmDataFeed));
-      }
-      case DataFeedUsageType.Content: {
-        const readStoredContentFeedAction = readStoredContentFeed(bsdmDataFeed);
-        const readStoredContentFeedPromise = dispatch(readStoredContentFeedAction);
-        readStoredContentFeedPromise.then(() => {
-          const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id);
-          if (!isNil(arDataFeed)) {
-            dispatch(massageStoredContentFeed(arDataFeed as ArContentFeed));
-          }
-        });
-      }
-      default:
-        return Promise.resolve();
+    dispatch(loadContentFeed(bsdmDataFeed))
+      .then(() => {
+        const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id);
+        if (!isNil(arDataFeed)) {
+          dispatch(massageStoredContentFeed(arDataFeed as ArContentFeed));
+        }
+      });
+  }
+}
+
+// returns a promise - verify
+function loadContentFeed(bsdmDataFeed: DmcDataFeed) {
+
+  return (dispatch: any, getState: any) => {
+
+    console.log('Read existing content for feed ' + bsdmDataFeed.id);
+
+    const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
+
+    if (isBsnFeed(bsdmDataFeed)) {
+      return dispatch(processBsnContentFeed(bsdmDataFeed, feedFileName));
     }
-  };
+    else {
+      return dispatch(processBSContentFeed(bsdmDataFeed, feedFileName));
+    }
+  }
 }
 
 function massageStoredContentFeed(arDataFeed: ArContentFeed) {
@@ -256,11 +190,6 @@ function massageStoredContentFeed(arDataFeed: ArContentFeed) {
 
     let index = 0;
     for (const contentItem of arDataFeed.contentItems) {
-
-      // console.log('create Asset');
-      // console.log(contentItem.name);
-      // console.log(contentItem.url);
-      // console.log(contentItem.hash);
 
       const asset: Asset = {
         link: contentItem.url,
@@ -278,8 +207,6 @@ function massageStoredContentFeed(arDataFeed: ArContentFeed) {
 
     arDataFeed.assetList = assetList;
 
-    console.log('end of massageStoredContentFeed');
-
     if (allDataFeedContentExists(arDataFeed)) {
       console.log('allDataFeedContentExists returned true');
       // post message indicating load complete
@@ -294,51 +221,6 @@ function massageStoredContentFeed(arDataFeed: ArContentFeed) {
       console.log('allDataFeedContentExists returned false');
     }
   }
-}
-
-function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<void> {
-  const jsonString = JSON.stringify(data, null, 2);
-  console.log('invoke fs.writeFile');
-  console.log(fullPath);
-  return fs.writeFile(fullPath, jsonString);
-}
-
-export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<any> {
-
-  // TODODF - authentication
-  // TODODF - headRequest
-  // TODODF - user agent string
-  // TODODF - binding
-
-
-  // simplified version - URL only; simple string
-  // TODODF - data feed source with user variable?
-  const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeed.id });
-  if (isNil(dataFeedSource)) {
-    console.log('******** retrieveDataFeed - dataFeedSource not found.');
-    // debugger;
-  }
-
-  const remoteDataFeedSource: DmRemoteDataFeedSource = dataFeedSource as DmRemoteDataFeedSource;
-  const urlPS: DmParameterizedString = remoteDataFeedSource.url;
-  const url: string | null = dmGetSimpleStringFromParameterizedString(urlPS);
-  if (!isNil(url)) {
-    return axios({
-      method: 'get',
-      url,
-      responseType: 'text',
-    }).then((response: any) => {
-      fs.writeFileSync(getFeedCacheRoot() + dataFeed.id + '.xml', response.data);
-      return xmlStringToJson(response.data);
-    }).then((feedAsJson) => {
-      console.log(feedAsJson);
-      return Promise.resolve(feedAsJson);
-    }).catch((err) => {
-      console.log(err);
-      return Promise.reject(err);
-    });
-  }
-  return Promise.reject('dataFeedSources url is null');
 }
 
 export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
@@ -413,6 +295,120 @@ export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
       });
   };
 }
+
+
+// ******************** BSN CONTENT FEED ********************/
+
+// returns a promise
+function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, feedFileName: string) {
+  return (dispatch: any, getState: any) => {
+    return parseMrssFeed(feedFileName)
+      .then((mrssItems: ArMrssItem[]) => {
+        const contentItems: ArContentFeedItem[] = convertMrssFormatToContentFormat(mrssItems);
+        const arContentFeed: ArContentFeed = {
+          id: bsdmDataFeed.id,
+          sourceId: bsdmDataFeed.feedSourceId,
+          usage: DataFeedUsageType.Content,
+          contentItems,
+        };
+        const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
+        dispatch(addDataFeedAction);
+        return Promise.resolve();
+      });
+  }
+}
+
+export function parseMrssFeed(feedFileName: string) {
+  const promise = populateFeedItems(feedFileName);
+  return promise.then((mrssItems: ArMrssItem[]) => {
+    return Promise.resolve(mrssItems);
+  });
+}
+
+function populateFeedItems(feedFileName: string): any {
+
+  let xmlFileContents: string;
+  try {
+    xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+    return xmlStringToJson(xmlFileContents)
+      .then((rawFeed) => {
+        const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+        console.log(items);
+        return Promise.resolve(items);
+      })
+      .catch((err) => {
+        debugger;
+      });
+  } catch (err) {
+    // return Promise.reject(err);
+    // TODODF
+    return Promise.resolve(null);
+  };
+}
+
+// convert to format required for content feed
+export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArContentFeedItem[] {
+  const contentItems: ArContentFeedItem[] = [];
+  for (const mrssItem of mrssItems) {
+    console.log('create ArContentFeed');
+    console.log(mrssItem.url);
+    console.log(mrssItem.filePath);
+    console.log(mrssItem.link);
+    const arContentItem: ArContentFeedItem = {
+      name: mrssItem.title,
+      url: mrssItem.url,
+      medium: mrssItem.medium,
+      hash: mrssItem.guid,
+    }
+    contentItems.push(arContentItem);
+  }
+  return contentItems;
+}
+
+
+// ******************** URL CONTENT FEED ********************/
+
+// returns a promise
+export function processBSContentFeed(bsdmDataFeed: DmcDataFeed, feedFileName: string) {
+
+  return (dispatch: any, getState: any) => {
+    let xmlFileContents: string;
+    try {
+      xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
+      return xmlStringToJson(xmlFileContents)
+        .then((rawFeed) => {
+
+          const contentItems: ArContentFeedItem[] = [];
+          for (const item of rawFeed.rss.channel.item) {
+            const arContentItem: ArContentFeedItem = {
+              name: item.title,
+              url: item.description,
+              medium: item.medium,
+              hash: item.guid,
+            }
+            contentItems.push(arContentItem);
+          }
+
+          const arContentFeed: ArContentFeed = {
+            id: bsdmDataFeed.id,
+            sourceId: bsdmDataFeed.feedSourceId,
+            usage: DataFeedUsageType.Content,
+            contentItems,
+          };
+          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
+          dispatch(addDataFeedAction);
+
+          return Promise.resolve();
+        })
+    }
+    catch {
+      return Promise.resolve();
+    };
+  }
+}
+
+
+// ******************** MRSS FEED  ********************/
 
 export function downloadMRSSFeedContent(bsdm: DmState, rawFeed: any, dataFeedId: BsDmId) {
 
@@ -537,29 +533,7 @@ export function downloadMRSSFeedContent(bsdm: DmState, rawFeed: any, dataFeedId:
   };
 }
 
-function handleFileEvent(fileEvent: any) {
-  console.log('handleFileEvent');
-  console.log(fileEvent);
-}
-
-function handleProgressEvent(progressEvent: any) {
-  console.log('handleProgressEvent');
-  console.log(progressEvent);
-}
-
-export function feedIsMrss(feed: any): boolean {
-
-  if (isObject(feed) && isObject(feed.rss) && isObject(feed.rss.$)) {
-    if (feed.rss.$.hasOwnProperty('xmlns:media')) {
-      const attr: string = feed.rss.$['xmlns:media'];
-      if (attr.startsWith('http://search.yahoo.com/mrss')) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
+// ******************** TEXT FEED  ********************/
 
 export function parseSimpleRSSFeed(bsdm: DmState, rawXmlTextFeed: any, dataFeedId: BsDmId) {
 
@@ -598,3 +572,61 @@ export function parseSimpleRSSFeed(bsdm: DmState, rawXmlTextFeed: any, dataFeedI
     dispatch(addDataFeedAction);
   }
 }
+
+// ******************** UTILIES / SHARED ********************/
+
+export function getFeedCacheRoot(): string {
+  switch (getPlatform()) {
+    case 'Desktop':
+    default:
+      return '/Users/tedshaffer/Desktop/autotron/feed_cache/';
+    case 'BrightSign':
+      return 'feed_cache/';
+  }
+}
+
+function getFeedAssetPool(): AssetPool {
+  switch (getPlatform()) {
+    case 'Desktop':
+    default:
+      return new AssetPool('/Users/tedshaffer/Desktop/autotron/feedPool');
+    case 'BrightSign':
+      return new AssetPool('SD:/feedPool');
+  }
+}
+
+function isBsnFeed(bsdmDataFeed: DmcDataFeed): boolean {
+  return (bsdmDataFeed.isBsnDataFeed && (bsdmDataFeed.type === DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed));
+}
+
+function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<void> {
+  const jsonString = JSON.stringify(data, null, 2);
+  console.log('invoke fs.writeFile');
+  console.log(fullPath);
+  return fs.writeFile(fullPath, jsonString);
+}
+
+function handleFileEvent(fileEvent: any) {
+  console.log('handleFileEvent');
+  console.log(fileEvent);
+}
+
+function handleProgressEvent(progressEvent: any) {
+  console.log('handleProgressEvent');
+  console.log(progressEvent);
+}
+
+export function feedIsMrss(feed: any): boolean {
+
+  if (isObject(feed) && isObject(feed.rss) && isObject(feed.rss.$)) {
+    if (feed.rss.$.hasOwnProperty('xmlns:media')) {
+      const attr: string = feed.rss.$['xmlns:media'];
+      if (attr.startsWith('http://search.yahoo.com/mrss')) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
