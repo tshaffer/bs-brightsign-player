@@ -14,6 +14,7 @@ import AssetPoolFetcher from '@brightsign/assetpoolfetcher';
 import { ArEventType } from '../type/runtime';
 
 import { postMessage, getPlatform, getPoolFilePath } from './runtime';
+import { BsBspVoidPromiseThunkAction, BsBspVoidThunkAction } from '../index';
 
 let assetPoolFetcher: AssetPoolFetcher | null = null;
 
@@ -21,7 +22,7 @@ let assetPoolFetcher: AssetPoolFetcher | null = null;
 // ******************** FEEDS: ********************/
 
 // Promise is resolved with the raw data feed (xml converted to json)
-export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<any> {
+export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<ArFeed> {
 
   const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeed.id });
   if (isNil(dataFeedSource)) {
@@ -40,7 +41,7 @@ export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<
     }).then((response: any) => {
       fs.writeFileSync(getFeedCacheRoot() + dataFeed.id + '.xml', response.data);
       return xmlStringToJson(response.data);
-    }).then((feedAsJson) => {
+    }).then((feedAsJson: ArFeed) => {
       console.log(feedAsJson);
       return Promise.resolve(feedAsJson);
     }).catch((err) => {
@@ -79,7 +80,7 @@ export function readCachedFeed(bsdmDataFeed: DmcDataFeed): Promise<ArFeed | null
   }
 }
 
-export function processFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
+export function processFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidPromiseThunkAction {
   return (dispatch: any, getState: any) => {
     switch (bsdmDataFeed.usage) {
       case DataFeedUsageType.Mrss: {
@@ -101,8 +102,7 @@ export function processFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
 
 // ******************** MRSS FEEDS: ********************/
 
-// return a promise
-function processMrssFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
+function processMrssFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidPromiseThunkAction {
 
   return (dispatch: any, getState: any) => {
 
@@ -233,14 +233,14 @@ export function downloadMRSSFeedContent(arDataFeed: ArMrssFeed) {
 // ******************** CONTENT FEEDS: BSN & BS  ********************/
 
 // return a promise
-function processContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
+function processContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidPromiseThunkAction {
   return (dispatch: any, getState: any) => {
     return dispatch(loadContentFeed(bsdmDataFeed, feed));
   };
 }
 
 // returns a promise - verify
-function loadContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
+function loadContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidPromiseThunkAction {
 
   return (dispatch: any, getState: any) => {
 
@@ -372,7 +372,7 @@ export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
 // ******************** BSN CONTENT FEED ********************/
 
 // returns a promise
-function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
+function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidPromiseThunkAction {
   return (dispatch: any, getState: any) => {
     return parseMrssFeed(feed)
       .then((mrssItems: ArMrssItem[]) => {
@@ -422,7 +422,7 @@ function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArContentFee
 // ******************** URL CONTENT FEED ********************/
 
 // returns a promise
-function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed) {
+function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed): BsBspVoidThunkAction {
 
   return (dispatch: any, getState: any) => {
     // TODO - can buildContentFeed return the arDataFeed it just created?
@@ -438,7 +438,7 @@ function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed) {
   };
 }
 
-function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed) {
+function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed): BsBspVoidThunkAction {
   return (dispatch: any, getState: any) => {
     const contentItems: ArContentFeedItem[] = [];
     for (const item of urlFeed.rss.channel.item) {
@@ -465,14 +465,14 @@ function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed)
 
 // ******************** TEXT FEED  ********************/
 
-export function processTextDataFeed(bsdmDataFeed: DmcDataFeed, textFeed: ArFeed) {
+export function processTextDataFeed(bsdmDataFeed: DmcDataFeed, textFeed: ArFeed): BsBspVoidPromiseThunkAction {
   return (dispatch: any, getState: any) => {
     dispatch(parseSimpleRSSFeed(bsdmDataFeed, textFeed));
     return Promise.resolve();
   };
 }
 
-export function parseSimpleRSSFeed(bsdmDataFeed: DmcDataFeed, textFeed: ArFeed) {
+export function parseSimpleRSSFeed(bsdmDataFeed: DmcDataFeed, textFeed: ArFeed): BsBspVoidThunkAction {
 
   return (dispatch: any, getState: any) => {
 

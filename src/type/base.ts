@@ -45,6 +45,7 @@ export interface BsBspBaseAction extends Action {
 
 export type BsBspVoidThunkAction = (dispatch: BsBspDispatch, getState: () => BsBrightSignPlayerState, extraArgument: undefined) => void;
 export type BsBspStringThunkAction = (dispatch: BsBspDispatch, getState: () => BsBrightSignPlayerState, extraArgument: undefined) => string;
+export type BsBspVoidPromiseThunkAction = (dispatch: BsBspDispatch, getState: () => BsBrightSignPlayerState, extraArgument: undefined) => Promise<void>;
 
 export type BsBspThunkAction<T> = (dispatch: BsBspDispatch, getState: () => BsBrightSignPlayerState, extraArgument: undefined) => BsBspAction<T>;
 // export type SimpleThunkAction<T> = (dispatch: BsBspDispatch) => BsBspAction<T>;
