@@ -156,8 +156,6 @@ class STRSSDataFeedPlaying extends HState {
       const tickerZoneHSM: TickerZoneHSM = this.stateMachine as TickerZoneHSM;
       const tickerZoneProperties: DmTickerZoneProperties = tickerZoneHSM.bsdmZone.properties as DmTickerZoneProperties;
 
-      debugger;
-
       // only support 1 for now
       let dataFeed: ArTextFeed | null = null;
       for (const rssDataFeedItem of tickerZoneHSM.rssDataFeedItems) {

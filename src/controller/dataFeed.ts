@@ -468,6 +468,7 @@ function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
 export function processTextDataFeed(bsdmDataFeed: DmcDataFeed, textFeed: any) {
   return (dispatch: any, getState: any) => {
     dispatch(parseSimpleRSSFeed(bsdmDataFeed, textFeed));
+    return Promise.resolve();
   };
 }
 
@@ -496,7 +497,7 @@ export function parseSimpleRSSFeed(bsdmDataFeed: DmcDataFeed, rawXmlTextFeed: an
     }
 
     const dataFeed: ArTextFeed = {
-      type: 'textFeed',
+      type: 'text',
       id: bsdmDataFeed.id,
       usage: DataFeedUsageType.Text,
       sourceId: bsdmDataFeed.feedSourceId,
