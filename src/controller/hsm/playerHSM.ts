@@ -15,7 +15,7 @@ import {
   processFeed
 } from '../dataFeed';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
-import { ArMrssItem, ArContentFeed, ArTextFeed } from '../../type/dataFeed';
+import { ArMrssItem, ArContentFeed, ArTextFeed, ArMrssFeed } from '../../type/dataFeed';
 import { getDataFeedById } from '../../selector/dataFeed';
 import { ArDataFeed } from '../../../index';
 import { addDataFeed } from '../../model/dataFeed';
@@ -93,7 +93,7 @@ class STPlayer extends HState {
 class STPlaying extends HState {
 
   // ids of dataFeeds to download
-  bsdmDataFeedIdsToDownload: string[] = [];
+  bsdmDataFeedIdsToDownload: BsDmId[] = [];
 
   constructor(stateMachine: PlayerHSM, id: string, superState: HState) {
     super(stateMachine, id);
@@ -228,12 +228,12 @@ class STPlaying extends HState {
           dispatch(processFeed(bsdmDataFeed, rawFeed))
             .then(() => {
               // TYPESCRIPT issues
-              const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id) as any;
+              const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArDataFeed;
               if (arDataFeed.type === 'content') {
-                dispatch(downloadContentFeedContent(arDataFeed));
+                dispatch(downloadContentFeedContent(arDataFeed as ArContentFeed));
               }
               else if (arDataFeed.type === 'mrss') {
-                dispatch(downloadMRSSFeedContent(arDataFeed));
+                dispatch(downloadMRSSFeedContent(arDataFeed as ArMrssFeed));
               }
               else if (arDataFeed.type === 'text') {
                 console.log('text feed: return from processFeed - no content to download');

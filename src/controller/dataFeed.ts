@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import axios from 'axios';
 
-import { ArTextItem, ArTextFeed, ArMrssItem, ArMrssFeed, ArContentFeedItem, ArContentFeed, ArDataFeed } from '../type/dataFeed';
+import { ArTextItem, ArTextFeed, ArMrssItem, ArMrssFeed, ArContentFeedItem, ArContentFeed, ArDataFeed, ArFeed } from '../type/dataFeed';
 import { DmState, BsDmId, DmcDataFeed, DmDataFeedSource, DmRemoteDataFeedSource, DmParameterizedString, dmGetSimpleStringFromParameterizedString, dmGetDataFeedSourceForFeedId, dmGetDataFeedById } from '@brightsign/bsdatamodel';
 import { isNil, isObject } from 'lodash';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
@@ -52,7 +52,7 @@ export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<
 }
 
 // returns promise
-export function readCachedFeed(bsdmDataFeed: DmcDataFeed): Promise<any> {
+export function readCachedFeed(bsdmDataFeed: DmcDataFeed): Promise<ArFeed | null> {
 
   const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
 
@@ -65,9 +65,9 @@ export function readCachedFeed(bsdmDataFeed: DmcDataFeed): Promise<any> {
     xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
 
     return xmlStringToJson(xmlFileContents)
-      .then((feedAsJson) => {
-        console.log(feedAsJson);
-        return Promise.resolve(feedAsJson);
+      .then((feed: ArFeed) => {
+        console.log(feed);
+        return Promise.resolve(feed);
       }).catch((err) => {
         // TODODF - if err is for file not found
         return Promise.resolve(null);
@@ -79,17 +79,17 @@ export function readCachedFeed(bsdmDataFeed: DmcDataFeed): Promise<any> {
   }
 }
 
-export function processFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
+export function processFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
   return (dispatch: any, getState: any) => {
     switch (bsdmDataFeed.usage) {
       case DataFeedUsageType.Mrss: {
-        return dispatch(processMrssFeed(bsdmDataFeed, rawFeed));
+        return dispatch(processMrssFeed(bsdmDataFeed, feed));
       }
       case DataFeedUsageType.Content: {
-        return dispatch(processContentFeed(bsdmDataFeed, rawFeed));
+        return dispatch(processContentFeed(bsdmDataFeed, feed));
       }
       case DataFeedUsageType.Text: {
-        return dispatch(processTextDataFeed(bsdmDataFeed, rawFeed));
+        return dispatch(processTextDataFeed(bsdmDataFeed, feed));
       }
       default:
         return Promise.resolve();
@@ -102,7 +102,7 @@ export function processFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
 // ******************** MRSS FEEDS: ********************/
 
 // return a promise
-function processMrssFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
+function processMrssFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
 
   return (dispatch: any, getState: any) => {
 
@@ -112,7 +112,7 @@ function processMrssFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
       return Promise.resolve();
     }
 
-    const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+    const items: ArMrssItem[] = getMrssFeedItems(feed);
     console.log(items);
 
     const assetList: Asset[] = [];
@@ -233,22 +233,22 @@ export function downloadMRSSFeedContent(arDataFeed: ArMrssFeed) {
 // ******************** CONTENT FEEDS: BSN & BS  ********************/
 
 // return a promise
-function processContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
+function processContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
   return (dispatch: any, getState: any) => {
-    return dispatch(loadContentFeed(bsdmDataFeed, rawFeed));
+    return dispatch(loadContentFeed(bsdmDataFeed, feed));
   };
 }
 
 // returns a promise - verify
-function loadContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
+function loadContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
 
   return (dispatch: any, getState: any) => {
 
     if (isBsnFeed(bsdmDataFeed)) {
-      return dispatch(processBsnContentFeed(bsdmDataFeed, rawFeed));
+      return dispatch(processBsnContentFeed(bsdmDataFeed, feed));
     }
     else {
-      dispatch(processUrlContentFeed(bsdmDataFeed, rawFeed));
+      dispatch(processUrlContentFeed(bsdmDataFeed, feed));
       return Promise.resolve();
     }
   };
@@ -372,9 +372,9 @@ export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
 // ******************** BSN CONTENT FEED ********************/
 
 // returns a promise
-function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
+function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed) {
   return (dispatch: any, getState: any) => {
-    return parseMrssFeed(rawFeed)
+    return parseMrssFeed(feed)
       .then((mrssItems: ArMrssItem[]) => {
         const contentItems: ArContentFeedItem[] = convertMrssFormatToContentFormat(mrssItems);
         const arContentFeed: ArContentFeed = {
@@ -391,15 +391,15 @@ function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
   };
 }
 
-function parseMrssFeed(rawFeed: any) {
-  const promise = populateFeedItems(rawFeed);
+function parseMrssFeed(feed: ArFeed) {
+  const promise = populateFeedItems(feed);
   return promise.then((mrssItems: ArMrssItem[]) => {
     return Promise.resolve(mrssItems);
   });
 }
 
-function populateFeedItems(rawFeed: any): any {
-  const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+function populateFeedItems(feed: ArFeed): Promise<ArMrssItem[]> {
+  const items: ArMrssItem[] = getMrssFeedItems(feed);
   return Promise.resolve(items);
 }
 
@@ -422,7 +422,7 @@ function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArContentFee
 // ******************** URL CONTENT FEED ********************/
 
 // returns a promise
-function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
+function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed) {
 
   return (dispatch: any, getState: any) => {
     // TODO - can buildContentFeed return the arDataFeed it just created?
@@ -438,7 +438,7 @@ function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
   };
 }
 
-function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
+function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed) {
   return (dispatch: any, getState: any) => {
     const contentItems: ArContentFeedItem[] = [];
     for (const item of urlFeed.rss.channel.item) {
@@ -465,14 +465,14 @@ function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
 
 // ******************** TEXT FEED  ********************/
 
-export function processTextDataFeed(bsdmDataFeed: DmcDataFeed, textFeed: any) {
+export function processTextDataFeed(bsdmDataFeed: DmcDataFeed, textFeed: ArFeed) {
   return (dispatch: any, getState: any) => {
     dispatch(parseSimpleRSSFeed(bsdmDataFeed, textFeed));
     return Promise.resolve();
   };
 }
 
-export function parseSimpleRSSFeed(bsdmDataFeed: DmcDataFeed, rawXmlTextFeed: any) {
+export function parseSimpleRSSFeed(bsdmDataFeed: DmcDataFeed, textFeed: ArFeed) {
 
   return (dispatch: any, getState: any) => {
 
@@ -481,7 +481,7 @@ export function parseSimpleRSSFeed(bsdmDataFeed: DmcDataFeed, rawXmlTextFeed: an
     const textItems: ArTextItem[] = [];
     const articlesByTitle: any = {};
 
-    for (const feedItem of rawXmlTextFeed.rss.channel.item) {
+    for (const feedItem of textFeed.rss.channel.item) {
       const title: string = feedItem.title;
       const description: string = feedItem.description;
 

@@ -81,7 +81,7 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
     const mediaType: ContentItemType = mediaContentItem.type;
 
     switch (mediaType.toString().toLowerCase()) {
-      case 'Image': {
+      case 'image': {
         return (
           <Image
             width={this.props.width}
@@ -90,7 +90,7 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
           />
         );
       }
-      case 'Video': {
+      case 'video': {
         return (
           <Video
             width={this.props.width}

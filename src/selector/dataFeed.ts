@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import isomorphicPath from 'isomorphic-path';
 import { BsBrightSignPlayerState } from '../type';
-import { ArDataFeed, ArMrssItem, ArMediaFeed, ArMrssFeed, ArContentFeed } from '../type/dataFeed';
+import { ArDataFeed, ArMrssItem, ArMrssFeed, ArContentFeed } from '../type/dataFeed';
 import { Hash, Asset } from '@brightsign/assetpool';
 import { getFeedDirectory as getFeedPoolDirectory } from '../controller';
 

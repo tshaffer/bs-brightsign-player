@@ -3,6 +3,16 @@ import { Asset } from '@brightsign/assetpool';
 import { BsDmId } from '@brightsign/bsdatamodel';
 import { DataFeedUsageType } from '@brightsign/bscore';
 
+export interface ArFeed {
+  rss: any;
+  // for a text feed
+  //    #name: string
+  //    $: object
+  //    $$: Array[]
+  //    channel: object
+}
+
+
 export interface ArDataFeedBase {
   id: BsDmId;
   sourceId: BsDmId;
@@ -58,10 +68,9 @@ export interface ArMediaFeedItem {
   medium: string;
 }
 
-export type ArDataFeed = ArTextFeed | ArMediaFeed;
+export type ArDataFeed = ArTextFeed | ArMrssFeed | ArContentFeed;
 
 export type ArTextFeed = ArDataFeedBase & ArTextFeedProperties;
-export type ArMediaFeed = ArMrssFeed | ArContentFeed;
 
 export type ArMrssFeed = ArDataFeedBase & ArMrssFeedProperties;
 export type ArContentFeed = ArDataFeedBase & ArContentFeedProperties;
