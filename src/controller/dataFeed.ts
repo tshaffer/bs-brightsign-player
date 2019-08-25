@@ -176,7 +176,8 @@ function loadContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
       return dispatch(processBsnContentFeed(bsdmDataFeed, rawFeed));
     }
     else {
-      return dispatch(processUrlContentFeed(bsdmDataFeed, rawFeed));
+      dispatch(processUrlContentFeed(bsdmDataFeed, rawFeed));
+      return Promise.resolve();
     }
   };
 }
@@ -577,8 +578,8 @@ function getFeedAssetPool(): AssetPool {
 }
 
 function isBsnFeed(bsdmDataFeed: DmcDataFeed): boolean {
-  return true;
-  // return (bsdmDataFeed.isBsnDataFeed && (bsdmDataFeed.type === DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed));
+  // return true;
+  return (bsdmDataFeed.isBsnDataFeed && (bsdmDataFeed.type === DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed));
 }
 
 function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<void> {
