@@ -16,8 +16,7 @@ import {
   processUrlContentFeed,
   getFeedCacheRoot,
   processFeed
-}
-  from '../dataFeed';
+} from '../dataFeed';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
 import { ArMrssItem, ArContentFeed } from '../../type/dataFeed';
 import { getDataFeedById } from '../../selector/dataFeed';
@@ -205,7 +204,7 @@ class STPlaying extends HState {
   }
 
   readCachedFeeds(bsdm: DmState) {
-    
+
     return (dispatch: any) => {
 
       const bsdmDataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
@@ -218,7 +217,7 @@ class STPlaying extends HState {
 
         const bsdmDataFeedId = bsdmDataFeedIds[index];
         const bsdmDataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: bsdmDataFeedId }) as DmcDataFeed;
-        return dispatch(readCachedFeed(bsdmDataFeed))
+        return (readCachedFeed(bsdmDataFeed))
           .then((rawFeed: any) => {
             if (!isNil(rawFeed)) {
               const promise = dispatch(processFeed(bsdmDataFeed, rawFeed));
@@ -249,32 +248,49 @@ class STPlaying extends HState {
       const bsdmDataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: bsdmDataFeedId }) as DmcDataFeed;
       const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
       retrieveDataFeed(bsdm, bsdmDataFeed)
-        .then((feedAsJson) => {
-          if (bsdmDataFeed.usage !== DataFeedUsageType.Mrss) {
-            // content OR simple RSS / text
-            // LOOKS LIKE CONTENT currently
-            if (bsdmDataFeed.type == DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed) {
-              parseMrssFeed(feedFileName).then((mrssItems: ArMrssItem[]) => {
-                const contentItems: any[] = convertMrssFormatToContentFormat(mrssItems);
-                const arContentFeed: ArContentFeed = {
-                  id: bsdmDataFeed.id,
-                  sourceId: bsdmDataFeed.feedSourceId,
-                  usage: DataFeedUsageType.Content,
-                  contentItems,
-                };
-                const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
-                dispatch(addDataFeedAction);
-                const arDataFeed: ArContentFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArContentFeed;
-                dispatch(downloadContentFeedContent(arDataFeed));
-              });
-            }
-            else {
-              const promise = dispatch(processUrlContentFeed(bsdmDataFeed, feedAsJson));
-              promise.then(() => {
-                dispatch(this.processMediaDataFeed(feedAsJson, bsdm, bsdmDataFeed));
-              })
-            }
-          }
+        .then((rawFeed) => {
+          dispatch(processFeed(bsdmDataFeed, rawFeed))
+            .then(() => {
+              const arDataFeed: ArContentFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArContentFeed;
+              dispatch(downloadContentFeedContent(arDataFeed));
+              
+              const event: ArEventType = {
+                EventType: 'LIVE_DATA_FEED_UPDATE',
+                EventData: bsdmDataFeedId,
+              };
+              const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
+              dispatch(action);
+
+              dispatch(this.launchRetrieveFeedTimer(bsdmDataFeedId, bsdm).bind(this));
+
+            }).catch((err: any) => {
+              console.log(err);
+            });
+          // if (bsdmDataFeed.usage !== DataFeedUsageType.Mrss) {
+          //   // content OR simple RSS / text
+          //   // LOOKS LIKE CONTENT currently
+          //   if (bsdmDataFeed.type == DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed) {
+          //     parseMrssFeed(feedFileName).then((mrssItems: ArMrssItem[]) => {
+          //       const contentItems: any[] = convertMrssFormatToContentFormat(mrssItems);
+          //       const arContentFeed: ArContentFeed = {
+          //         id: bsdmDataFeed.id,
+          //         sourceId: bsdmDataFeed.feedSourceId,
+          //         usage: DataFeedUsageType.Content,
+          //         contentItems,
+          //       };
+          //       const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
+          //       dispatch(addDataFeedAction);
+          //       const arDataFeed: ArContentFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArContentFeed;
+          //       dispatch(downloadContentFeedContent(arDataFeed));
+          //     });
+          //   }
+          //   else {
+          //     const promise = dispatch(processUrlContentFeed(bsdmDataFeed, rawFeed));
+          //     promise.then(() => {
+          //       dispatch(this.processMediaDataFeed(rawFeed, bsdm, bsdmDataFeed));
+          //     })
+          //   }
+          // }
 
 
           // if (bsdmDataFeed.usage === DataFeedUsageType.Text) {
@@ -287,35 +303,35 @@ class STPlaying extends HState {
     };
   }
 
-  processMediaDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed) {
-    return (dispatch: any, getState: any) => {
+  // processMediaDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed) {
+  //   return (dispatch: any, getState: any) => {
 
-      console.log('processMediaFeed - entry');
+  //     console.log('processMediaFeed - entry');
 
-      const isMRSSFeed = feedIsMrss(feedAsJson);
+  //     const isMRSSFeed = feedIsMrss(feedAsJson);
 
-      const arDataFeed: ArContentFeed = getDataFeedById(getState(), dataFeed.id) as ArContentFeed;
+  //     const arDataFeed: ArContentFeed = getDataFeedById(getState(), dataFeed.id) as ArContentFeed;
 
-      if (dataFeed.usage === DataFeedUsageType.Content) {
-        dispatch(downloadContentFeedContent(arDataFeed));
-      }
-      else if (dataFeed.usage === DataFeedUsageType.Mrss && (dataFeed.parserPlugin !== '' || isMRSSFeed)) {
-        dispatch(downloadMRSSFeedContent(bsdm, feedAsJson, dataFeed.id));
-      }
-      else {
-        debugger;
-      }
+  //     if (dataFeed.usage === DataFeedUsageType.Content) {
+  //       dispatch(downloadContentFeedContent(arDataFeed));
+  //     }
+  //     else if (dataFeed.usage === DataFeedUsageType.Mrss && (dataFeed.parserPlugin !== '' || isMRSSFeed)) {
+  //       dispatch(downloadMRSSFeedContent(bsdm, feedAsJson, dataFeed.id));
+  //     }
+  //     else {
+  //       debugger;
+  //     }
 
-      const event: ArEventType = {
-        EventType: 'LIVE_DATA_FEED_UPDATE',
-        EventData: dataFeed.id,
-      };
-      const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
-      dispatch(action);
+  //     const event: ArEventType = {
+  //       EventType: 'LIVE_DATA_FEED_UPDATE',
+  //       EventData: dataFeed.id,
+  //     };
+  //     const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
+  //     dispatch(action);
 
-      dispatch(this.launchRetrieveFeedTimer(dataFeed.id, bsdm).bind(this));
-    };
-  }
+  //     dispatch(this.launchRetrieveFeedTimer(dataFeed.id, bsdm).bind(this));
+  //   };
+  // }
 
   processTextDataFeed(feedAsJson: any, bsdm: DmState, bsdmDataFeed: DmcDataFeed) {
     return (dispatch: any, getState: any) => {

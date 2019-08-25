@@ -87,7 +87,7 @@ export class TickerZoneHSM extends ZoneHSM {
 
   // see newRSSDataFeedPlaylistItem in autorun
   getRSSDataFeedItem(dataFeedContentItem: DmDataFeedContentItem): any {
-    const rssDataFeedItem: any = {}
+    const rssDataFeedItem: any = {};
     rssDataFeedItem.dataFeedId = dataFeedContentItem.dataFeedId;
     return rssDataFeedItem;
   }
@@ -119,7 +119,7 @@ class STRSSDataFeedInitialLoad extends HState {
 
       stateData.nextState = this.superState;
       return 'SUPER';
-    }
+    };
   }
 }
 
@@ -146,7 +146,7 @@ class STRSSDataFeedPlaying extends HState {
 
       stateData.nextState = this.superState;
       return 'SUPER';
-    }
+    };
   }
 
   populateRSSDataFeedWidget() {
@@ -194,7 +194,7 @@ class STRSSDataFeedPlaying extends HState {
         console.log('failed to create bsTicker: ');
         return;
       }
-    }
+    };
   }
 
 }

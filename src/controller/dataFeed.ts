@@ -51,7 +51,7 @@ export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<
 }
 
 // returns promise
-export function readCachedFeed(bsdmDataFeed: DmcDataFeed) {
+export function readCachedFeed(bsdmDataFeed: DmcDataFeed): Promise<any> {
 
   const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
 
@@ -164,7 +164,7 @@ function processCachedMrssFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
 function processCachedContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
   return (dispatch: any, getState: any) => {
     return dispatch(loadContentFeed(bsdmDataFeed, rawFeed));
-  }
+  };
 }
 
 // returns a promise - verify
@@ -178,7 +178,7 @@ function loadContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
     else {
       return dispatch(processUrlContentFeed(bsdmDataFeed, rawFeed));
     }
-  }
+  };
 }
 
 function massageStoredContentFeed(arDataFeed: ArContentFeed) {
@@ -219,7 +219,7 @@ function massageStoredContentFeed(arDataFeed: ArContentFeed) {
     else {
       console.log('allDataFeedContentExists returned false');
     }
-  }
+  };
 }
 
 export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
@@ -246,7 +246,7 @@ export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
           method: 'SHA1',
           hex: contentFeedItem.hash,
         }
-      }
+      };
       assetList.push(asset);
     }
     console.log('assetList created');
@@ -314,7 +314,7 @@ function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
         dispatch(addDataFeedAction);
         return Promise.resolve();
       });
-  }
+  };
 }
 
 export function parseMrssFeed(rawFeed: any) {
@@ -338,7 +338,7 @@ export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArCon
       url: mrssItem.url,
       medium: mrssItem.medium,
       hash: mrssItem.guid,
-    }
+    };
     contentItems.push(arContentItem);
   }
   return contentItems;
@@ -361,7 +361,7 @@ export function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
       //    NO
       // THIS THREAD IS DONE!!
     }
-  }
+  };
 }
 
 function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
@@ -373,7 +373,7 @@ function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
         url: item.description,
         medium: item.medium,
         hash: item.guid,
-      }
+      };
       contentItems.push(arContentItem);
     }
 
@@ -385,7 +385,7 @@ function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
     };
     const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
     dispatch(addDataFeedAction);
-  }
+  };
 }
 
 
@@ -532,7 +532,7 @@ export function parseSimpleRSSFeed(bsdm: DmState, rawXmlTextFeed: any, dataFeedI
       const arTextItem: ArTextItem = {
         articleTitle: title,
         articleDescription: description,
-      }
+      };
       textItems.push(arTextItem);
 
       // articles.push(description);
@@ -551,7 +551,7 @@ export function parseSimpleRSSFeed(bsdm: DmState, rawXmlTextFeed: any, dataFeedI
 
     const addDataFeedAction: any = addDataFeed(dataFeedId, dataFeed);
     dispatch(addDataFeedAction);
-  }
+  };
 }
 
 // ******************** UTILIES / SHARED ********************/
@@ -577,7 +577,8 @@ function getFeedAssetPool(): AssetPool {
 }
 
 function isBsnFeed(bsdmDataFeed: DmcDataFeed): boolean {
-  return (bsdmDataFeed.isBsnDataFeed && (bsdmDataFeed.type === DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed));
+  return true;
+  // return (bsdmDataFeed.isBsnDataFeed && (bsdmDataFeed.type === DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed));
 }
 
 function fsSaveObjectAsLocalJsonFile(data: object, fullPath: string): Promise<void> {
