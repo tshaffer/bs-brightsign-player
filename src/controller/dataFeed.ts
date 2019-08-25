@@ -318,7 +318,7 @@ function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
   };
 }
 
-export function parseMrssFeed(rawFeed: any) {
+function parseMrssFeed(rawFeed: any) {
   const promise = populateFeedItems(rawFeed);
   return promise.then((mrssItems: ArMrssItem[]) => {
     return Promise.resolve(mrssItems);
@@ -331,7 +331,7 @@ function populateFeedItems(rawFeed: any): any {
 }
 
 // convert to format required for content feed
-export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArContentFeedItem[] {
+function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArContentFeedItem[] {
   const contentItems: ArContentFeedItem[] = [];
   for (const mrssItem of mrssItems) {
     const arContentItem: ArContentFeedItem = {
@@ -349,7 +349,7 @@ export function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArCon
 // ******************** URL CONTENT FEED ********************/
 
 // returns a promise
-export function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
+function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
 
   return (dispatch: any, getState: any) => {
     // TODO - can buildContentFeed return the arDataFeed it just created?

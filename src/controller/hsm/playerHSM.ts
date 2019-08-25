@@ -11,9 +11,6 @@ import {
   feedIsMrss,
   downloadContentFeedContent,
   parseSimpleRSSFeed,
-  parseMrssFeed,
-  convertMrssFormatToContentFormat,
-  processUrlContentFeed,
   getFeedCacheRoot,
   processFeed
 } from '../dataFeed';
@@ -177,21 +174,6 @@ class STPlaying extends HState {
 
             return 'HANDLED';
           });
-        // // read stored data feeds
-        // const readStoredDataFeedsAction: any = this.readStoredDataFeeds(getState().bsdm);
-        // dispatch(readStoredDataFeedsAction)
-        //   .then(() => {
-
-        //     // then initiate data feed downloads
-        //     dispatch(this.fetchDataFeeds(getState().bsdm));
-
-        //     // launch playback
-        //     const action: any = (this.stateMachine as PlayerHSM).startPlayback();
-        //     dispatch(action);
-
-        //     return 'HANDLED';
-        //   });
-
       } else if (isString(event.EventType) && (event.EventType === 'MRSS_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_UNCHANGED')) {
         console.log('******* - cc30');
         dispatch(this.advanceToNextDataFeedInQueue(getState().bsdm).bind(this));
@@ -266,32 +248,6 @@ class STPlaying extends HState {
             }).catch((err: any) => {
               console.log(err);
             });
-          // if (bsdmDataFeed.usage !== DataFeedUsageType.Mrss) {
-          //   // content OR simple RSS / text
-          //   // LOOKS LIKE CONTENT currently
-          //   if (bsdmDataFeed.type == DataFeedType.BSNDynamicPlaylist || bsdmDataFeed.type === DataFeedType.BSNMediaFeed) {
-          //     parseMrssFeed(feedFileName).then((mrssItems: ArMrssItem[]) => {
-          //       const contentItems: any[] = convertMrssFormatToContentFormat(mrssItems);
-          //       const arContentFeed: ArContentFeed = {
-          //         id: bsdmDataFeed.id,
-          //         sourceId: bsdmDataFeed.feedSourceId,
-          //         usage: DataFeedUsageType.Content,
-          //         contentItems,
-          //       };
-          //       const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
-          //       dispatch(addDataFeedAction);
-          //       const arDataFeed: ArContentFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArContentFeed;
-          //       dispatch(downloadContentFeedContent(arDataFeed));
-          //     });
-          //   }
-          //   else {
-          //     const promise = dispatch(processUrlContentFeed(bsdmDataFeed, rawFeed));
-          //     promise.then(() => {
-          //       dispatch(this.processMediaDataFeed(rawFeed, bsdm, bsdmDataFeed));
-          //     })
-          //   }
-          // }
-
 
           // if (bsdmDataFeed.usage === DataFeedUsageType.Text) {
           //   dispatch(this.processTextDataFeed(feedAsJson, bsdm, bsdmDataFeed));
@@ -302,36 +258,6 @@ class STPlaying extends HState {
         });
     };
   }
-
-  // processMediaDataFeed(feedAsJson: any, bsdm: DmState, dataFeed: DmcDataFeed) {
-  //   return (dispatch: any, getState: any) => {
-
-  //     console.log('processMediaFeed - entry');
-
-  //     const isMRSSFeed = feedIsMrss(feedAsJson);
-
-  //     const arDataFeed: ArContentFeed = getDataFeedById(getState(), dataFeed.id) as ArContentFeed;
-
-  //     if (dataFeed.usage === DataFeedUsageType.Content) {
-  //       dispatch(downloadContentFeedContent(arDataFeed));
-  //     }
-  //     else if (dataFeed.usage === DataFeedUsageType.Mrss && (dataFeed.parserPlugin !== '' || isMRSSFeed)) {
-  //       dispatch(downloadMRSSFeedContent(bsdm, feedAsJson, dataFeed.id));
-  //     }
-  //     else {
-  //       debugger;
-  //     }
-
-  //     const event: ArEventType = {
-  //       EventType: 'LIVE_DATA_FEED_UPDATE',
-  //       EventData: dataFeed.id,
-  //     };
-  //     const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
-  //     dispatch(action);
-
-  //     dispatch(this.launchRetrieveFeedTimer(dataFeed.id, bsdm).bind(this));
-  //   };
-  // }
 
   processTextDataFeed(feedAsJson: any, bsdm: DmState, bsdmDataFeed: DmcDataFeed) {
     return (dispatch: any, getState: any) => {
@@ -349,10 +275,6 @@ class STPlaying extends HState {
       dispatch(this.launchRetrieveFeedTimer(bsdmDataFeed.id, bsdm).bind(this));
     };
   }
-
-
-
-
 }
 
 class STWaiting extends HState {
