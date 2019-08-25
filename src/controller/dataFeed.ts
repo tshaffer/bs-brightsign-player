@@ -83,10 +83,13 @@ export function processFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
   return (dispatch: any, getState: any) => {
     switch (bsdmDataFeed.usage) {
       case DataFeedUsageType.Mrss: {
-        return dispatch(processCachedMrssFeed(bsdmDataFeed, rawFeed));
+        return dispatch(processMrssFeed(bsdmDataFeed, rawFeed));
       }
       case DataFeedUsageType.Content: {
-        return dispatch(processCachedContentFeed(bsdmDataFeed, rawFeed));
+        return dispatch(processContentFeed(bsdmDataFeed, rawFeed));
+      }
+      case DataFeedUsageType.Text: {
+        return dispatch(processTextDataFeed(bsdmDataFeed, rawFeed));
       }
       default:
         return Promise.resolve();
@@ -99,7 +102,7 @@ export function processFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
 // ******************** MRSS FEEDS: ********************/
 
 // return a promise
-function processCachedMrssFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
+function processMrssFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
 
   return (dispatch: any, getState: any) => {
 
@@ -230,7 +233,7 @@ export function downloadMRSSFeedContent(arDataFeed: ArMrssFeed) {
 // ******************** CONTENT FEEDS: BSN & BS  ********************/
 
 // return a promise
-function processCachedContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
+function processContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
   return (dispatch: any, getState: any) => {
     return dispatch(loadContentFeed(bsdmDataFeed, rawFeed));
   };
@@ -462,7 +465,13 @@ function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
 
 // ******************** TEXT FEED  ********************/
 
-export function parseSimpleRSSFeed(bsdm: DmState, rawXmlTextFeed: any, dataFeedId: BsDmId) {
+export function processTextDataFeed(bsdmDataFeed: DmcDataFeed, textFeed: any) {
+  return (dispatch: any, getState: any) => {
+    dispatch(parseSimpleRSSFeed(bsdmDataFeed, textFeed));
+  };
+}
+
+export function parseSimpleRSSFeed(bsdmDataFeed: DmcDataFeed, rawXmlTextFeed: any) {
 
   return (dispatch: any, getState: any) => {
 
@@ -486,17 +495,16 @@ export function parseSimpleRSSFeed(bsdm: DmState, rawXmlTextFeed: any, dataFeedI
       articlesByTitle[title] = description;
     }
 
-    const dmDataFeed: DmcDataFeed = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
     const dataFeed: ArTextFeed = {
       type: 'textFeed',
-      id: dataFeedId,
+      id: bsdmDataFeed.id,
       usage: DataFeedUsageType.Text,
-      sourceId: dmDataFeed.feedSourceId,
+      sourceId: bsdmDataFeed.feedSourceId,
       textItems,
       articlesByTitle,
     };
 
-    const addDataFeedAction: any = addDataFeed(dataFeedId, dataFeed);
+    const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, dataFeed);
     dispatch(addDataFeedAction);
   };
 }

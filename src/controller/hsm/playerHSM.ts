@@ -160,18 +160,12 @@ class STPlaying extends HState {
 
         const bsdm: DmState = getState().bsdm;
 
-        // read stored feeds (previously downloaded and now cache)
         const readStoredFeedsAction: any = this.readCachedFeeds(bsdm);
         dispatch(readStoredFeedsAction)
           .then(() => {
-
-            // initial feed downloads
             dispatch(this.fetchFeeds(bsdm));
-
-            // launch playback
             const action: any = (this.stateMachine as PlayerHSM).startPlayback();
             dispatch(action);
-
             return 'HANDLED';
           });
       } else if (isString(event.EventType) && (event.EventType === 'MRSS_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_LOADED') || (event.EventType === 'CONTENT_DATA_FEED_UNCHANGED')) {
@@ -233,7 +227,7 @@ class STPlaying extends HState {
         .then((rawFeed) => {
           dispatch(processFeed(bsdmDataFeed, rawFeed))
             .then(() => {
-              // const arDataFeed: ArDataFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArDataFeed;
+              // TYPESCRIPT issues
               const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id) as any;
               if (arDataFeed.type === 'content') {
                 dispatch(downloadContentFeedContent(arDataFeed));
@@ -242,7 +236,7 @@ class STPlaying extends HState {
                 dispatch(downloadMRSSFeedContent(arDataFeed));
               }
               else if (arDataFeed.type === 'text') {
-                console.log('text feed');
+                console.log('text feed: return from processFeed - no content to download');
               }
               else {
                 debugger;
@@ -260,33 +254,10 @@ class STPlaying extends HState {
             }).catch((err: any) => {
               console.log(err);
             });
-
-          // if (bsdmDataFeed.usage === DataFeedUsageType.Text) {
-          //   dispatch(this.processTextDataFeed(feedAsJson, bsdm, bsdmDataFeed));
-          // }
-          // else {
-          //   dispatch(this.processMediaDataFeed(feedAsJson, bsdm, bsdmDataFeed));
-          // }
         });
     };
   }
 
-  processTextDataFeed(feedAsJson: any, bsdm: DmState, bsdmDataFeed: DmcDataFeed) {
-    return (dispatch: any, getState: any) => {
-
-      dispatch(parseSimpleRSSFeed(bsdm, feedAsJson, bsdmDataFeed.id));
-
-      const event: ArEventType = {
-        EventType: 'LIVE_DATA_FEED_UPDATE',
-        EventData: bsdmDataFeed.id,
-      };
-      const action: any = (this.stateMachine as PlayerHSM).postMessage(event);
-      dispatch(action);
-
-      // set timer to check for feed update
-      dispatch(this.launchRetrieveFeedTimer(bsdmDataFeed.id, bsdm).bind(this));
-    };
-  }
 }
 
 class STWaiting extends HState {
