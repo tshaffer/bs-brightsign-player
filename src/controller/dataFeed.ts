@@ -103,186 +103,125 @@ function processCachedMrssFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
 
   return (dispatch: any, getState: any) => {
 
-    const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
-
-    console.log('Read existing content for feed ' + bsdmDataFeed.id);
-
-    let xmlFileContents: string;
-
-    try {
-
-      xmlFileContents = fs.readFileSync(feedFileName, 'utf8');
-
-      return xmlStringToJson(xmlFileContents)
-        .then((rawFeed) => {
-
-          const isMrssFeed: boolean = feedIsMrss(rawFeed);
-          // const isMrssFeed = true;
-          if (!isMrssFeed) {
-            return Promise.resolve();
-          }
-
-          const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
-          console.log(items);
-
-          const assetList: Asset[] = [];
-          for (const feedItem of items) {
-            const asset: Asset = {
-              link: feedItem.url,
-              name: feedItem.url,
-              changeHint: feedItem.guid,
-              hash: {
-                method: 'SHA1',
-                hex: feedItem.guid,
-              }
-            };
-            assetList.push(asset);
-          }
-
-          const dataFeed: ArMrssFeed = {
-            id: bsdmDataFeed.id,
-            usage: DataFeedUsageType.Mrss,
-            sourceId: bsdmDataFeed.feedSourceId,
-            mrssItems: items,
-            assetList,
-            title: 'notSure',
-            playtime: '',
-            ttl: '',
-          };
-          const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, dataFeed);
-          dispatch(addDataFeedAction);
-          return Promise.resolve();
-        }).catch((err) => {
-          // TODODF - if err is for file not found
-          return Promise.resolve();
-        });
-    } catch (err) {
-      // return Promise.reject(err);
-      // TODODF
+    // const isMrssFeed: boolean = feedIsMrss(rawFeed);
+    const isMrssFeed = true;
+    if (!isMrssFeed) {
       return Promise.resolve();
     }
+
+    const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
+    console.log(items);
+
+    const assetList: Asset[] = [];
+    for (const feedItem of items) {
+      const asset: Asset = {
+        link: feedItem.url,
+        name: feedItem.url,
+        changeHint: feedItem.guid,
+        hash: {
+          method: 'SHA1',
+          hex: feedItem.guid,
+        }
+      };
+      assetList.push(asset);
+    }
+
+    const dataFeed: ArMrssFeed = {
+      type: 'mrss',
+      id: bsdmDataFeed.id,
+      usage: DataFeedUsageType.Mrss,
+      sourceId: bsdmDataFeed.feedSourceId,
+      mrssItems: items,
+      assetList,
+      title: 'notSure',
+      playtime: '',
+      ttl: '',
+    };
+    const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, dataFeed);
+    dispatch(addDataFeedAction);
+    return Promise.resolve();
   };
 }
 
-export function downloadMRSSFeedContent(bsdm: DmState, rawFeed: any, dataFeedId: BsDmId) {
+export function downloadMRSSFeedContent(arDataFeed: ArMrssFeed) {
 
   return (dispatch: any, getState: any) => {
 
-    const dataFeedSource = dmGetDataFeedSourceForFeedId(bsdm, { id: dataFeedId }) as DmDataFeedSource;
+    console.log(arDataFeed.mrssItems);
+    console.log(arDataFeed.assetList);
 
-    // write the mrss feed to the card
-    fsSaveObjectAsLocalJsonFile(rawFeed, getFeedCacheRoot() + dataFeedId + '.json')
+    console.log('assetList created');
+
+    console.log('***** - downloadMRSSContent, addDataFeed');
+    console.log('***** - dataFeedId = ' + arDataFeed.id);
+    console.log('***** - items length = ' + arDataFeed.mrssItems.length.toString());
+
+    const dataFeed = getDataFeedById(getState(), arDataFeed.id) as ArDataFeed;
+
+    console.log('check for existence of assetPoolFetcher');
+
+    console.log('but even if it exists, create a new one');
+    // if (isNil(assetPoolFetcher)) {
+    console.log('assetPoolFetcher does not exist, create it');
+    const feedAssetPool: AssetPool = getFeedAssetPool();
+    console.log('created and retrieved feedAssetPool');
+    console.log(feedAssetPool);
+    assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
+    console.log('assetPoolFetcher created');
+    console.log(assetPoolFetcher);
+
+    // assetPoolFetcher.fileevent = handleFileEvent;
+    // assetPoolFetcher.progressevent = handleProgressEvent;
+    assetPoolFetcher.addEventListener('progressevent', (data: any) => {
+      // ProgressEvent is defined at
+      // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
+      console.log('progressEvent:');
+      console.log(data.detail.fileName);
+      console.log(data.detail.index);
+      console.log(data.detail.total);
+      console.log(data.detail.currentFileTransferred);
+      console.log(data.detail.currentFileTotal);
+    });
+
+    assetPoolFetcher.addEventListener('fileevent', (data: any) => {
+      // FileEvent is at data.detail
+      // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
+      console.log('fileEvent:');
+      console.log(data.detail.fileName);
+      console.log(data.detail.index);
+      console.log(data.detail.responseCode);
+    });
+
+
+    console.log('post MRSS_SPEC_UPDATED message');
+
+    // indicate that the mrss spec has been updated
+    const event: ArEventType = {
+      EventType: 'MRSS_SPEC_UPDATED',
+      // EventData: dataFeedSource.id,
+      EventData: dataFeed.id,
+    };
+    const action: any = postMessage(event);
+    dispatch(action);
+
+    console.log('assetPoolFetcher.start');
+    assetPoolFetcher.start(arDataFeed.assetList)
       .then(() => {
+        console.log('assetPoolFetcher promise resolved');
 
-        /* feed level properties
-        if name = "ttl" then
-          m.SetTTLMinutes(elt.GetBody())
-        else if name = "frameuserinfo:playtime" then
-          m.playtime = Val(elt.GetBody())
-        else if lcase(name) = "title" then
-          m.title = elt.GetBody()
-        */
-        const items: ArMrssItem[] = getMrssFeedItems(rawFeed);
-
-        const assetList: Asset[] = [];
-        for (const feedItem of items) {
-
-          const asset: Asset = {
-            link: feedItem.url,
-            name: feedItem.url,
-            changeHint: feedItem.guid,
-            hash: {
-              method: 'SHA1',
-              hex: feedItem.guid,
-            }
-          };
-          assetList.push(asset);
-        }
-
-        console.log('assetList created');
-
-        console.log('***** - downloadMRSSContent, addDataFeed');
-        console.log('***** - dataFeedId = ' + dataFeedId);
-        console.log('***** - items length = ' + items.length.toString());
-
-        const dataFeed: ArMrssFeed = {
-          id: dataFeedId,
-          sourceId: dataFeedSource.id,
-          assetList,
-          usage: DataFeedUsageType.Mrss,
-          mrssItems: items,
-          title: 'notSure',
-          playtime: '',
-          ttl: '',
-        };
-        dispatch(addDataFeed(dataFeedId, dataFeed));
-
-        console.log('check for existence of assetPoolFetcher');
-
-        console.log('but even if it exists, create a new one');
-        // if (isNil(assetPoolFetcher)) {
-        console.log('assetPoolFetcher does not exist, create it');
-        const feedAssetPool: AssetPool = getFeedAssetPool();
-        console.log('created and retrieved feedAssetPool');
-        console.log(feedAssetPool);
-        assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
-        console.log('assetPoolFetcher created');
-        console.log(assetPoolFetcher);
-        // }
-
-        // assetPoolFetcher.fileevent = handleFileEvent;
-        // assetPoolFetcher.progressevent = handleProgressEvent;
-        assetPoolFetcher.addEventListener('progressevent', (data: any) => {
-          // ProgressEvent is defined at
-          // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
-          console.log('progressEvent:');
-          console.log(data.detail.fileName);
-          console.log(data.detail.index);
-          console.log(data.detail.total);
-          console.log(data.detail.currentFileTransferred);
-          console.log(data.detail.currentFileTotal);
-        });
-
-        assetPoolFetcher.addEventListener('fileevent', (data: any) => {
-          // FileEvent is at data.detail
-          // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
-          console.log('fileEvent:');
-          console.log(data.detail.fileName);
-          console.log(data.detail.index);
-          console.log(data.detail.responseCode);
-        });
-
-
-        console.log('post MRSS_SPEC_UPDATED message');
-
-        // indicate that the mrss spec has been updated
+        // after all files complete
         const event: ArEventType = {
-          EventType: 'MRSS_SPEC_UPDATED',
+          EventType: 'MRSS_DATA_FEED_LOADED',
           // EventData: dataFeedSource.id,
           EventData: dataFeed.id,
         };
         const action: any = postMessage(event);
         dispatch(action);
-
-        console.log('assetPoolFetcher.start');
-        assetPoolFetcher.start(assetList)
-          .then(() => {
-            console.log('assetPoolFetcher promise resolved');
-
-            // after all files complete
-            const event: ArEventType = {
-              EventType: 'MRSS_DATA_FEED_LOADED',
-              // EventData: dataFeedSource.id,
-              EventData: dataFeed.id,
-            };
-            const action: any = postMessage(event);
-            dispatch(action);
-          })
-          .catch((err) => {
-            console.log('err caught in assetPoolFetcher.start');
-            console.log(err);
-            debugger;
-          });
+      })
+      .catch((err) => {
+        console.log('err caught in assetPoolFetcher.start');
+        console.log(err);
+        debugger;
       });
   };
 }
@@ -436,6 +375,7 @@ function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, rawFeed: any) {
       .then((mrssItems: ArMrssItem[]) => {
         const contentItems: ArContentFeedItem[] = convertMrssFormatToContentFormat(mrssItems);
         const arContentFeed: ArContentFeed = {
+          type: 'contentFeed',
           id: bsdmDataFeed.id,
           sourceId: bsdmDataFeed.feedSourceId,
           usage: DataFeedUsageType.Content,
@@ -484,7 +424,7 @@ function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
   return (dispatch: any, getState: any) => {
     // TODO - can buildContentFeed return the arDataFeed it just created?
     dispatch(buildContentFeedFromUrlFeed(bsdmDataFeed, urlFeed));
-    const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id);
+    const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArDataFeed;
     if (!isNil(arDataFeed)) {
       // NO REAL NEED TO CALL THIS IF FEED WAS NOT CACHED
       dispatch(massageStoredContentFeed(arDataFeed as ArContentFeed));
@@ -509,6 +449,7 @@ function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: any) {
     }
 
     const arContentFeed: ArContentFeed = {
+      type: 'contentFeed',
       id: bsdmDataFeed.id,
       sourceId: bsdmDataFeed.feedSourceId,
       usage: DataFeedUsageType.Content,
@@ -547,6 +488,7 @@ export function parseSimpleRSSFeed(bsdm: DmState, rawXmlTextFeed: any, dataFeedI
 
     const dmDataFeed: DmcDataFeed = dmGetDataFeedById(bsdm, { id: dataFeedId }) as DmcDataFeed;
     const dataFeed: ArTextFeed = {
+      type: 'textFeed',
       id: dataFeedId,
       usage: DataFeedUsageType.Text,
       sourceId: dmDataFeed.feedSourceId,

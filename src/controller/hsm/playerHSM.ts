@@ -15,7 +15,7 @@ import {
   processFeed
 } from '../dataFeed';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
-import { ArMrssItem, ArContentFeed } from '../../type/dataFeed';
+import { ArMrssItem, ArContentFeed, ArTextFeed } from '../../type/dataFeed';
 import { getDataFeedById } from '../../selector/dataFeed';
 import { ArDataFeed } from '../../../index';
 import { addDataFeed } from '../../model/dataFeed';
@@ -233,8 +233,20 @@ class STPlaying extends HState {
         .then((rawFeed) => {
           dispatch(processFeed(bsdmDataFeed, rawFeed))
             .then(() => {
-              const arDataFeed: ArContentFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArContentFeed;
-              dispatch(downloadContentFeedContent(arDataFeed));
+              // const arDataFeed: ArDataFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArDataFeed;
+              const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id) as any;
+              if (arDataFeed.type === 'content') {
+                dispatch(downloadContentFeedContent(arDataFeed));
+              }
+              else if (arDataFeed.type === 'mrss') {
+                dispatch(downloadMRSSFeedContent(arDataFeed));
+              }
+              else if (arDataFeed.type === 'text') {
+                console.log('text feed');
+              }
+              else {
+                debugger;
+              }
               
               const event: ArEventType = {
                 EventType: 'LIVE_DATA_FEED_UPDATE',

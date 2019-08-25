@@ -13,6 +13,8 @@ import { initRuntime } from './controller';
 import { combineReducers } from 'redux';
 import { bsDmReducer } from '@brightsign/bsdatamodel';
 
+console.log('define getStore');
+
 const getStore = () => {
   const reducers = combineReducers<BsBrightSignPlayerState>({
     bsdm: bsDmReducer,
@@ -21,16 +23,28 @@ const getStore = () => {
   return createStore<BsBrightSignPlayerState>(
     reducers,
     composeWithDevTools(applyMiddleware(thunk),
-  ));
+    ));
 };
 
-const store = getStore();
+function bootstrapper() {
 
-store.dispatch(initRuntime(store));
+  console.log('bootstrapper');
 
-ReactDOM.render(
-  <Provider store={store}>
-    <App />
-  </Provider>,
-  document.getElementById('root') as HTMLElement
-);
+  const store = getStore();
+
+  store.dispatch(initRuntime(store));
+
+  ReactDOM.render(
+    <Provider store={store}>
+      <App />
+    </Provider>,
+    document.getElementById('root') as HTMLElement
+  );
+
+}
+
+console.log('setTimeout');
+
+// setTimeout(bootstrapper, 30000);
+setTimeout(bootstrapper, 1000);
+

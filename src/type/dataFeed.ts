@@ -7,6 +7,7 @@ export interface ArDataFeedBase {
   id: BsDmId;
   sourceId: BsDmId;
   usage: DataFeedUsageType;
+  type: string;
 }
 
 export interface ArTextItem {
@@ -39,20 +40,6 @@ export interface ArMrssFeedProperties {
   playtime: string;
   ttl: string;
 }
-
-// export interface ArContentItem {
-//   filePath: string;
-//   itemUrl: string;
-//   guid: string;
-//   medium: string;
-// }
-
-// export interface  ArContentFeedItem {
-//   article: string;
-//   articleTitle: string;
-//   guid: string;
-//   medium: string;
-// }
 
 export interface ArContentFeedItem {
   name: string;
