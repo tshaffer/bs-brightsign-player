@@ -13,8 +13,9 @@ import {
   parseSimpleRSSFeed,
   parseMrssFeed,
   convertMrssFormatToContentFormat,
-  processBSContentFeed,
-  getFeedCacheRoot
+  processUrlContentFeed,
+  getFeedCacheRoot,
+  processFeed
 }
   from '../dataFeed';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
@@ -204,6 +205,7 @@ class STPlaying extends HState {
   }
 
   readCachedFeeds(bsdm: DmState) {
+    
     return (dispatch: any) => {
 
       const bsdmDataFeedIds: BsDmId[] = dmGetDataFeedIdsForSign(bsdm);
@@ -217,7 +219,11 @@ class STPlaying extends HState {
         const bsdmDataFeedId = bsdmDataFeedIds[index];
         const bsdmDataFeed: DmcDataFeed | null = dmGetDataFeedById(bsdm, { id: bsdmDataFeedId }) as DmcDataFeed;
         return dispatch(readCachedFeed(bsdmDataFeed))
-          .then(() => {
+          .then((rawFeed: any) => {
+            if (!isNil(rawFeed)) {
+              const promise = dispatch(processFeed(bsdmDataFeed, rawFeed));
+              // TODO - wait for promise to get resolved before starting next one?
+            }
             return readNextCachedFeed(index + 1);
           }).catch((error: Error) => {
             console.log(error);
@@ -263,7 +269,7 @@ class STPlaying extends HState {
               });
             }
             else {
-              const promise = dispatch(processBSContentFeed(bsdmDataFeed, feedFileName));
+              const promise = dispatch(processUrlContentFeed(bsdmDataFeed, feedAsJson));
               promise.then(() => {
                 dispatch(this.processMediaDataFeed(feedAsJson, bsdm, bsdmDataFeed));
               })
