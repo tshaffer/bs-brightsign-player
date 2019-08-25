@@ -132,8 +132,8 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
           return (
             <Image
               src={src}
-              width={1920}
-              height={300}
+              width={this.props.width}
+              height={this.props.height}
 
             />
           );
@@ -171,6 +171,8 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
           return (
             <Image
               src={src}
+              width={this.props.width}
+              height={this.props.height}
             />
           );
         case 'video':
