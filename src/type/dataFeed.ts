@@ -14,10 +14,10 @@ export interface ArFeed {
 
 
 export interface ArDataFeedBase {
+  type: string;
   id: BsDmId;
   sourceId: BsDmId;
   usage: DataFeedUsageType;
-  type: string;
 }
 
 export interface ArTextItem {
@@ -45,10 +45,10 @@ export interface ArMrssItem {
 
 export interface ArMrssFeedProperties {
   mrssItems: ArMrssItem[];
-  assetList: Asset[];
   title: string;
   playtime: string;
   ttl: string;
+  assetList: Asset[];
 }
 
 export interface ArContentFeedItem {
@@ -60,7 +60,7 @@ export interface ArContentFeedItem {
 
 export interface ArContentFeedProperties {
   contentItems: ArContentFeedItem[];
-  assetList?: Asset[];
+  assetList: Asset[];
 }
 
 export interface ArMediaFeedItem {

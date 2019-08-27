@@ -52,7 +52,6 @@ export function retrieveDataFeed(bsdm: DmState, dataFeed: DmcDataFeed): Promise<
   return Promise.reject('dataFeedSources url is null');
 }
 
-// returns promise
 export function readCachedFeed(bsdmDataFeed: DmcDataFeed): Promise<ArFeed | null> {
 
   const feedFileName: string = getFeedCacheRoot() + bsdmDataFeed.id + '.xml';
@@ -99,7 +98,6 @@ export function processFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidP
 
 }
 
-
 // ******************** MRSS FEEDS: ********************/
 
 function processMrssFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidPromiseThunkAction {
@@ -115,19 +113,7 @@ function processMrssFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidProm
     const items: ArMrssItem[] = getMrssFeedItems(feed);
     console.log(items);
 
-    const assetList: Asset[] = [];
-    for (const feedItem of items) {
-      const asset: Asset = {
-        link: feedItem.url,
-        name: feedItem.url,
-        changeHint: feedItem.guid,
-        hash: {
-          method: 'SHA1',
-          hex: feedItem.guid,
-        }
-      };
-      assetList.push(asset);
-    }
+    const assetList: Asset[] = generateMrssFeedAssetList(items);
 
     const dataFeed: ArMrssFeed = {
       type: 'mrss',
@@ -146,35 +132,35 @@ function processMrssFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidProm
   };
 }
 
+function generateMrssFeedAssetList(contentItems: ArMrssItem[]): Asset[] {
+
+  const assetList: Asset[] = [];
+
+  for (const feedItem of contentItems) {
+    const asset: Asset = {
+      name: feedItem.url,
+      link: feedItem.url,
+      changeHint: feedItem.guid,
+      hash: {
+        method: 'SHA1',
+        hex: feedItem.guid,
+      }
+    };
+    assetList.push(asset);
+  }
+
+  return assetList;
+}
+
 export function downloadMRSSFeedContent(arDataFeed: ArMrssFeed) {
 
   return (dispatch: any, getState: any) => {
 
-    console.log(arDataFeed.mrssItems);
-    console.log(arDataFeed.assetList);
-
-    console.log('assetList created');
-
-    console.log('***** - downloadMRSSContent, addDataFeed');
-    console.log('***** - dataFeedId = ' + arDataFeed.id);
-    console.log('***** - items length = ' + arDataFeed.mrssItems.length.toString());
-
     const dataFeed = getDataFeedById(getState(), arDataFeed.id) as ArDataFeed;
 
-    console.log('check for existence of assetPoolFetcher');
-
-    console.log('but even if it exists, create a new one');
-    // if (isNil(assetPoolFetcher)) {
-    console.log('assetPoolFetcher does not exist, create it');
     const feedAssetPool: AssetPool = getFeedAssetPool();
-    console.log('created and retrieved feedAssetPool');
-    console.log(feedAssetPool);
     assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
-    console.log('assetPoolFetcher created');
-    console.log(assetPoolFetcher);
 
-    // assetPoolFetcher.fileevent = handleFileEvent;
-    // assetPoolFetcher.progressevent = handleProgressEvent;
     assetPoolFetcher.addEventListener('progressevent', (data: any) => {
       // ProgressEvent is defined at
       // https://docs.brightsign.biz/display/DOC/assetpoolfetcher#assetpoolfetcher-Events
@@ -195,7 +181,6 @@ export function downloadMRSSFeedContent(arDataFeed: ArMrssFeed) {
       console.log(data.detail.responseCode);
     });
 
-
     console.log('post MRSS_SPEC_UPDATED message');
 
     // indicate that the mrss spec has been updated
@@ -208,7 +193,7 @@ export function downloadMRSSFeedContent(arDataFeed: ArMrssFeed) {
     dispatch(action);
 
     console.log('assetPoolFetcher.start');
-    assetPoolFetcher.start(arDataFeed.assetList)
+    assetPoolFetcher.start((dataFeed as ArMrssFeed).assetList)
       .then(() => {
         console.log('assetPoolFetcher promise resolved');
 
@@ -232,14 +217,12 @@ export function downloadMRSSFeedContent(arDataFeed: ArMrssFeed) {
 
 // ******************** CONTENT FEEDS: BSN & BS  ********************/
 
-// return a promise
 function processContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidPromiseThunkAction {
   return (dispatch: any, getState: any) => {
     return dispatch(loadContentFeed(bsdmDataFeed, feed));
   };
 }
 
-// returns a promise - verify
 function loadContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidPromiseThunkAction {
 
   return (dispatch: any, getState: any) => {
@@ -254,76 +237,31 @@ function loadContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVoidProm
   };
 }
 
-function massageStoredContentFeed(arDataFeed: ArContentFeed) {
+function generateContentFeedAssetList(contentItems: ArContentFeedItem[]): Asset[] {
 
-  return (dispatch: any, getState: any) => {
+  const assetList: Asset[] = [];
 
-    const assetList: Asset[] = [];
+  for (const contentFeedItem of contentItems) {
+    const asset: Asset = {
+      name: contentFeedItem.name,
+      link: contentFeedItem.url,
+      changeHint: contentFeedItem.hash,
+      hash: {
+        method: 'SHA1',
+        hex: contentFeedItem.hash,
+      }
+    };
+    assetList.push(asset);
+  }
 
-    let index = 0;
-    for (const contentItem of arDataFeed.contentItems) {
-
-      const asset: Asset = {
-        link: contentItem.url,
-        name: contentItem.name,
-        changeHint: contentItem.hash,
-        hash: {
-          method: 'SHA1',
-          hex: contentItem.hash,
-        }
-      };
-
-      assetList.push(asset);
-      index++;
-    }
-
-    arDataFeed.assetList = assetList;
-
-    if (allDataFeedContentExists(arDataFeed)) {
-      console.log('allDataFeedContentExists returned true');
-      // post message indicating load complete
-      const event: ArEventType = {
-        EventType: 'CONTENT_DATA_FEED_LOADED',
-        EventData: arDataFeed.id,
-      };
-      const action: any = postMessage(event);
-      dispatch(action);
-    }
-    else {
-      console.log('allDataFeedContentExists returned false');
-    }
-  };
+  return assetList;
 }
 
 export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
-  // feed should already exist at this point and be on the card
+
   return (dispatch: any, getState: any) => {
 
     console.log('downloadContentFeedContent - entry');
-
-    const assetList: Asset[] = [];
-
-    const its = arDataFeed.contentItems;
-    for (const contentFeedItem of its) {
-
-      console.log('create Asset');
-      console.log(contentFeedItem.name);
-      console.log(contentFeedItem.url);
-      console.log(contentFeedItem.hash);
-
-      const asset: Asset = {
-        name: contentFeedItem.name,
-        link: contentFeedItem.url,
-        changeHint: contentFeedItem.hash,
-        hash: {
-          method: 'SHA1',
-          hex: contentFeedItem.hash,
-        }
-      };
-      assetList.push(asset);
-    }
-    console.log('assetList created');
-    console.log(assetList);
 
     const feedAssetPool: AssetPool = getFeedAssetPool();
     assetPoolFetcher = new AssetPoolFetcher(feedAssetPool);
@@ -347,7 +285,7 @@ export function downloadContentFeedContent(arDataFeed: ArContentFeed) {
     });
 
     console.log('assetPoolFetcher.start');
-    assetPoolFetcher.start(assetList)
+    assetPoolFetcher.start(arDataFeed.assetList)
       .then(() => {
 
         console.log('assetPoolFetcher promise resolved');
@@ -377,15 +315,7 @@ function processBsnContentFeed(bsdmDataFeed: DmcDataFeed, feed: ArFeed): BsBspVo
     return parseMrssFeed(feed)
       .then((mrssItems: ArMrssItem[]) => {
         const contentItems: ArContentFeedItem[] = convertMrssFormatToContentFormat(mrssItems);
-        const arContentFeed: ArContentFeed = {
-          type: 'contentFeed',
-          id: bsdmDataFeed.id,
-          sourceId: bsdmDataFeed.feedSourceId,
-          usage: DataFeedUsageType.Content,
-          contentItems,
-        };
-        const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
-        dispatch(addDataFeedAction);
+        dispatch(addContentFeed(bsdmDataFeed, contentItems));
         return Promise.resolve();
       });
   };
@@ -421,7 +351,6 @@ function convertMrssFormatToContentFormat(mrssItems: ArMrssItem[]): ArContentFee
 
 // ******************** URL CONTENT FEED ********************/
 
-// returns a promise
 function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed): BsBspVoidThunkAction {
 
   return (dispatch: any, getState: any) => {
@@ -429,12 +358,31 @@ function processUrlContentFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed): BsBs
     dispatch(buildContentFeedFromUrlFeed(bsdmDataFeed, urlFeed));
     const arDataFeed = getDataFeedById(getState(), bsdmDataFeed.id) as ArDataFeed;
     if (!isNil(arDataFeed)) {
-      // NO REAL NEED TO CALL THIS IF FEED WAS NOT CACHED
-      dispatch(massageStoredContentFeed(arDataFeed as ArContentFeed));
-      // DOES READ LAUNCH A DOWNLOAD?
-      //    NO
-      // THIS THREAD IS DONE!!
+      if (allDataFeedContentExists(arDataFeed as ArContentFeed)) {
+        const event: ArEventType = {
+          EventType: 'CONTENT_DATA_FEED_LOADED',
+          EventData: arDataFeed.id,
+        };
+        const action: any = postMessage(event);
+        dispatch(action);
+      }
     }
+  };
+}
+
+function addContentFeed(bsdmDataFeed: DmcDataFeed, contentItems: ArContentFeedItem[]) {
+  return (dispatch: any, getState: any) => {
+    const assetList: Asset[] = generateContentFeedAssetList(contentItems);
+    const arContentFeed: ArContentFeed = {
+      type: 'content',
+      id: bsdmDataFeed.id,
+      sourceId: bsdmDataFeed.feedSourceId,
+      usage: DataFeedUsageType.Content,
+      contentItems,
+      assetList,
+    };
+    const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
+    dispatch(addDataFeedAction);
   };
 }
 
@@ -450,16 +398,7 @@ function buildContentFeedFromUrlFeed(bsdmDataFeed: DmcDataFeed, urlFeed: ArFeed)
       };
       contentItems.push(arContentItem);
     }
-
-    const arContentFeed: ArContentFeed = {
-      type: 'contentFeed',
-      id: bsdmDataFeed.id,
-      sourceId: bsdmDataFeed.feedSourceId,
-      usage: DataFeedUsageType.Content,
-      contentItems,
-    };
-    const addDataFeedAction: any = addDataFeed(bsdmDataFeed.id, arContentFeed);
-    dispatch(addDataFeedAction);
+    dispatch(addContentFeed(bsdmDataFeed, contentItems));
   };
 }
 
