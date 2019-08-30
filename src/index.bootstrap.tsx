@@ -12,6 +12,7 @@ import { App, bsBrightSignPlayerReducer, BsBrightSignPlayerState } from './index
 import { initRuntime } from './controller';
 import { combineReducers } from 'redux';
 import { bsDmReducer } from '@brightsign/bsdatamodel';
+// import express from 'express';
 
 console.log('define getStore');
 
@@ -42,6 +43,19 @@ function bootstrapper() {
   );
 
 }
+
+// const app: express.Application = express();
+// console.log(app);
+const express = require('express')
+const app = express()
+const port = 3333;
+
+app.get('/', (req: any, res: any) => res.send('Hello World!'))
+app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+
+
+
+
 
 console.log('setTimeout');
 
