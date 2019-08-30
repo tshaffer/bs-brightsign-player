@@ -44,21 +44,58 @@ function bootstrapper() {
 
 }
 
+function handleStatus(res: any) {
+  console.log('send status');
+  res.send('status');
+}
+
+function handleConfiguration(res: any) {
+  console.log('send configuration');
+  res.send('configuration');
+}
+
+function handleStorageConfiguration(res: any) {
+  res.send('handleStorageConfiguration');
+}
+
+function handlePublish(res: any) {
+  res.send('handlePublish');
+}
+
+function handlePublishSync(res: any) {
+  res.send('handlePublishSync');
+}
+
 // const app: express.Application = express();
 // console.log(app);
-const express = require('express')
-const app = express()
-const port = 3333;
+const express = require('express');
+const app = express();
+const port = 8080;
 
-app.get('/', (req: any, res: any) => res.send('Hello World!'))
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+app.get('/', (req: any, res: any) => res.send('Hello World!'));
+app.get('/v2/device/configuration', (req: any, res: any) => handleConfiguration(res));
+app.get('/v2/device/status', (req: any, res: any) => handleStatus(res));
+app.post('/v2/storage/configuration',  (req: any, res: any) => handleStorageConfiguration(res));
+app.post('/v2/publish',  (req: any, res: any) => handlePublish(res));
+app.post('/v2/publish/sync',  (req: any, res: any) => handlePublishSync(res));
 
 
-
-
+app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
 console.log('setTimeout');
 
 // setTimeout(bootstrapper, 30000);
 setTimeout(bootstrapper, 1000);
 
+// endpoints
+/*
+-1: const deviceConfigurationApiPath = '/v2/device/configuration';
+const deviceStatusApiPath = '/v2/device/status';
+POST: const snapshotConfigurationApiPath = '/v2/snapshot/configuration';
+const snapshotHistoryApiPath = '/v2/snapshot/history';
+const snapshotApiPath = '/v2/snapshot';
+0: POST: const storageConfigurationApiPath = '/v2/storage/configuration';
+1: POST: const publishApiPath = '/v2/publish';
+POST: const publishFileApiPath = '/v2/publish/file';
+2: POST: const publishSyncApiPath = '/v2/publish/sync';
+*/
