@@ -74,10 +74,6 @@ function handlePublish(req: any, res: any) {
   console.log('---------------------------------------------- handlePublish');
   console.log(req.files);
 
-  // file was uploaded to
-  //    uploads/04a91bb38505b68ed9141ca9f229f48e
-  //    could read it and do a JSON.parse on it.
-
   const buffer: any = req.files[0].buffer;
   const fileSpecs: any[] = JSON.parse(buffer).file;
 
@@ -92,14 +88,16 @@ function handlePublishSync(req: any, res: any) {
   res.send('handlePublishSync');
 }
 
-// const app: express.Application = express();
-// console.log(app);
 const express = require('express');
 const app = express();
 const multer  = require('multer');
 const upload = multer();
+
+// with this syntax, the file is uploaded to uploads/
 // const uploadManifest = multer({ dest: 'uploads/' })
-const uploadManifest = multer()
+
+// with this syntax, the file information is available via req.files. included is a buffer with the content of the upload
+const uploadManifest = multer();
 
 const port = 8080;
 
@@ -113,6 +111,8 @@ app.post('/v2/storage/configuration', upload.none(), (req: any, res: any, next: 
 // app.post('/v2/publish',  (req: any, res: any) => handlePublish(req, res));
 // app.post('/v2/publish', upload.any(), (req: any, res: any) => handlePublish(req, res));
 // app.post('/v2/publish', uploadManifest.single('filesToPublish.json'), (req: any, res: any) => handlePublish(req, res));
+
+// This approach works for the method I want; unable to get .single() to work.
 app.post('/v2/publish', uploadManifest.any(), (req: any, res: any) => handlePublish(req, res));
 
 // app.post('/v2/publish/sync',  (req: any, res: any) => handlePublishSync(req, res));
