@@ -70,6 +70,8 @@ function handleStorageConfiguration(req: any, res: any) {
   res.status(200).end();
 }
 
+// equivalent to
+// PostPrepareForTransferJson
 function handlePublish(req: any, res: any) {
   console.log('---------------------------------------------- handlePublish');
   console.log(req.files);
@@ -79,6 +81,15 @@ function handlePublish(req: any, res: any) {
 
   for (const fileSpec of fileSpecs) {
     console.log(fileSpec);
+  }
+  
+  // files that need to be copied by BrightAuthor
+  const actualPublishFiles = { }
+  // files that can be deleted to make room for more content
+  const deletionCandidates = { }
+
+  if (fileSpecs.length > 0) {
+
   }
 
   res.status(200).end();
@@ -107,11 +118,7 @@ app.get('/v2/device/status', (req: any, res: any) => handleStatus(req, res));
 app.get('/v2/device/configuration', (req: any, res: any) => handleConfiguration(req, res));
 app.post('/v2/storage/configuration', upload.none(), (req: any, res: any, next: any) => handleStorageConfiguration(req, res));
 
-// app.post('/v2/publish',  (req: any, res: any) => handlePublish(req, res));
-// app.post('/v2/publish',  (req: any, res: any) => handlePublish(req, res));
-// app.post('/v2/publish', upload.any(), (req: any, res: any) => handlePublish(req, res));
 // app.post('/v2/publish', uploadManifest.single('filesToPublish.json'), (req: any, res: any) => handlePublish(req, res));
-
 // This approach works for the method I want; unable to get .single() to work.
 app.post('/v2/publish', uploadManifest.any(), (req: any, res: any) => handlePublish(req, res));
 
@@ -136,36 +143,4 @@ const snapshotApiPath = '/v2/snapshot';
 1: POST: const publishApiPath = '/v2/publish';
 POST: const publishFileApiPath = '/v2/publish/file';
 2: POST: const publishSyncApiPath = '/v2/publish/sync';
-*/
-
-/*
-var path = require('path');
-var express = require('express');
-var app = express();
-var multer  = require('multer');
-
-var storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './public/images/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + file.originalname);
-  }
-});
-
-var upload = multer({ storage: storage });
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.post('/upload', upload.single('wallpaper'), function (req, res) {
-  var imagePath = req.file.path.replace(/^public\//, '');
-  res.redirect(imagePath);
-});
-
-app.use(function (err, req, res, next) {
-  if (err instanceof multer.MulterError) res.status(500).send(err.message);
-  else next(err);
-});
-
-app.listen(5000);
 */
