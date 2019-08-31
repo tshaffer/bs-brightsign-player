@@ -78,14 +78,14 @@ function handlePublish(req: any, res: any) {
   //    uploads/04a91bb38505b68ed9141ca9f229f48e
   //    could read it and do a JSON.parse on it.
 
-  // OR - could try old way, where dest wasn't specified (nor was singleFile - not sure which made a diff)
-  // const buffer: any = req.files[0].buffer;
-  // const fileSpecs: any[] = JSON.parse(buffer);
+  const buffer: any = req.files[0].buffer;
+  const fileSpecs: any[] = JSON.parse(buffer).file;
 
-  // for (const fileSpec of fileSpecs) {
-  //   console.log(fileSpec);
-  // }
-  res.send('handlePublish');
+  for (const fileSpec of fileSpecs) {
+    console.log(fileSpec);
+  }
+
+  res.status(200).end();
 }
 
 function handlePublishSync(req: any, res: any) {
@@ -99,7 +99,7 @@ const app = express();
 const multer  = require('multer');
 const upload = multer();
 // const uploadManifest = multer({ dest: 'uploads/' })
-const uploadManifest = multer({ dest: 'uploads/' })
+const uploadManifest = multer()
 
 const port = 8080;
 
