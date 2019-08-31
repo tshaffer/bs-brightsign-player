@@ -1,5 +1,7 @@
 import * as React from 'react';
+import * as fs from 'fs-extra';
 import { isNil } from 'lodash';
+import * as sizeOf from 'image-size';
 
 import isomorphicPath from 'isomorphic-path';
 
@@ -116,7 +118,7 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
 
       const mediaListItem = this.props.activeMediaListDisplayItem;
       console.log(mediaListItem);
-      
+
       // const poolFilePath: string = getPoolFilePath(mediaListItem.filePath);
       // const src = isomorphicPath.join('file://', poolFilePath);
       const src = isomorphicPath.join('file://', mediaListItem.filePath);
@@ -125,7 +127,6 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
       /*
                     width={this.props.width}
                     height={this.props.height}
-      
       */
       switch (mediaType.toString().toLowerCase()) {
         case 'image': {
@@ -164,15 +165,44 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
 
     if (!isNil(this.props.activeMrssDisplayItem)) {
       const dataFeedItem: ArMediaFeedItem = this.props.activeMrssDisplayItem;
+
       const src: string = isomorphicPath.join('file://', dataFeedItem.filePath);
+
+      // does this work for videos?
+      const dimensions = sizeOf(dataFeedItem.filePath);
+      const { width, height } = dimensions;
+
+      /* max size
+    height: 1000,
+    width: 750,
+      */
+      // scale down to get to that size
+      const widthScaleFactor = width / 1000;
+      const heightScaleFactor = height / 750;
+      let scaledWidth: number;
+      let scaledHeight: number;
+      if (widthScaleFactor > heightScaleFactor) {
+        scaledWidth = width / widthScaleFactor;
+        scaledHeight = height / widthScaleFactor;
+      }
+      else {
+        scaledWidth = width / heightScaleFactor;
+        scaledHeight = height / heightScaleFactor;
+      }
+
+      console.log('width: ', width);
+      console.log('height: ', height);
+      console.log('scaledWidth: ', scaledWidth);
+      console.log('scaledHeight: ', scaledHeight);
 
       switch (dataFeedItem.medium) {
         case 'image':
           return (
             <Image
               src={src}
-              width={this.props.width}
-              height={this.props.height}
+              width={scaledWidth}
+              height={scaledHeight}
+              maxHeight={200}
             />
           );
         case 'video':
