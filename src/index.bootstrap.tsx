@@ -51,7 +51,7 @@ function handleStatus(req: any, res: any) {
 
 // first request from autorun.
 function handleConfiguration(req: any, res: any) {
-  console.log('send configuration');
+  console.log('---------------------------------------------- send configuration');
 
   const respBody = {
     model: 'XT1144',
@@ -64,15 +64,28 @@ function handleConfiguration(req: any, res: any) {
 }
 
 function handleStorageConfiguration(req: any, res: any) {
-  console.log(req.body);
+  console.log('---------------------------------------------- handleStorageConfiguration');
   const limitStorageEnabled: boolean = req.body.limitStorageEnabled;
-  console.log('limitStorageEnabled: ' + limitStorageEnabled);
+  console.log('---------------------------------------------- limitStorageEnabled: ' + limitStorageEnabled);
   res.status(200).end();
 }
 
 function handlePublish(req: any, res: any) {
+  console.log('---------------------------------------------- handlePublish');
+  console.log(req.files);
+
+  // file was uploaded to
+  //    uploads/04a91bb38505b68ed9141ca9f229f48e
+  //    could read it and do a JSON.parse on it.
+
+  // OR - could try old way, where dest wasn't specified (nor was singleFile - not sure which made a diff)
+  // const buffer: any = req.files[0].buffer;
+  // const fileSpecs: any[] = JSON.parse(buffer);
+
+  // for (const fileSpec of fileSpecs) {
+  //   console.log(fileSpec);
+  // }
   res.send('handlePublish');
-  console.log(req.body);
 }
 
 function handlePublishSync(req: any, res: any) {
@@ -85,21 +98,24 @@ const express = require('express');
 const app = express();
 const multer  = require('multer');
 const upload = multer();
-
-// app.use(express.urlencoded({ extended: false }));
-// app.use(express.urlencoded());
-// app.use(express.json());
+// const uploadManifest = multer({ dest: 'uploads/' })
+const uploadManifest = multer({ dest: 'uploads/' })
 
 const port = 8080;
 
 app.get('/', (req: any, res: any) => res.send('Hello World!'));
-app.get('/v2/device/configuration', (req: any, res: any) => handleConfiguration(req, res));
 app.get('/v2/device/status', (req: any, res: any) => handleStatus(req, res));
-// app.post('/v2/storage/configuration',  (req: any, res: any) => handleStorageConfiguration(req, res));
+
+app.get('/v2/device/configuration', (req: any, res: any) => handleConfiguration(req, res));
 app.post('/v2/storage/configuration', upload.none(), (req: any, res: any, next: any) => handleStorageConfiguration(req, res));
 
-app.post('/v2/publish',  (req: any, res: any) => handlePublish(req, res));
-app.post('/v2/publish/sync',  (req: any, res: any) => handlePublishSync(req, res));
+// app.post('/v2/publish',  (req: any, res: any) => handlePublish(req, res));
+// app.post('/v2/publish',  (req: any, res: any) => handlePublish(req, res));
+// app.post('/v2/publish', upload.any(), (req: any, res: any) => handlePublish(req, res));
+// app.post('/v2/publish', uploadManifest.single('filesToPublish.json'), (req: any, res: any) => handlePublish(req, res));
+app.post('/v2/publish', uploadManifest.any(), (req: any, res: any) => handlePublish(req, res));
+
+// app.post('/v2/publish/sync',  (req: any, res: any) => handlePublishSync(req, res));
 
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
