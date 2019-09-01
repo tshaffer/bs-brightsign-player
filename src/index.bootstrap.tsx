@@ -18,8 +18,8 @@ import isomorphicPath from 'isomorphic-path';
 import { getRootDirectory, getPoolDirectory } from './controller/runtime';
 
 import { FileToPublish, ContentFileMap, FilesToPublishMap } from './type';
-
-console.log('define getStore');
+import { SyncSpecDownload, SyncSpec, SyncSpecFiles } from './type';
+import { isNil } from 'lodash';
 
 const getStore = () => {
   const reducers = combineReducers<BsBrightSignPlayerState>({
@@ -49,14 +49,27 @@ function bootstrapper() {
 
 }
 
+// LFN
+// endpoints
+/*
+const deviceStatusApiPath = '/v2/device/status';
+POST: const snapshotConfigurationApiPath = '/v2/snapshot/configuration';
+const snapshotHistoryApiPath = '/v2/snapshot/history';
+const snapshotApiPath = '/v2/snapshot';
+-1: GET:  const deviceConfigurationApiPath = '/v2/device/configuration';
+0:  POST: const storageConfigurationApiPath = '/v2/storage/configuration';
+1:  POST: const publishApiPath = '/v2/publish';
+1.5 POST: const publishFileApiPath = '/v2/publish/file';
+2:  POST: const publishSyncApiPath = '/v2/publish/sync';
+*/
+
+
 function handleStatus(req: any, res: any) {
-  console.log('send status');
   res.send('status');
 }
 
 // first request from autorun.
 function handleConfiguration(req: any, res: any) {
-  console.log('---------------------------------------------- send configuration');
 
   const respBody = {
     model: 'XT1144',
@@ -69,31 +82,24 @@ function handleConfiguration(req: any, res: any) {
 }
 
 function handleStorageConfiguration(req: any, res: any) {
-  console.log('---------------------------------------------- handleStorageConfiguration');
   const limitStorageEnabled: boolean = req.body.limitStorageEnabled;
-  console.log('---------------------------------------------- limitStorageEnabled: ' + limitStorageEnabled);
   res.status(200).end();
 }
 
 // PostPrepareForTransferJson
 // '/v2/publish'
 function handlePublish(req: any, res: any) {
-  console.log('------------------------------------------------------------------- handlePublish');
 
   const buffer: any = req.files[0].buffer;
   const fileSpecs: FileToPublish[] = JSON.parse(buffer).file;
-  console.log(fileSpecs);
 
   const response: any = getFilesToPublishResponse(fileSpecs);
-  console.log('------------------------------------------------------------------- response');
-  console.log(response);
   res.json(response);
 }
 
 // PostFileJson
 // /v2/publish/file
 function handlePublishFile(req: any, res: any) {
-  console.log(req);
 
   const fileToTransfer: any = req.files[0];
   const { destination, encoding, fieldname, filename, mimetype, originalname, path, size } = fileToTransfer;
@@ -111,15 +117,60 @@ function handlePublishFile(req: any, res: any) {
 
   fs.renameSync(sourcePath, destinationPath);
 
-  console.log('------------------------------------------------------------------- handlePublishFile');
-  console.log(destinationPath);
-
   res.status(200).end();
 }
 
+// PostSyncSpecJson
+// /v2/publish/sync
 function handlePublishSync(req: any, res: any) {
+
+  console.log('------------------------------------------------------------------- handlePublishFile');
+  // const xferFile: any = req.files[0];
+  // const { destination, encoding, fieldname, filename, mimetype, originalname, path, size } = xferFile;
+  // const newSyncFileName = req.headers['destination-filename'];
+  // const newSyncSpecPath: string = isomorphicPath.join(getRootDirectory(), 'syncSpec') + '/' + newSyncFileName;
+  const newSyncSpecPath = req.files[0].path;
+  const newSyncSpecBuffer: Buffer = fs.readFileSync(newSyncSpecPath);
+  const newSyncSpecStr = newSyncSpecBuffer.toString();
+  const newSyncSpec: SyncSpec = JSON.parse(newSyncSpecStr) as SyncSpec;
+  console.log(newSyncSpec);
+
+  const oldSyncFileName = 'local-sync.json';
+  const oldSyncSpecPath = isomorphicPath.join(getRootDirectory(), oldSyncFileName);
+  const oldSyncSpecBuffer: Buffer = fs.readFileSync(oldSyncSpecPath);
+  const oldSyncSpecStr = oldSyncSpecBuffer.toString();
+  const oldSyncSpec: any = JSON.parse(oldSyncSpecStr);
+  console.log(oldSyncSpec);
+
+  const oldSyncSpecScriptsOnly: SyncSpecDownload[] = [];
+  const oldSyncSpecFiles: SyncSpecFiles = newSyncSpec.files;
+  const oldSyncSpecDownloadFiles: SyncSpecDownload[] = oldSyncSpecFiles.download;
+  for (const syncSpecDownload of oldSyncSpecDownloadFiles) {
+    if (!isNil(syncSpecDownload.group) && syncSpecDownload.group === 'script') {
+      oldSyncSpecScriptsOnly.push(syncSpecDownload);
+    }
+  } 
+
+  const newSyncSpecScriptsOnly: SyncSpecDownload[] = [];
+  const newSyncSpecFiles: SyncSpecFiles = newSyncSpec.files;
+  const newSyncSpecDownloadFiles: SyncSpecDownload[] = newSyncSpecFiles.download;
+  for (const syncSpecDownload of newSyncSpecDownloadFiles) {
+    if (!isNil(syncSpecDownload.group) && syncSpecDownload.group === 'script') {
+      newSyncSpecScriptsOnly.push(syncSpecDownload);
+    }
+  } 
+
+
+  fs.writeFileSync(oldSyncSpecPath, newSyncSpecStr);
+  
   res.send('handlePublishSync');
 }
+
+
+
+
+
+
 
 const express = require('express');
 const app = express();
@@ -133,6 +184,7 @@ const upload = multer();
 const uploadManifest = multer();
 
 const uploadLfnTransfers = multer({ dest: 'lfnTransfers/' });
+const uploadLfnSyncSpec = multer({ dest: 'syncSpec/' });
 
 const port = 8080;
 
@@ -148,28 +200,13 @@ app.post('/v2/publish', uploadManifest.any(), (req: any, res: any) => handlePubl
 
 app.post('/v2/publish/file', uploadLfnTransfers.any(), (req: any, res: any) => handlePublishFile(req, res));
 
-// app.post('/v2/publish/sync',  (req: any, res: any) => handlePublishSync(req, res));
+app.post('/v2/publish/sync', uploadLfnSyncSpec.any(), (req: any, res: any) => handlePublishSync(req, res));
 
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
-console.log('setTimeout');
-
 // setTimeout(bootstrapper, 30000);
 setTimeout(bootstrapper, 1000);
-
-// endpoints
-/*
--1: const deviceConfigurationApiPath = '/v2/device/configuration';
-const deviceStatusApiPath = '/v2/device/status';
-POST: const snapshotConfigurationApiPath = '/v2/snapshot/configuration';
-const snapshotHistoryApiPath = '/v2/snapshot/history';
-const snapshotApiPath = '/v2/snapshot';
-0: POST: const storageConfigurationApiPath = '/v2/storage/configuration';
-1: POST: const publishApiPath = '/v2/publish';
-POST: const publishFileApiPath = '/v2/publish/file';
-2: POST: const publishSyncApiPath = '/v2/publish/sync';
-*/
 
 function getFilesToPublishResponse(filesInPublish: FileToPublish[]): any {
 
@@ -195,20 +232,10 @@ function getFilesToPublishResponse(filesInPublish: FileToPublish[]): any {
       resp.file.push(file);
     }
   }
-
-  console.log('response:');
-  console.log(resp);
-
   return resp;
 }
 
 function getFilesToPublish(filesToPublish: FileToPublish[]): FilesToPublishMap {
-
-  // const filesToPublishPath = isomorphicPath.join(getRootDirectory(), 'filesToPublish.json');
-  // const filesToPublishBuffer: Buffer = fs.readFileSync(filesToPublishPath);
-  // const filesToPublishStr = filesToPublishBuffer.toString();
-  // const filesToPublish: FileToPublish[] = JSON.parse(filesToPublishStr).file;
-  // console.log(filesToPublish);
 
   // files that need to be copied by BrightAuthor
   const actualPublishFiles: FilesToPublishMap = {};
@@ -238,10 +265,7 @@ function getContentFiles(): ContentFileMap {
 
   const poolDirectoryPath = getPoolDirectory();
 
-  console.log('poolDirectory: ', poolDirectoryPath);
-
   const firstLevelPoolDirectories: string[] = fs.readdirSync(poolDirectoryPath);
-  console.log(firstLevelPoolDirectories);
 
   for (const firstLevelPoolDirectory of firstLevelPoolDirectories) {
     const firstLevelPoolDirectoryPath = isomorphicPath.join(poolDirectoryPath, firstLevelPoolDirectory);
@@ -254,9 +278,6 @@ function getContentFiles(): ContentFileMap {
       }
     }
   }
-
-  console.log('allFiles:');
-  console.log(allFiles);
 
   return allFiles;
 }
