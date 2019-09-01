@@ -13,6 +13,11 @@ import { initRuntime } from './controller';
 import { combineReducers } from 'redux';
 import { bsDmReducer } from '@brightsign/bsdatamodel';
 // import express from 'express';
+import * as fs from 'fs-extra';
+import isomorphicPath from 'isomorphic-path';
+import { getRootDirectory, getPoolDirectory } from './controller/runtime';
+
+import { FileToPublish, ContentFileMap, FilesToPublishMap } from './type';
 
 console.log('define getStore');
 
@@ -72,12 +77,15 @@ function handleStorageConfiguration(req: any, res: any) {
 
 // equivalent to
 // PostPrepareForTransferJson
+// '/v2/publish'
 function handlePublish(req: any, res: any) {
   console.log('---------------------------------------------- handlePublish');
   console.log(req.files);
 
   const buffer: any = req.files[0].buffer;
-  const fileSpecs: any[] = JSON.parse(buffer).file;
+  const fileSpecs: FileToPublish[] = JSON.parse(buffer).file;
+
+  const response: any = getFilesToPublishResponse(fileSpecs);
 
   for (const fileSpec of fileSpecs) {
     console.log(fileSpec);
@@ -144,3 +152,95 @@ const snapshotApiPath = '/v2/snapshot';
 POST: const publishFileApiPath = '/v2/publish/file';
 2: POST: const publishSyncApiPath = '/v2/publish/sync';
 */
+
+function getFilesToPublishResponse(filesInPublish: FileToPublish[]) {
+
+  const filesToPublish: FilesToPublishMap = getFilesToPublish(filesInPublish);
+
+  const resp: any = {};
+  resp.family = 'malibu';
+  resp.model = 'xt1144';
+  resp.fwVersion = '8.0.69.2';
+  resp.fwVersionNumber = '1776';
+  
+  resp.file = [];
+
+  for (const fileName in filesToPublish) {
+    if (filesToPublish.hasOwnProperty(fileName)) {
+      const fileToPublish: FileToPublish = filesToPublish[fileName];
+      const file: any = {
+        fileName: fileToPublish.fileName,
+        filePath: fileToPublish.filePath,
+        hash: fileToPublish.hash,
+        size: fileToPublish.size
+      };
+      resp.file.push(file);
+    }
+  }
+
+  console.log('response:');
+  console.log(resp);
+  
+  return resp;
+}
+
+function getFilesToPublish(filesToPublish: FileToPublish[]): FilesToPublishMap {
+
+  // const filesToPublishPath = isomorphicPath.join(getRootDirectory(), 'filesToPublish.json');
+  // const filesToPublishBuffer: Buffer = fs.readFileSync(filesToPublishPath);
+  // const filesToPublishStr = filesToPublishBuffer.toString();
+  // const filesToPublish: FileToPublish[] = JSON.parse(filesToPublishStr).file;
+  // console.log(filesToPublish);
+
+  // files that need to be copied by BrightAuthor
+  const actualPublishFiles: FilesToPublishMap = {};
+  
+  // files that can be deleted to make room for more content
+  const deletionCandidates = {};
+
+  const currentPoolFiles: ContentFileMap = getContentFiles();
+  for (const currentPoolFile in currentPoolFiles) {
+    if (currentPoolFiles.hasOwnProperty(currentPoolFile)) {    
+      deletionCandidates[currentPoolFile] = currentPoolFiles[currentPoolFile];
+    }
+  }
+
+  for (const fileToPublish of filesToPublish) {
+    if (!deletionCandidates.hasOwnProperty(fileToPublish.fileName)) {
+      actualPublishFiles[fileToPublish.fileName] = fileToPublish;
+    }
+  }
+
+  return actualPublishFiles;
+}
+
+function getContentFiles(): ContentFileMap {
+
+  const allFiles: ContentFileMap = {};
+
+  const poolDirectoryPath = getPoolDirectory();
+
+  console.log('poolDirectory: ', poolDirectoryPath);
+
+  const firstLevelPoolDirectories: string[] = fs.readdirSync(poolDirectoryPath);
+  console.log(firstLevelPoolDirectories);
+
+  for (const firstLevelPoolDirectory of firstLevelPoolDirectories) {
+    const firstLevelPoolDirectoryPath = isomorphicPath.join(poolDirectoryPath, firstLevelPoolDirectory);
+    const secondLevelPoolDirectories: string[] = fs.readdirSync(firstLevelPoolDirectoryPath);
+    for (const secondLevelPoolDirectory of secondLevelPoolDirectories) {
+      const secondLevelPoolDirectoryPath = isomorphicPath.join(firstLevelPoolDirectoryPath, secondLevelPoolDirectory);
+      const filesInDirectory: string[] = fs.readdirSync(secondLevelPoolDirectoryPath);
+      for (const fileInDirectory of filesInDirectory) {
+        allFiles[fileInDirectory] = secondLevelPoolDirectoryPath;
+      }
+    }
+  }
+
+  console.log('allFiles:');
+  console.log(allFiles);
+
+  return allFiles;
+}
+
+

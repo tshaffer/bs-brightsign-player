@@ -55,3 +55,26 @@ export interface BsBspAction<T> extends BsBspBaseAction {
 }
 
 export type ExitHandlerAction = BsBspAction<void>;
+
+/*
+"autoplay-lfnTest.json"
+"/Users/tedshaffer/Documents/Projects/fb34.5/bacon/temp/autoplay-lfnTest.json"
+"5ea1860f2014bb1a83f9aa2bfa7f69357c49790f"
+"sha1-5ea1860f2014bb1a83f9aa2bfa7f69357c49790f"
+10348
+*/
+export interface FileToPublish {
+  fileName: string;
+  filePath: string;
+  hash: string;
+  poolFileName: string;
+  size: number;
+}
+
+export interface FilesToPublishMap {
+  [fileName: string]: FileToPublish;
+}
+
+export interface ContentFileMap {
+  [fileName: string]: string;
+}

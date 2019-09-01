@@ -52,7 +52,6 @@ else {
   process.chdir('/storage/sd');
   srcDirectory = '';
 }
-getContentFiles();
 
 import Registry from '@brightsign/registry';
 import { ZoneType } from '@brightsign/bscore';
@@ -261,7 +260,7 @@ export function getPoolFilePath(fileName: string): string {
   return filePath;
 }
 
-function getPoolDirectory(): string {
+export function getPoolDirectory(): string {
   return isomorphicPath.join(getRootDirectory(), 'pool');
 }
 
@@ -269,7 +268,7 @@ export function getFeedDirectory(): string {
   return isomorphicPath.join(getRootDirectory(), 'feedPool');
 }
 
-function getRootDirectory(): string {
+export function getRootDirectory(): string {
   return srcDirectory;
 }
 
@@ -413,33 +412,4 @@ function startPlayback() {
     });
   };
 }
-
-function getContentFiles() {
-
-  const allFiles = {};
-
-  const poolDirectoryPath = getPoolDirectory();
-
-  console.log('poolDirectory: ', poolDirectoryPath);
-
-  const firstLevelPoolDirectories: string[] = fs.readdirSync(poolDirectoryPath);
-  console.log(firstLevelPoolDirectories);
-
-  for (const firstLevelPoolDirectory of firstLevelPoolDirectories) {
-    const firstLevelPoolDirectoryPath = isomorphicPath.join(poolDirectoryPath, firstLevelPoolDirectory);
-    const secondLevelPoolDirectories: string[] = fs.readdirSync(firstLevelPoolDirectoryPath);
-    for (const secondLevelPoolDirectory of secondLevelPoolDirectories) {
-      const secondLevelPoolDirectoryPath = isomorphicPath.join(firstLevelPoolDirectoryPath, secondLevelPoolDirectory);
-      const filesInDirectory: string[] = fs.readdirSync(secondLevelPoolDirectoryPath);
-      for (const fileInDirectory of filesInDirectory) {
-        allFiles[fileInDirectory] = secondLevelPoolDirectoryPath;
-      }
-    }
-  }
-
-  console.log('allFiles:');
-  console.log(allFiles);
-}
-
-
 
