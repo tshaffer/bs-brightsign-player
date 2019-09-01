@@ -78,3 +78,27 @@ export interface FilesToPublishMap {
 export interface ContentFileMap {
   [fileName: string]: string;
 }
+
+export interface SyncSpec {
+  files: SyncSpecFiles;
+  meta: any;
+}
+
+export interface SyncSpecFiles {
+  delete: any[];
+  download: SyncSpecDownload[];
+  ignore: any[];
+}
+
+export interface SyncSpecHash {
+  hex: string;
+  method: string;
+}
+
+export interface SyncSpecDownload {
+  name: string;
+  link: string;
+  hash: SyncSpecHash;
+  size: number;
+  group?: string;
+}
