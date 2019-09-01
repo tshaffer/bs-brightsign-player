@@ -78,13 +78,15 @@ function handleStorageConfiguration(req: any, res: any) {
 // PostPrepareForTransferJson
 // '/v2/publish'
 function handlePublish(req: any, res: any) {
-  console.log('---------------------------------------------- handlePublish');
-  console.log(req.files);
+  console.log('------------------------------------------------------------------- handlePublish');
 
   const buffer: any = req.files[0].buffer;
   const fileSpecs: FileToPublish[] = JSON.parse(buffer).file;
+  console.log(fileSpecs);
 
   const response: any = getFilesToPublishResponse(fileSpecs);
+  console.log('------------------------------------------------------------------- response');
+  console.log(response);
   res.json(response);
 }
 
@@ -95,18 +97,22 @@ function handlePublishFile(req: any, res: any) {
 
   const fileToTransfer: any = req.files[0];
   const { destination, encoding, fieldname, filename, mimetype, originalname, path, size } = fileToTransfer;
+  const sha1FileName = req.headers['destination-filename'];
 
   const sourcePath: string = isomorphicPath.join(getRootDirectory(), 'lfnTransfers') + '/' + filename;
 
   const poolDirectory = getPoolDirectory();
-  const fileNameLength = filename.length;
-  const firstDir: string = filename.substring(fileNameLength - 2, fileNameLength - 1);
-  const secondDir: string = filename.substring(fileNameLength - 1, fileNameLength);
+  const fileNameLength = sha1FileName.length;
+  const firstDir: string = sha1FileName.substring(fileNameLength - 2, fileNameLength - 1);
+  const secondDir: string = sha1FileName.substring(fileNameLength - 1, fileNameLength);
   const destinationDirectory = isomorphicPath.join(poolDirectory, firstDir, secondDir);
   fs.ensureDirSync(destinationDirectory);
-  const destinationPath = destinationDirectory + '/sha1-' + filename;
+  const destinationPath = destinationDirectory + '/' + sha1FileName.substring(5);
 
-  fs.rename(sourcePath, destinationPath);
+  fs.renameSync(sourcePath, destinationPath);
+
+  console.log('------------------------------------------------------------------- handlePublishFile');
+  console.log(destinationPath);
 
   res.status(200).end();
 }
@@ -218,7 +224,7 @@ function getFilesToPublish(filesToPublish: FileToPublish[]): FilesToPublishMap {
   }
 
   for (const fileToPublish of filesToPublish) {
-    if (!deletionCandidates.hasOwnProperty(fileToPublish.fileName)) {
+    if (!deletionCandidates.hasOwnProperty(fileToPublish.poolFileName)) {
       actualPublishFiles[fileToPublish.fileName] = fileToPublish;
     }
   }
