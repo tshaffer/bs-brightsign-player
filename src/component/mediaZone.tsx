@@ -202,7 +202,6 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
               src={src}
               width={scaledWidth}
               height={scaledHeight}
-              maxHeight={200}
             />
           );
         case 'video':
