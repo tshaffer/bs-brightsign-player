@@ -195,14 +195,23 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
       console.log('scaledWidth: ', scaledWidth);
       console.log('scaledHeight: ', scaledHeight);
 
-      switch (dataFeedItem.medium) {
-        case 'image':
-          return (
+      /*
             <Image
               src={src}
               width={scaledWidth}
               height={scaledHeight}
               maxHeight={200}
+      */
+
+      switch (dataFeedItem.medium) {
+        case 'image':
+          return (
+            <Image
+              src={src}
+              width='auto'
+              height='auto'
+              maxHeight={scaledWidth}
+              maxWidth={scaledHeight}
             />
           );
         case 'video':

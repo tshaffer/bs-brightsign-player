@@ -14,11 +14,21 @@ export interface ImageProps {
   src: string;
   width: number;
   height: number;
+  maxHeight: number;
+  maxWidth: number;
 }
 
 // -----------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------
+/*
+img {
+  display: block;
+  max-width:230px;
+  max-height:95px;
+  width: auto;
+  height: auto;
+}*/
 
 export class ImageComponent extends React.Component<ImageProps> {
   render() {
@@ -33,8 +43,10 @@ export class ImageComponent extends React.Component<ImageProps> {
       return (
         <img
           src={this.props.src}
-          width={this.props.width.toString()}
-          height={this.props.height.toString()}
+          width='auto'
+          height='auto'
+          max-height={this.props.maxHeight}
+          max-width={this.props.maxWidth}
         />
       );
     }
@@ -57,6 +69,8 @@ const mapStateToProps = (state: any, ownProps: any): any => {
     src: ownProps.src,
     width: ownProps.width,
     height: ownProps.height,
+    maxWidth: ownProps.maxWidth,
+    maxHeight: ownProps.maxHeight,
   };
 };
 
