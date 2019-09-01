@@ -75,7 +75,6 @@ function handleStorageConfiguration(req: any, res: any) {
   res.status(200).end();
 }
 
-// equivalent to
 // PostPrepareForTransferJson
 // '/v2/publish'
 function handlePublish(req: any, res: any) {
@@ -86,19 +85,28 @@ function handlePublish(req: any, res: any) {
   const fileSpecs: FileToPublish[] = JSON.parse(buffer).file;
 
   const response: any = getFilesToPublishResponse(fileSpecs);
+  res.json(response);
+}
 
-  for (const fileSpec of fileSpecs) {
-    console.log(fileSpec);
-  }
-  
-  // files that need to be copied by BrightAuthor
-  const actualPublishFiles = { }
-  // files that can be deleted to make room for more content
-  const deletionCandidates = { }
+// PostFileJson
+// /v2/publish/file
+function handlePublishFile(req: any, res: any) {
+  console.log(req);
 
-  if (fileSpecs.length > 0) {
+  const fileToTransfer: any = req.files[0];
+  const { destination, encoding, fieldname, filename, mimetype, originalname, path, size } = fileToTransfer;
 
-  }
+  const sourcePath: string = isomorphicPath.join(getRootDirectory(), 'lfnTransfers') + '/' + filename;
+
+  const poolDirectory = getPoolDirectory();
+  const fileNameLength = filename.length;
+  const firstDir: string = filename.substring(fileNameLength - 2, fileNameLength - 1);
+  const secondDir: string = filename.substring(fileNameLength - 1, fileNameLength);
+  const destinationDirectory = isomorphicPath.join(poolDirectory, firstDir, secondDir);
+  fs.ensureDirSync(destinationDirectory);
+  const destinationPath = destinationDirectory + '/sha1-' + filename;
+
+  fs.rename(sourcePath, destinationPath);
 
   res.status(200).end();
 }
@@ -109,7 +117,7 @@ function handlePublishSync(req: any, res: any) {
 
 const express = require('express');
 const app = express();
-const multer  = require('multer');
+const multer = require('multer');
 const upload = multer();
 
 // with this syntax, the file is uploaded to uploads/
@@ -117,6 +125,8 @@ const upload = multer();
 
 // with this syntax, the file information is available via req.files. included is a buffer with the content of the upload
 const uploadManifest = multer();
+
+const uploadLfnTransfers = multer({ dest: 'lfnTransfers/' });
 
 const port = 8080;
 
@@ -129,6 +139,8 @@ app.post('/v2/storage/configuration', upload.none(), (req: any, res: any, next: 
 // app.post('/v2/publish', uploadManifest.single('filesToPublish.json'), (req: any, res: any) => handlePublish(req, res));
 // This approach works for the method I want; unable to get .single() to work.
 app.post('/v2/publish', uploadManifest.any(), (req: any, res: any) => handlePublish(req, res));
+
+app.post('/v2/publish/file', uploadLfnTransfers.any(), (req: any, res: any) => handlePublishFile(req, res));
 
 // app.post('/v2/publish/sync',  (req: any, res: any) => handlePublishSync(req, res));
 
@@ -153,7 +165,7 @@ POST: const publishFileApiPath = '/v2/publish/file';
 2: POST: const publishSyncApiPath = '/v2/publish/sync';
 */
 
-function getFilesToPublishResponse(filesInPublish: FileToPublish[]) {
+function getFilesToPublishResponse(filesInPublish: FileToPublish[]): any {
 
   const filesToPublish: FilesToPublishMap = getFilesToPublish(filesInPublish);
 
@@ -162,7 +174,7 @@ function getFilesToPublishResponse(filesInPublish: FileToPublish[]) {
   resp.model = 'xt1144';
   resp.fwVersion = '8.0.69.2';
   resp.fwVersionNumber = '1776';
-  
+
   resp.file = [];
 
   for (const fileName in filesToPublish) {
@@ -180,7 +192,7 @@ function getFilesToPublishResponse(filesInPublish: FileToPublish[]) {
 
   console.log('response:');
   console.log(resp);
-  
+
   return resp;
 }
 
@@ -194,13 +206,13 @@ function getFilesToPublish(filesToPublish: FileToPublish[]): FilesToPublishMap {
 
   // files that need to be copied by BrightAuthor
   const actualPublishFiles: FilesToPublishMap = {};
-  
+
   // files that can be deleted to make room for more content
   const deletionCandidates = {};
 
   const currentPoolFiles: ContentFileMap = getContentFiles();
   for (const currentPoolFile in currentPoolFiles) {
-    if (currentPoolFiles.hasOwnProperty(currentPoolFile)) {    
+    if (currentPoolFiles.hasOwnProperty(currentPoolFile)) {
       deletionCandidates[currentPoolFile] = currentPoolFiles[currentPoolFile];
     }
   }
