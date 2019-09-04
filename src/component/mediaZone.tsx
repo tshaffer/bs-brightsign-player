@@ -172,13 +172,12 @@ export default class MediaZoneComponent extends React.Component<MediaZoneProps> 
       const dimensions = sizeOf(dataFeedItem.filePath);
       const { width, height } = dimensions;
 
-      /* max size
-    height: 1000,
-    width: 750,
-      */
-      // scale down to get to that size
-      const widthScaleFactor = width / 1000;
-      const heightScaleFactor = height / 750;
+      const laptopMaxWidth = 1420;
+      const laptopMaxHeight = 780;
+
+      // scale down to get to screen size
+      const widthScaleFactor = width / laptopMaxWidth;
+      const heightScaleFactor = height / laptopMaxHeight;
       let scaledWidth: number;
       let scaledHeight: number;
       if (widthScaleFactor > heightScaleFactor) {
