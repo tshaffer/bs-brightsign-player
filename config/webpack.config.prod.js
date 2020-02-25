@@ -59,20 +59,20 @@ if (isBrowser) {
   nodeStubs.child_process = 'empty';
 }
 
-function DtsBundlePlugin(){}
-DtsBundlePlugin.prototype.apply = function (compiler) {
-  compiler.plugin('done', function(){
-    var dts = require('dts-bundle');
+// function DtsBundlePlugin(){}
+// DtsBundlePlugin.prototype.apply = function (compiler) {
+//   compiler.plugin('done', function(){
+//     var dts = require('dts-bundle');
 
-    dts.bundle({
-      name: '[name]',
-      main: distDeploymentDir + '/index.d.ts',
-      out: '../../index.d.ts',
-      removeSource: true,
-      outputAsModuleFolder: true // to use npm in-package typings
-    });
-  });
-};
+//     dts.bundle({
+//       name: '[name]',
+//       main: distDeploymentDir + '/index.d.ts',
+//       out: '../../index.d.ts',
+//       removeSource: true,
+//       outputAsModuleFolder: true // to use npm in-package typings
+//     });
+//   });
+// };
 
 
 // Assert this just to be safe.
@@ -90,7 +90,7 @@ const cssFilename = '[name].[contenthash:8].css';
 // To have this structure working with relative paths, we have to use custom options.
 const extractTextPluginOptions = shouldUseRelativeAssetPaths
   ? // Making sure that the publicPath goes back to to build folder.
-    { publicPath: Array(cssFilename.split('/').length).join('../') }
+  { publicPath: Array(cssFilename.split('/').length).join('../') }
   : {};
 
 
@@ -121,13 +121,13 @@ if (isStandalone) {
     '@brightsign/videooutput': 'commonjs @brightsign/videooutput',
   });
 } else {
-  externals.push(function(context, request, callback) {
+  externals.push(function (context, request, callback) {
     if (/^lodash.*/.test(request)) {
       return callback(null, 'commonjs ' + request);
     }
     callback();
   });
-  externals.push(function(context, request, callback) {
+  externals.push(function (context, request, callback) {
     if (/^@brightsign.*/.test(request)) {
       return callback(null, 'commonjs ' + request);
     }
@@ -196,7 +196,7 @@ plugins.push(new ManifestPlugin({ fileName: 'asset-manifest.json' }));
 plugins.push(new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/));
 
 // add auto types generation
-plugins.push(new DtsBundlePlugin());
+// plugins.push(new DtsBundlePlugin());
 
 if (isStandalone) {
   // Makes some environment variables available in index.html.
@@ -264,7 +264,7 @@ module.exports = {
       '.jsx',
     ],
     alias: {
-      
+
       // Support React Native Web
       // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
       'react-native': 'react-native-web',
