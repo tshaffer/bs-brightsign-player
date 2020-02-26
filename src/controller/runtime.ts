@@ -124,8 +124,10 @@ export function getPlatform(): string {
   return platform;
 }
 
-export function initRuntime(store: Store<BsBrightSignPlayerState>) {
-  return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
+// export function initRuntime(store: Store<BsBrightSignPlayerState>) {
+// return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
+export function initRuntime(store: Store<any>) {
+  return ((dispatch: any, getState: () => any) => {
     _autotronStore = store;
     return getRuntimeFiles()
       .then(() => {
@@ -607,7 +609,7 @@ function handlePublishFile(req: any, res: any) {
 // /v2/publish/sync
 function handlePublishSync(req: any, res: any) {
 
-  console.log('------------------------------------------------------------------- handlePublishFile');
+  console.log('------------------------------------------------------------------- handlePublishSync');
   // const xferFile: any = req.files[0];
   // const { destination, encoding, fieldname, filename, mimetype, originalname, path, size } = xferFile;
   // const newSyncFileName = req.headers['destination-filename'];
@@ -632,7 +634,7 @@ function handlePublishSync(req: any, res: any) {
     if (!isNil(syncSpecDownload.group) && syncSpecDownload.group === 'script') {
       oldSyncSpecScriptsOnly.push(syncSpecDownload);
     }
-  } 
+  }
 
   const newSyncSpecScriptsOnly: SyncSpecDownload[] = [];
   const newSyncSpecFiles: SyncSpecFiles = newSyncSpec.files;
@@ -641,11 +643,10 @@ function handlePublishSync(req: any, res: any) {
     if (!isNil(syncSpecDownload.group) && syncSpecDownload.group === 'script') {
       newSyncSpecScriptsOnly.push(syncSpecDownload);
     }
-  } 
-
+  }
 
   fs.writeFileSync(oldSyncSpecPath, newSyncSpecStr);
-  
+
   res.send('handlePublishSync');
 }
 

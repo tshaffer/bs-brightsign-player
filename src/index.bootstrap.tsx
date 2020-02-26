@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { createStore, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware, Action } from 'redux';
 import thunk from 'redux-thunk';
 import { Provider } from 'react-redux';
 import { composeWithDevTools } from 'redux-devtools-extension';
@@ -30,7 +30,9 @@ function bootstrapper() {
 
   const store = getStore();
 
-  store.dispatch(initRuntime(store));
+  const action = initRuntime(store);
+  store.dispatch(action as any);
+  // store.dispatch(initRuntime(store));
 
   ReactDOM.render(
     <Provider store={store}>

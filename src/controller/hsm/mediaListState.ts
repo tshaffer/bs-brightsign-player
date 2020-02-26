@@ -167,7 +167,7 @@ export default class MediaListState extends MediaHState {
 
   advanceMediaListPlayback(playImmediate: boolean, executeNextCommands: boolean): BsBspVoidThunkAction {
 
-    return (dispatch: BsBspDispatch, getState: any) => {
+    return (dispatch: any, getState: any) => {
       dispatch(this.launchMediaListPlaybackItem(playImmediate, executeNextCommands, false));
 
       this.playbackIndex++;
@@ -178,7 +178,7 @@ export default class MediaListState extends MediaHState {
   }
 
   STDisplayingMediaListItemEventHandler(event: ArEventType, stateData: HSMStateData): BsBspStringThunkAction {
-    return (dispatch: BsBspDispatch, getState) => {
+    return (dispatch: any, getState) => {
       if (event.EventType === 'ENTRY_SIGNAL') {
 
         console.log('mediaListState ' + this.id + ': entry signal');

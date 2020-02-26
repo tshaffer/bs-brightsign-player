@@ -23,7 +23,7 @@ export default class ImageState extends MediaHState {
 
   STDisplayingImageEventHandler(event: ArEventType, stateData: HSMStateData): BsBspStringThunkAction {
 
-    return (dispatch: BsBspDispatch) => {
+    return (dispatch: any) => {
       if (event.EventType === 'ENTRY_SIGNAL') {
         console.log(this.id + ': entry signal');
         dispatch(this.executeMediaStateCommands(this.mediaState.id, this.stateMachine as MediaZoneHSM, CommandSequenceType.StateEntry));

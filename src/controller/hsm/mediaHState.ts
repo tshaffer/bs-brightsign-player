@@ -156,7 +156,7 @@ export class MediaHState extends HState {
 
   mediaHStateExitHandler(): BsBspVoidThunkAction {
 
-    return (dispatch, getState) => {
+    return (dispatch: BsBspDispatch) => {
 
       if (this.timeout) {
         clearTimeout(this.timeout);
@@ -169,7 +169,7 @@ export class MediaHState extends HState {
 
   launchTimer(): BsBspVoidThunkAction {
 
-    return (dispatch: any, getState: any) => {
+    return (dispatch: BsBspDispatch, getState: any) => {
 
       // at least part of this will move somwhere else
       const bsdm: DmState = getState().bsdm;

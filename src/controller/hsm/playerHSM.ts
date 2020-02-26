@@ -15,9 +15,8 @@ import {
   processFeed
 } from '../dataFeed';
 import { DataFeedUsageType, DataFeedType } from '@brightsign/bscore';
-import { ArMrssItem, ArContentFeed, ArTextFeed, ArMrssFeed } from '../../type/dataFeed';
+import { ArMrssItem, ArContentFeed, ArTextFeed, ArMrssFeed, ArDataFeed } from '../../type/dataFeed';
 import { getDataFeedById } from '../../selector/dataFeed';
-import { ArDataFeed } from '../../../index';
 import { addDataFeed } from '../../model/dataFeed';
 
 export class PlayerHSM extends HSM {
