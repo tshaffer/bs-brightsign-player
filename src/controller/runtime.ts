@@ -124,10 +124,8 @@ export function getPlatform(): string {
   return platform;
 }
 
-// export function initRuntime(store: Store<BsBrightSignPlayerState>) {
-// return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
-export function initRuntime(store: Store<any>) {
-  return ((dispatch: any, getState: () => any) => {
+export function initRuntime(store: Store<BsBrightSignPlayerState>) {
+  return ((dispatch: any, getState: () => BsBrightSignPlayerState) => {
     _autotronStore = store;
     return getRuntimeFiles()
       .then(() => {
