@@ -71,7 +71,7 @@
     "devtron": "^1.4.0",
     "dotenv": "4.0.0",
     "dts-bundle": "^0.7.3",
-    "electron": "1.7.9",
+    "electron": "9.1.0",
     "electron-devtools-installer": "^2.2.1",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
